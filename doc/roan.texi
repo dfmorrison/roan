@@ -1,0 +1,954 @@
+\input texinfo
+@c %**start of header
+@include inc/roan-version.texi
+@settitle Roan @value{VERSION}
+@setchapternewpage on
+@footnotestyle end
+@c %**end of header
+
+@dircategory Software libraries
+@direntry
+* Roan: (roan).           Roan change ringing library
+@end direntry
+
+@copying
+This is documentation of Roan, version @value{VERSION}.
+
+This documentation is copyright @copyright{} 2015-2017 Donald F Morrison.
+
+Copying and distribution of this documentation, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+@end copying
+
+@titlepage
+@title Roan
+@subtitle Version @value{VERSION}
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@ifnottex
+@validatemenus off
+@node Top
+@top
+@insertcopying
+@end ifnottex
+
+@contents
+
+
+@node Introduction
+@chapter Introduction
+
+@cindex change ringing
+@cindex Common Lisp
+@cindex introduction
+@cindex Ringing Class Library
+@cindex features
+Roan is a libary of
+@url{http://en.wikipedia.org/wiki/Common_Lisp,Common Lisp}
+code for writing applications related to
+@url{http://www.ringing.org/change-ringing,change ringing}.
+It is roughly comparable to the
+@url{http://ringing-lib.sourceforge.net/,Ringing Class Library},
+although that is for the C++ programming language, and the two libraries differ in many
+other ways.
+
+@cindex features
+Roan provides
+@itemize
+@item
+facilities for representing rows and changes as Lisp objects, and permuting them, etc.
+
+@item
+functions for reading and writing place notation, extended to support jump changes as well
+as conveniently representing palindromic sequences of changes
+
+@item
+a set data structure suitable for collecting and proving sets of rows, or sets of sets of rows
+
+@item
+a pattern language for matching rows, for example, for identifying ones with properties
+considered musically desirable; and that includes the ability to match pairs of rows,
+which enables identifying wraps
+
+@item
+a data structure for describing methods, which can include jump changes,
+
+@item
+a searchable database of method definitions, together with a mechanism for
+updating that database from the @url{http://www.ringing.org/,ringing.org web site}
+
+@item
+a function for extracting false course heads from common kinds of methods
+
+@c @item
+@c a data structure for describing calls, which can include jump changes, and applying them
+@c to leads of methods
+
+@item
+there's more in the works, just not ready for public release yet
+@xref{future-plans}.
+@end itemize
+
+While this manual describes Roan, it is neither a tutorial on Lisp nor one on change
+ringing. If you don't know Common Lisp or don't know about change ringing, much of this
+manual is likely to be confusing.
+
+@cindex license
+Roan is distributed under an MIT open source license. While you should read it for
+complete details, it largely means that you can just use Roan for nearly anything you like.
+@xref{License}.
+Roan also loads and uses a variety of other libraries. @xref{dependencies}.
+
+
+@node Obtaining and installing Roan
+@section Obtaining and installing Roan
+@cindex Lisp implementations
+Roan has been tested with
+@itemize
+@item
+@url{http:ccl.clozure.com,@acronym{CCL, Clozure CL}} version 1.11 (64 bit), on Ubuntu
+Linux 16.04 and macOS 10.13.5
+@item
+@url{http://sbcl.org,@acronym{SBCL, Steel Bank Common Lisp}} (64 bit) version 1.3.18 on
+Ubuntu Linux 16.04 and version 1.2.11 on macOS 10.13.5
+@item
+@url{http://clisp.org,CLISP}, version 2.49 on Ubuntu Linux 16.04
+@end itemize
+@noindent
+but should also work in other, modern Common Lisp implementations that
+support the libraries on which Roan depends. @xref{dependencies}.
+
+@cindex roan-base
+@cindex CLISP
+@cindex LispWorks
+One function, @code{update-methods-database}, does not work in CLISP or
+@url{http://www.lispworks.com,LispWorks} because the libraries used to download and unzip the updated database
+currently (as of June 2017) do not work or cannot be loaded in those Lisp implementations.
+@xref{update-methods-database} for further details and workarounds.
+
+
+
+@cindex Quicklisp
+While @url{http://quicklisp.org,Quicklisp} is not required to run Roan, it is
+recommended.
+Quicklisp's @code{quickload} function will also pull in all the other libraries
+upon which Roan depends;
+if you don't use Quicklisp you will have to ensure that those libraries
+are available and loaded.
+The rest of this section assumes that you have Quicklisp installed and
+configured in the usual way.
+
+One of the libraries on which Roan depends, @code{cl-sqlite}, depends upon a C language
+library, @code{libsqlite3}, already being installed. It may already be on
+your system, but if not it is readily available from the
+@url{https://www.sqlite.org/,SQLite web site}.
+When loading Roan, below, if this library is not present an error will be signaled, and
+you will typically be thrown into your Lisp's debugger when Quicklisp is loading
+@code{cl-sqlite}. If for some reason you prefer not to install @code{libsqlite}
+there is version of Roan with slightly reduced functionality, @code{roan-base}, that
+does not contain the method lookup functions and does not load @code{cl-sqlite}. To use
+it instead simply replace @code{:roan} by @code{:roan-base} in the following instructions.
+@xref{Methods database}.
+
+
+@cindex installation
+@cindex downloading
+@cindex Quicklisp
+@cindex ASDF
+@cindex library
+@cindex Bitbucket
+To install Roan, download the
+@url{http://bitbucket.org/tbd.zip,Roan zip file}
+from Bitbucket and unzip it.
+Then move the resulting directory to one of
+@itemize
+@item
+@file{~/common-lisp/}
+@item
+@file{~/quicklisp/local-projects/}
+@item
+@file{~/.local/share/common-lisp/source/}
+@item
+or some other location into which @url{http://www.cliki.net/asdf,ASDF} is configured
+to look for systems.
+@end itemize
+@noindent
+Alternatively the directory can be left anywhere you like
+by adding symbolic links in @file{~/quicklisp/local-projects/} that
+point to the @file{roan.asd} and @file{roan-base.asd} files in the unzipped Roan
+directory.
+
+Once this is done, and Lisp has been restarted if necessary, Roan can be loaded into Lisp
+by evaluating @code{(ql:quickload :roan)}. In addition to Roan itself this will also load
+the other libraries on which it depends.
+
+I hope to add Roan to the Quicklisp library soon. Once that is done there will no
+longer be a need to explicitly download it from Bitbucket.
+
+
+@node Reporting bugs
+@section Reporting bugs
+
+For now, if you find bugs to report, please just send mail to Don Morrison <@email{dfm@@ringing.org}>.
+In the future a bug reporting system will likely be available.
+
+It would be helpful, and will be more likely to lead to successful resolution of the bug,
+if a bug report includes
+@itemize
+@item
+a detailed prescription of how generate the bug, preferably from as simple a starting place as
+you can use to reproduce it; that is, send code, that when evaluated, demonstrates the bug
+
+@item
+the version of Roan you are using; this can be found by evaluating
+@code{(asdf:component-version (asdf:find-system :roan))}
+
+@item
+the name and version number of the Lisp implementation you are using, as well as whether
+it is 32-bit or 64-bit if both are available
+
+@item
+the name and version number of the operating system on which it is running
+
+@item
+the kind of processor on which it is running, especially if it's something unusual
+@end itemize
+
+
+@node A note on examples
+@section A note on examples
+
+Examples in this manual are typically of the form
+@example
+(caddr '(1 2 3 4)) @result{}  3
+@end example
+@noindent
+That is, an expression, followed by @samp{@result{}} and a printed
+representation of the result of evaluating that expression. That right hand side is
+typically not exactly as the @acronym{REPL, Read Eval Print Loop} might print it:
+for example, symbols will usually be shown in lower case while most
+Lisp implementation's @acronym{REPL}s will use upper case; and things like
+hash-sets that have indeterminate order may result in different orders
+of elements of lists.
+
+Occasionally, though, examples will look like
+@example
+@group
+CL-USER> (+ 1 2 3)
+6
+CL-USER> (values (+ 1 2 3) (cons 'a 'b))
+6
+(A . B)
+CL-USER>
+@end group
+@end example
+@noindent
+In this case the example is a transcript of an interaction with a @acronym{REPL}@.
+None of the examples makes explicit note of which of these two styles is being used,
+it being assumed the reader can easily deduce this from their appearances.
+
+
+@node Multi-threading
+@section Multi-threading
+@cindex threads
+@cindex multi-threading
+@cindex @code{bordeaux-threads}
+
+If the symbol @code{:bordeaux-threads} is in @code{*features*}
+@emph{before} Roan is loaded, Roan will try to ensure that all its
+calls can be used safely in multiple threads simultaneously, using the
+@code{bordeaux-threads} API. This has not yet been extensively tested,
+however.
+
+It is only safe to use multiple threads with @code{bordeaux-threads};
+using Roan in multiple threads in an implementation's native threading
+API, without loading @code{bordeaux-threads} before Roan, will
+likely fail.
+
+
+@node The roan package
+@section The roan package
+
+@include inc/roan-summary.texi
+@include inc/roan-package.texi
+@include inc/use-roan-package-function.texi
+
+@node Fundamental Types
+@chapter Fundamental Types
+
+@cindex change ringing
+Central to change ringing is permuting sequences of a fixed collection of bells, where
+the cardinality of that collection is the stage. For modeling such things Roan
+provides the types @code{bell}, @code{stage} and @code{row}, and various operations
+on them. It is also provides tools for reading and writing place notation.
+
+@node Bells
+@section Bells
+
+@include inc/bell-summary.texi
+@include inc/bell-type.texi
+@include inc/bell-name-function.texi
+@include inc/bell-from-name-function.texi
+@include inc/print-bells-upper-case-variable.texi
+
+@node Stages
+@section Stages
+
+@include inc/stage-summary.texi
+@include inc/stage-type.texi
+@include inc/minimum-stage-constant.texi
+@include inc/maximum-stage-constant.texi
+@include inc/stage-name-function.texi
+@include inc/stage-from-name-function.texi
+@include inc/default-stage-variable.texi
+
+
+@node Rows
+@section Rows
+
+@include inc/row-summary.texi
+@include inc/row-structure.texi
+
+@anchor{row-p-function}
+@cindex @code{row-p}
+@deffn Function row-p object
+Non-nil if and only if @var{object} is a @code{row}.
+@end deffn
+
+@include inc/stage-function.texi
+@include inc/write-row-function.texi
+@include inc/row-string-function.texi
+@include inc/read-row-function.texi
+@include inc/parse-row-function.texi
+@include inc/row-function.texi
+@include inc/rounds-function.texi
+@include inc/bell-at-position-function.texi
+@include inc/bells-list-function.texi
+
+@node Properties of rows
+@subsection Properties of rows
+
+@include inc/roundsp-function.texi
+@include inc/changep-function.texi
+@include inc/placesp-function.texi
+@include inc/in-course-p-function.texi
+@include inc/involutionp-function.texi
+@include inc/order-function.texi
+@include inc/cycles-function.texi
+@include inc/tenors-fixed-p-function.texi
+@include inc/which-plain-bob-lead-head-function.texi
+@include inc/which-grandsire-lead-head-function.texi
+@include inc/plain-bob-lead-end-p-function.texi
+
+@node Permuting rows
+@subsection Permuting rows
+
+@include inc/permute-function.texi
+@include inc/permute-collection-generic-function.texi
+@include inc/generate-rows-generic-function.texi
+@include inc/inverse-function.texi
+@include inc/permute-by-inverse-function.texi
+@include inc/alter-stage-function.texi
+
+
+@node Place notation
+@section Place notation
+
+Place notation is a succinct notation for writing sequences of changes, and is widely used
+in change ringing. Roan provides functions for reading and writing place notation,
+producing lists of @code{row}s, representing changes.
+
+@include inc/parse-place-notation-summary.texi
+
+@include inc/parse-place-notation-function.texi
+@include inc/read-place-notation-function.texi
+@cindex writing place notation
+@cindex formatting place notation
+@cindex comma
+@cindex @samp{,} in place notation
+@cindex jump changes
+@include inc/write-place-notation-function.texi
+@include inc/place-notation-string-function.texi
+@include inc/cross-character-variable.texi
+
+
+@node Hash-sets
+@chapter Hash-sets
+
+@include inc/hash-set-summary.texi
+@include inc/hash-set-structure.texi
+@include inc/make-hash-set-function.texi
+@include inc/hash-set-function.texi
+@include inc/hash-set-copy-function.texi
+
+@node Properties of hash-sets
+@section Properties of hash-sets
+
+@include inc/hash-set-count-function.texi
+@include inc/hash-set-empty-p-function.texi
+@include inc/hash-set-elements-function.texi
+@include inc/hash-set-member-function.texi
+@include inc/hash-set-subset-p-function.texi
+
+@node Modifying hash-sets
+@section Modifying hash-sets
+
+@include inc/hash-set-clear-function.texi
+@include inc/hash-set-adjoin-function.texi
+@include inc/hash-set-nadjoinf-macro.texi
+@include inc/hash-set-remove-function.texi
+@include inc/hash-set-delete-function.texi
+@include inc/hash-set-deletef-macro.texi
+@include inc/hash-set-difference-function.texi
+@include inc/hash-set-union-function.texi
+@include inc/hash-set-intersection-function.texi
+
+@node Iterating over @code{hash-set}s
+@section Iterating over @code{hash-set}s
+
+@include inc/map-hash-set-function.texi
+@include inc/do-hash-set-macro.texi
+
+@cindex @code{iterate}
+In addition, it is possible to iterate over a @code{hash-set} using
+the @url{https://common-lisp.net/project/iterate/,@code{iterate}} macro,
+by using the @code{for...:in-hash-set...} construct.
+@example
+@group
+(iter (for element :in-hash-set (hash-set !135246 !123456 !531246))
+      (collect (list element (in-course-p element))))
+    @result{} ((!531246 nil) (!135246 nil) (!123456 t))
+@end group
+@end example
+
+
+@node Patterns
+@chapter Patterns
+
+@include inc/row-match-p-summary.texi
+@include inc/row-match-p-function.texi
+@include inc/parse-pattern-function.texi
+@include inc/format-pattern-function.texi
+@include inc/named-row-pattern-generic-function.texi
+@include inc/pattern-parse-error-class.texi
+
+@node Counting matches
+@section Counting matches
+
+@include inc/match-counter-summary.texi
+@include inc/match-counter-structure.texi
+@include inc/make-match-counter-function.texi
+@include inc/add-pattern-function.texi
+@include inc/remove-pattern-function.texi
+@include inc/remove-all-patterns-function.texi
+@include inc/match-counter-pattern-function.texi
+@include inc/match-counter-labels-function.texi
+@include inc/match-counter-counts-function.texi
+@include inc/reset-match-counter-function.texi
+@include inc/match-counter-handstroke-p-function.texi
+@include inc/record-matches-function.texi
+
+
+@node Methods
+@chapter Methods
+
+@include inc/method-summary.texi
+@include inc/method-class.texi
+@include inc/method-function.texi
+
+@anchor{method-stage-function}
+@anchor{method-name-function}
+@anchor{method-place-notation-function}
+@deffn Function method-stage method
+@deffnx Function method-name method
+@deffnx Function method-place-notation method
+@deffnx Function method-properties method
+Returns the stage, name, place notation or property list of @var{method}, or @code{nil}.
+A non-nil value returned by @code{method-stage} is a @code{stage}, and by
+@code{method-name} or @code{method-place-notation} a string; @code{nil} for these
+indicates the corresponding attribute of @var{method} is unknown. The value returned by
+@code{method-properties} is a list, possibly empty.
+Note that the name is not
+just the portion that the Central Council considers its name: it also includes any
+explictly named class, such as @samp{Surprise}, as well as modifiers such as @samp{Little}
+or @samp{Differential}. For example, the name of Littleport Little Surprise Royal is
+@samp{Littleport Little Surprise}.
+All these functions may be used with @code{setf} to set the relevant attributes of @var{method}.
+No checking is done that the string supplied as the @code{method-place-notation} is, in
+fact valid place notation; however, a subsequent attempt to use invalid place notation, for example by
+@code{method-changes} or @code{method-lead-head}, will signal an error.
+These functions all signal a @code{type-error} if @var{method} is not a @code{method},
+as does attempting to set the stage to a non-@code{stage}, the name or place notation to a
+non-string, or the property list to a non-list.
+@end deffn
+
+@include inc/method-property-function.texi
+@include inc/method-title-function.texi
+@include inc/parse-method-title-function.texi
+@include inc/canonicalize-method-place-notation-function.texi
+@include inc/method-changes-function.texi
+@include inc/method-contains-jump-changes-function.texi
+@include inc/method-lead-head-function.texi
+@include inc/method-lead-head-code-function.texi
+@include inc/method-lead-count-function.texi
+@include inc/method-plain-lead-function.texi
+@include inc/method-lead-length-function.texi
+@include inc/method-course-length-function.texi
+@include inc/method-plain-course-function.texi
+@include inc/method-true-plain-course-p-function.texi
+@cindex classification
+@cindex Central Council
+@cindex CCCBR
+@cindex Methods Committee
+@cindex methods
+@include inc/method-hunt-bells-function.texi
+@include inc/method-working-bells-function.texi
+@include inc/method-rotations-p-function.texi
+
+@cindex classification
+@cindex Central Council
+@cindex CCCBR
+@cindex Methods Committee
+@include inc/method-classification-function.texi
+@include inc/set-method-classified-name-function.texi
+@include inc/no-place-notation-error-class.texi
+
+@cindex falseness
+@cindex false course head groups
+@cindex summary falseness
+@cindex incidence of falseness
+@cindex Hodgson, Maurice
+@cindex Baldwin, Roger
+@cindex Shuttleworth, Edmund
+@cindex Leary, John
+@node Falseness
+@section Falseness
+
+@include inc/fch-group-summary.texi
+@include inc/fch-group-structure.texi
+@include inc/fch-group-function.texi
+
+@anchor{fch-group-name-function}
+@anchor{fch-group-parity-function}
+@anchor{fch-group-elements-function}
+@deffn Function fch-group-name group
+@deffnx Function fch-group-parity group
+@deffnx Function fch-group-elements group
+Returns the name, parity or elements of the @code{fch-group} @var{group}.
+
+The value returned by @code{fch-group-name} is a string of length one or two. For major
+groups it is always of length one, and is a letter. For higher stages if of length one it
+is again a letter, and if of length two it is a letter followed by the digit @samp{1} or
+the digit @samp{2}. The case of letters in @code{fch-group} names is significant.
+
+For major @code{fch-group}s @code{fch-group-parity} always returns @code{nil}. For higher
+stage @code{fch-group}s it always returns either @code{:in-course} or
+@code{:out-of-course}.
+
+The @code{fch-group-elements} function returns a list of @code{row}s, the elements of the
+group. For major groups these are always major @code{row}s, and for higher stage groups
+royal @code{rows}. The @code{alter-stage} fucntion (@pxref{alter-stage}) can be helpful
+for making such @code{row}s conform to the needs of other stages above major.
+
+All three functions signal a @code{type-error} if @var{group} is not a @code{fch-group}.
+@end deffn
+
+@include inc/fch-groups-string-function.texi
+@include inc/method-falseness-function.texi
+
+
+@cindex Central Council
+@cindex CCCBR
+@cindex Methods Committee
+@cindex methods
+@cindex place notation
+@cindex library
+@cindex lookup
+@cindex query
+@cindex ringing.org
+@cindex SQLite
+@cindex database
+@node Methods database
+@section Methods database
+
+@include inc/lookup-methods-by-name-summary.texi
+@include inc/lookup-methods-by-name-function.texi
+@include inc/update-methods-database-function.texi
+@include inc/methods-database-attributes-function.texi
+@include inc/with-methods-database-macro.texi
+@include inc/too-many-methods-error-class.texi
+
+@c @cindex calls
+@c @cindex immutable
+@c @cindex bob
+@c @cindex single
+@c @cindex variations, doubles
+@c @cindex doubles variations
+@c @node Calls
+@c @section Calls
+@c
+@c @include inc/call-summary.texi
+@c @include inc/call-structure.texi
+@c @include inc/call-apply-function.texi
+@c @include inc/call-application-error-class.texi
+
+
+@node License
+@appendix License
+
+@cindex license
+
+Roan is covered by an
+@url{https://en.wikipedia.org/wiki/MIT_License,MIT open source license},
+a well-known, permissive license with few compatibility
+problems with other licenses. The license is quoted below. Loading Roan also
+loads several third party libraries, each of which is made available under its own
+terms, distinct from Roan's. To the best of my understanding all the libraries Roan
+loads are either in the public domain, or have similarly permissive licenses; however, you should
+read their actual licenses to be sure. @xref{dependencies}.
+
+Roan's license is:
+@quotation
+Copyright (c) 1975-2016 Donald F Morrison
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+@end quotation
+
+
+@node Libraries Used by Roan
+@appendix Libraries Used by Roan
+
+@anchor{dependencies}
+@cindex library
+@cindex license
+@cindex dependencies
+
+Roan loads the following libraries. I believe all but one are in the public doamin or
+offered under a permissive, open source license. The exception is zip, part of which is
+offered under a copyleft license; this should make no difference for using Roan, but if
+you wish to distribute something incorporating it you will need to take a closer look---it
+is possible that if, as is likely, you don't actually incorporate the dependcy on zip
+directly it will still be irrelevant---that said, please do your own research and use your
+own judgement. Note also that zip is only used by the @code{update-methods-database}
+function and can easily be excised if necessary.
+
+@itemize
+@item
+@url{https://common-lisp.net/project/alexandria/draft/alexandria.html,Alexandria} [public domain]
+@item
+@url{http://weitz.de/cl-ppcre,CL-PPCRE} [BSD]
+@item
+@url{http://weitz.de/drakma/,Drakma} [BSD]
+@item
+@url{http://weitz.de/cl-fad/,CL-FAD} [BSD]
+@item
+@url{https://common-lisp.net/project/iterate,Iterate} [MIT]
+@item
+@url{https://common-lisp.net/project/cl-sqlite/,CL-SQLITE} [public domain]
+@item
+@url{https://common-lisp.net/project/trivial-garbage,Trivial Garbage} [public domain]
+@item
+@url{https://common-lisp.net/project/zip/,zip} [BSD+LGPL]
+@end itemize
+
+Several further libraries are used in the construction of Roan, but their license terms should
+not affect those who use or ship Roan itself, except possibly in so far as they need to use
+them to develop modifications to Roan.
+
+While not loaded during normal use of Roan, when running Roan's unit tests (@pxref{testing})
+the following library is also loaded and used.
+
+@itemize
+@item
+@url{https://github.com/AccelerationNet/lisp-unit2,lisp-unit2} [MIT]
+@end itemize
+
+Also while not loaded during normal use of Roan, when building Roan's documentation (@pxref{building})
+the following libraries are also loaded and used. In distinction to most of the above @code{trivial-documentation}
+is offered under a
+@url{https://en.wikipedia.org/wiki/Copyleft#Strong_and_weak_copyleft,strong copyleft} license, however
+one that to the best of my understanding does not affect those simply copying or distributing Roan,
+so long as they do not include a copy of @code{trivial-documentation} with it.
+
+@itemize
+@item
+@url{http://weitz.de/cl-fad/,CL-FAD} [BSD]
+@item
+@url{https://github.com/eugeneia/trivial-documentation,trivial-documentation} [Affero GPL]
+@end itemize
+
+While they are not loaded into Lisp, a variety of other tools are used in building Roan's
+documentation, some of which are distributed with strong copyleft licenses. My
+understanding is that this shouldn't be an issue so long as you don't redistribute or
+modify them, however.
+
+
+@cindex UNIX
+@cindex Apollo
+@cindex Domain Lisp
+@cindex Lisp Machine
+@cindex Macintosh Common Lisp
+@cindex CLISP
+@cindex @acronym{C}
+@cindex bluelines
+@cindex calls
+@cindex drawing
+@node History
+@appendix History
+
+Roan started out in the mid-1970s as code to support searching for compositions using
+Portable Standard Lisp on a Digital Equiptment Corporation DEC-10 machine. A few years
+later a bunch of utilities for UNIX, written in @acronym{C}, were added. By the mid-1980s
+it had expanded significantly into collections of Apollo Domain Lisp and Lisp Machine Lisp
+code. From there to a highly portability-challenged version for Digitool Macintosh Common
+Lisp, followed by a more portable version that I used for several years, predominately
+with CLISP. Over the years I've even ``ported'' it (if you can call a complete rewrite in
+a different language a ``port'') to a few other programming languages where I used it for
+various lengths of time. Eventually I tried to make a more tidy, fairly portable Common
+Lisp version, and have been happily using this for my compositional activities in recent
+years.
+
+Over the years several folks received copies of it, and in some cases used it, at least
+for a little while. I think it was used for a time on a Lisp Machine to drive a set of
+electronic Christmas tree ornamental bells ringing touches! But despite such use, it was
+never well organized or documented.
+
+In a fit of good-neighorliness I've finally tried to make it sufficiently tidy for more
+general distribution and added this documentation, in the hopes that others may find it
+useful, too.
+
+@anchor{future-plans}
+As you can easily deduce from its history, lots of things have come and gone over the
+years, and there are lots of parts that have fallen into disrepair or don't play well with
+other parts. In tidying it up for distribution I'm trying to fix that. Public releases of
+Roan will contain only portions that have been reasonably well tested and that do play
+well together, but there's still a lot of work to do resurrecting, tidying and documenting
+other features of varied antiquity and robustness. I'm hopeful that in coming months and
+years I'll be able to offer more releases with more good stuff added to them. Two
+additions that should be coming soon are a fairly general notion of calls amending the
+changes of leads of methods, and a mechanism for drawing blueines.
+
+
+@node What's with the name?
+@section What's with the name?
+
+@cindex Robert Roan
+@cindex Fabian Stedman
+@cindex Stedman, Fabian
+@cindex Plain Bob Minor
+@cindex Grandsire Doubles
+@cindex standard extent
+
+Robert Roan was an important seventeenth century ringer and composer. He is believed
+to have invented Grandsire Doubles and Plain Bob Minor, and by implication, the
+``standard extent'' of minor.
+
+Sadly, his name is less well known among most ringers than some other early composers,
+probably because he's had the misfortune of never having had a method named after him.
+So several decades ago it seemed fitting to name a library of software intended
+for use in composition after him. In keeping with Robert Roan's relative obscurity, it's
+taken several decades for the eponymous software to become publicly available.
+
+
+@cindex Quicklisp
+@cindex ASDF
+@node Building and Modifying Roan
+@appendix Building and Modifying Roan
+
+Since Roan is written in Lisp there really is no build process: your Lisp implementation,
+under the direction of Quicklisp and ASDF, will happily just compile and load it.
+
+However, the documentation does have a slightly complex build process. And if you
+are modifying Roan you really should make friends with the unit tests.
+
+@cindex building
+@cindex documentation
+@node Building the documentation
+@section Building the documentation
+
+@anchor{building}
+
+@cindex documentation
+@cindex manual
+@cindex building
+@cindex Texinfo
+@cindex @code{extract-documentation}
+@cindex @file{Makefile}
+@cindex @acronym{PDF}
+@cindex @acronym{HTML}
+@cindex Info
+This manual is written using
+@url{https://www.gnu.org/software/texinfo/,Texinfo}.
+Depending upon how your environment is already configured you may have to download
+and install Texinfo software, TeX and/or LaTeX.
+
+There is a file included in the source tree, though not a part of Roan per
+se, @file{extract-documentation.lisp}, that is used to extract the documentation
+strings associated with symbols exported from the @code{roan} package. This
+is done using the @code{roan/doc:extract-documentation} function. For each exported
+symbol it writes a small @file{.texi} file in the @file{doc/inc} directory
+with its documentation
+string, augmented with some further Texinfo commands. The documentation strings in
+the Roan sources are themselves infested with appropriate Texinfo commands.
+Most of these small files are then @code{@@include}d into the main Texinfo file,
+@file{roan.texi}, to document the various functions, macros and types.
+In addition to @file{roan.texi}, there is also a small collection of style
+information used by the @acronym{HTML} versions of the documentation in
+@file{roan.css}.
+
+After the documentation strings have been extracted @command{makeinfo} needs to
+be called for each of the four versions of the documentation that are produced:
+@itemize
+@item
+an Info file
+@item
+a @acronym{PDF} file
+@item
+a single @acronym{HTML} file
+@item
+a collection of @acronym{HTML} files, one per chapter
+@end itemize
+
+@cindex Clozure Common Lisp
+@cindex CCL
+So long as CCL (Clozure Common Lisp) is installed, the @file{Makefile} in the source
+hierarchy should do all this for you. If preferred, it should be straightforward to
+modify the @file{Makefile} to use a different Lisp implementation to run
+@code{extract-documentation}.
+
+@cindex Edward Smith
+@cindex Smith, Edward
+@cindex @emph{Titanic}
+@cindex @acronym{RMS} @emph{Titanic}
+If a public function is added to Roan, it should include a suitable documentation string,
+and @file{roan.texi} should be revised to give it an appropriate home, where the
+corresponding @file{inc/*-function.texi} file is @code{@@include}d. So long as you export
+its name from the @code{roan} package it should be picked up by when building the
+documentation.
+Then, run
+@command{make documentation} and if all goes
+well@footnote{``If all goes well'' is reputed to have been a favorite expression of the sea captain Edward Smith.},
+all four kinds of documentation will be nicely produced a few seconds later.
+
+Of course, most of the time, all won't go well. Besides looking carefully at the rather noisy
+output from @command{makeinfo}, here are a few other things to bear in mind:
+@itemize
+@item
+Even though a problem looks like it's in @file{roan.texi}, it might be in a
+documentation string in a source file; Texinfo is pretty good about
+identifying the include file that's causing the problem, unless the problem
+is just too subtle for it.
+
+@item
+@cindex @samp{@@}-sign
+@cindex at-sign
+@cindex braces
+Any occurrences of braces, @samp{@{@}}, or an at-sign, @samp{@@}, in a documentation string
+will be interpreted magically by Texinfo, and need to be quoted with an @samp{@@}.
+
+@item
+@cindex @samp{"}
+@cindex quotes
+When writing examples in documentation strings, if the examples use Lisp strings, the double
+quotes need to be escaped with back slashes, or Lisp will become confused.
+
+@item
+@cindex parentheses
+@cindex Emacs
+@cindex fill-paragraph
+ Even if you are not one yourself, be nice to Emacs users. In Lisp mode Emacs treats an
+open parenthesis, @samp{(}, at the beginning of a line specially, and will become badly
+confused if you have such in a documentation string. When writing examples, indent such
+Lisp code by one space to keep Emacs happy. Similarly be sure to format documentation
+strings so that parenthetical comments do not start at the beginning of a line; Emacs's
+own @code{fill-paragraph} command is careful about that on your behalf.
+
+@item
+Texinfo is a complex system. If you're going to use it, you're going to have to learn a
+bit about it. Until you become facile with it its usually easiest to make changes slowly
+and incrementally.
+
+@item
+Writing good documentation is often harder than writing the corresponding code.
+@end itemize
+
+
+@cindex tests
+@cindex unit tests
+@cindex lisp-unit2
+@node Running unit tests
+@section Running unit tests
+
+@anchor{testing}
+
+The Roan source tree contains a collection unit tests. If you are making changes to Roan
+it is @emph{highly} recommended that you make friends with them and use them early and
+often. Unless run on an unusally slow machine or Lisp implementation it takes only a few
+seconds to run the full collection, and in the long run they will save you a lot of time.
+
+The unit tests live in their own package, @code{roan/test}, and make use of a further library
+not included in Roan itself, @url{https://github.com/AccelerationNet/lisp-unit2,lisp-unit2}.
+After running @code{(ql:quickload :roan)} once, run @code{(ql:quickload :roan/test)} once as
+well. Once that has been done, assuming Roan has
+been installed where @acronym{ASDF} can find it, it should be possible to run all the
+unit tests by simply evaluating @code{(asdf:test-system :roan)}. If the unit tests all succeed
+it will report the success of about 12,700 assertions with no failures. Otherwise, you'll
+have some debugging to do.
+
+A few caveats:
+@itemize
+@item
+The unit tests assume the full version of Roan (@code{(ql:quickload :roan)}) is installed,
+not just @code{:roan-base}.
+
+@item
+A few of the tests, related to upgrading the methods database, require access to the
+internet. If it is not available, there will be a failure reported, and a few tests will
+be skipped.
+
+@item
+The tests related to upgrading the methods database depend upon a couple of test
+databases hosted on ringing.org. While these databases are not expected to change
+frequently, it is possible that they may have to change at some point, making them no longer
+compatible with older versions of Roan; in such a case for all the unit tests to pass
+you will have to be using a recent enough version of Roan.
+@end itemize
+
+If you make changes to Roan I suggest you run the unit tests frequently. If you care about
+portability, run them at least occasionally on as many different Lisp implementations as
+you have access to. And if you add functions to Roan, add unit tests for them, too.
+
+Writing decent, reusable tests is often harder and more time consuming, than writing code;
+but it's a lot easier and less time consuming than debugging things days, weeks, months or
+years after they were first written. This is especially true for a relatively low-level
+library such as Roan.
+
+
+
+@c Can't call the index just "Index" 'cause that produces two, different index.html's! Sigh.
+@node Documentation Index
+@unnumbered Index
+
+@printindex cp
+
+
+
+@bye
