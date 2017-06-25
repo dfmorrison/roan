@@ -44,11 +44,11 @@ either clone this Bitbucket repository or download and unzip
 [the zip file of its contents](https://bitbucket.org/dfmorrison/roan/downloads/latest-version.zip "Latest Version").
 Move the resulting directory somewhere Quicklisp has been configured to look for systems. By default it looks in
 
-* `~/common-lisp/`
+`~/common-lisp/`
 
-* `~/quicklisp/local-projects/`
+`~/quicklisp/local-projects/`
 
-* `~/.local/share/common-lisp/source/`
+`~/.local/share/common-lisp/source/`
 
 After that executing in Lisp `(ql:quickload :roan)` should download and make available all the other libraries
 on which Roan depends, and then load Roan itself.
