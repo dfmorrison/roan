@@ -21,7 +21,7 @@ Roan provides
 * a data structure for describing methods, which can include jump changes,
 
 * a searchable database of method definitions, together with a mechanism for
-  updating that database from the @url{http://www.ringing.org/,ringing.org web site}
+  updating that database from the [ringing.org web site](http://www.ringing.org/)
 
 * a function for extracting false course heads from common kinds of methods
 
@@ -41,7 +41,7 @@ and configured in the usual way.
 
 After installing Quicklisp
 either clone this Bitbucket repository or download and unzip
-the zip file of its contents](https://bitbucket.org/dfmorrison/roan/downloads/latest-version.zip "Latest Version").
+[the zip file of its contents](https://bitbucket.org/dfmorrison/roan/downloads/latest-version.zip "Latest Version").
 Move the resulting directory somewhere Quicklisp has been configured to look for systems. By default it looks in
 
 * `~/common-lisp/`
