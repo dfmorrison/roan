@@ -23,6 +23,7 @@
   :version "8.0.3"
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
+  :description "A library to support change ringing applications, including methods library support"
   :depends-on (:roan-base :alexandria :cl-fad :sqlite :cl-ppcre :asdf
                           #-(or clisp lispworks6 lispworks7) :drakma
                           #-(or clisp lispworks6 lispworks7) :zip)
@@ -30,6 +31,7 @@
   :in-order-to ((test-op (test-op "roan/test"))))
 
 (defsystem :roan/test
+  :description "Unit tests for Roan"
   :depends-on (:roan :alexandria :iterate :lisp-unit2 :cl-ppcre :cl-fad)
   :components ((:file "tests")
                (:file "util-tests" :depends-on ("tests"))
@@ -41,5 +43,6 @@
              (uiop:symbol-call :roan/test '#:test-roan)))
 
 (defsystem :roan/doc
+  :description "Support for building the documentation for Roan"
   :depends-on (:roan :alexandria :iterate :trivial-documentation :cl-fad :cl-ppcre :asdf)
   :components ((:file "extract-documentation")))

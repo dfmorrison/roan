@@ -23,6 +23,7 @@
   :version "8.0.3"
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
+  :description "A library to support change ringing applications, sans the method library support"
   :depends-on (:alexandria :iterate :trivial-garbage :cl-ppcre :asdf)
   :components ((:file "package")
                (:file "util" :depends-on ("package"))
