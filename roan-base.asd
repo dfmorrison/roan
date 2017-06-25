@@ -20,7 +20,7 @@
 (in-package :asdf-user)
 
 (defsystem :roan-base
-  :version "8.0.2"
+  :version "8.0.3"
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :depends-on (:alexandria :iterate :trivial-garbage :cl-ppcre :asdf)
