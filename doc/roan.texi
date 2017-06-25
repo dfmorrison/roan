@@ -194,8 +194,9 @@ longer be a need to explicitly download it from Bitbucket.
 @node Reporting bugs
 @section Reporting bugs
 
-For now, if you find bugs to report, please just send mail to Don Morrison <@email{dfm@@ringing.org}>.
-In the future a bug reporting system will likely be available.
+The best way to report bugs is to submit them with the
+@url{https://bitbucket.org/dfmorrison/roan/issues,BitBucket issue tracker}.
+If that doesn't work of you you can also send mail to Don Morrison <@email{dfm@@ringing.org}>.
 
 It would be helpful, and will be more likely to lead to successful resolution of the bug,
 if a bug report includes

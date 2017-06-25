@@ -78,3 +78,10 @@ It can also be downloaded in four different formats:
 * [multiple HTML pages](https://bitbucket.org/dfmorrison/roan/downloads/roan-html-multiple-pages.zip)
 
 * [an Info file](https://bitbucket.org/dfmorrison/roan/downloads/roan-info.zip)
+
+### Reporting Bugs
+
+The best way to report bugs is to submit them with the
+[BitBucket issue tracker](https://bitbucket.org/dfmorrison/roan/issues)
+If that doesn't work of you you can also send mail to Don Morrison <dfm@ringing.org>.
+
