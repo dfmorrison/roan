@@ -1,3 +1,5 @@
+## Roan
+
 Roan is a libary of Common Lisp code for writing applications related to
 [change ringing](http://www.ringing.org/change-ringing "A Brief Description of Change Ringing")
 It is roughly comparable to the
@@ -50,7 +52,7 @@ Move the resulting directory somewhere Quicklisp has been configured to look for
 
 `~/.local/share/common-lisp/source/`
 
-After that executing in Lisp `(ql:quickload :roan)` should download and make available all the other libraries
+After that's done executing in Lisp `(ql:quickload :roan)` will download and make available all the other libraries
 on which Roan depends, and then load Roan itself.
 
 Roan has been tested with
@@ -64,3 +66,15 @@ Roan has been tested with
 but it should also work in other, modern Common Lisp implementations that
 support the libraries on which Roan depends.
 
+### Documentation
+
+The [Roan manual](https://bytebucket.org/dfmorrison/roan/wiki/roan.pdf "Roan manual PDF version") is available online.
+It can also be downloaded in four different formats:
+
+* [a PDF file](https://bitbucket.org/dfmorrison/roan/downloads/roan.pdf)
+
+* [a single HTML page](https://bitbucket.org/dfmorrison/roan/downloads/roan-html-single-page.zip)
+
+* [multiple HTML pages](https://bitbucket.org/dfmorrison/roan/downloads/roan-html-multiple-pages.zip)
+
+* [an Info file](https://bitbucket.org/dfmorrison/roan/downloads/roan-info.zip)

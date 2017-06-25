@@ -161,8 +161,10 @@ it instead simply replace @code{:roan} by @code{:roan-base} in the following ins
 @cindex library
 @cindex Bitbucket
 To install Roan, download the
-@url{http://bitbucket.org/tbd.zip,Roan zip file}
+@url{https://bitbucket.org/dfmorrison/roan/downloads/latest-version.zip,Roan zip file}
 from Bitbucket and unzip it.
+Or, alternatively, clone the
+@url{https://dfmorrison@@bitbucket.org/dfmorrison/roan.git,Roan git repository}
 Then move the resulting directory to one of
 @itemize
 @item
