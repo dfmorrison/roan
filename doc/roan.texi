@@ -612,7 +612,7 @@ read their actual licenses to be sure. @xref{dependencies}.
 
 Roan's license is:
 @quotation
-Copyright (c) 1975-2016 Donald F Morrison
+Copyright (c) 1975-2017 Donald F Morrison
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
@@ -641,8 +641,12 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @cindex license
 @cindex dependencies
 
-Roan loads the following libraries. I believe all but one are in the public doamin or
-offered under a permissive, open source license. The exception is zip, part of which is
+Roan loads the following libraries.
+Note that it does not include them as part of itself, it merely loads them, typically
+over the network from Quicklisp's library server.
+
+That said, I believe all but one are in the public doamin or
+offered under a permissive, open source license, anyway. The exception is zip, part of which is
 offered under a copyleft license; this should make no difference for using Roan, but if
 you wish to distribute something incorporating it you will need to take a closer look---it
 is possible that if, as is likely, you don't actually incorporate the dependcy on zip
