@@ -20,7 +20,7 @@
 (in-package :asdf-user)
 
 (defsystem :roan
-  :version "8.0.3"
+  :version "8.0.4"
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :description "A library to support change ringing applications, including methods library support"
