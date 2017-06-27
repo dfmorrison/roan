@@ -43,7 +43,7 @@ and configured in the usual way.
 
 After installing Quicklisp
 either clone this Bitbucket repository or download and unpack
-[bzip2ed tar archive of its contents](https://bitbucket.org/dfmorrison/roan/downloads/current-version.tar.bz2 "Current Version").
+[bzip2ed tar archive of its contents](https://bitbucket.org/dfmorrison/roan/downloads/roan-current-version.tar.bz2 "Current Version").
 Move the resulting directory somewhere Quicklisp has been configured to look for systems. By default it looks in
 
 `~/common-lisp/`
