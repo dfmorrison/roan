@@ -2,7 +2,7 @@ SOURCES=package.lisp util.lisp roan.lisp pattern.lisp method.lisp \
 	tests.lisp util-tests.lisp roan-tests.lisp pattern-tests.lisp method-tests.lisp \
 	extract-documentation.lisp
 
-all: clean TAGS documentation
+all: clean TAGS documentation make-archives
 
 documentation: doc/roan.pdf doc/roan.info doc/roan.html doc/roan/index.html
 
@@ -30,17 +30,19 @@ doc/inc/roan-version.texi: $(SOURCES) roan.asd extract-documentation.lisp
 	-e '(roan/doc:extract-documentation :roan)' \
 	-e '(quit)'
 
-update-database:
-	ccl -Q \
-	-e '(ql:quickload :roan/db)' \
-	-e '(roan::update-method-database :create-if-does-not-exist t)' \
-	-e '(quit)'
+make-archives:
+	cd doc; cp roan.html roan-manual-single-page.html; bzip2 roan-manual-single-page.html
+	cd doc; tar -cjf roan-manual-multe-page-html.tar.bz2 roan
+	cd doc; cp roan.info roan-manual.info; bzip2 roan-manual.info
+
 tidy:
 	-rm -rf doc/inc doc/roan.aux doc/roan.fn doc/roan.fns doc/roan.log doc/roan.toc \
 	        doc/roan.vr doc/roan.vrs doc/roan.tp doc/roan.tps doc/roan.cp doc/roan.cps
 
 clean: tidy
-	-rm -rf doc/roan doc/roan.pdf doc/roan.info doc/roan.html
+	-rm -rf doc/roan doc/roan.pdf doc/roan.info doc/roan.html \
+	        doc/roan-manual-html-single-page.bz2 doc/roan-manual-html-multiple-pages.tar.bz2 \
+	        doc/roan-manual-info.bz2
 
 TAGS: $(SOURCES)
 	etags $(SOURCES)

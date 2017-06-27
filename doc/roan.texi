@@ -150,7 +150,8 @@ you will typically be thrown into your Lisp's debugger when Quicklisp is loading
 @code{cl-sqlite}. If for some reason you prefer not to install @code{libsqlite}
 there is version of Roan with slightly reduced functionality, @code{roan-base}, that
 does not contain the method lookup functions and does not load @code{cl-sqlite}. To use
-it instead simply replace @code{:roan} by @code{:roan-base} in the following instructions.
+it instead simply replace @code{:roan} by @code{:roan-base} when loading Roan into Lisp,
+below.
 @xref{Methods database}.
 
 
@@ -161,11 +162,11 @@ it instead simply replace @code{:roan} by @code{:roan-base} in the following ins
 @cindex library
 @cindex Bitbucket
 To install Roan, download the
-@url{https://bitbucket.org/dfmorrison/roan/downloads/latest-version.zip,Roan zip file}
-from Bitbucket and unzip it.
+@url{https://bitbucket.org/dfmorrison/roan/downloads/roan-current-version.tar.bz2,Roan bzip2ed, tar archive}
+from Bitbucket and untar it, typically with @code{tar -xjf}.
 Or, alternatively, clone the
 @url{https://bitbucket.org/dfmorrison/roan.git,Roan git repository}
-Then move the resulting directory to one of
+In either case move the resulting directory to one of
 @itemize
 @item
 @file{~/common-lisp/}
@@ -180,7 +181,7 @@ to look for systems.
 @noindent
 Alternatively the directory can be left anywhere you like
 by adding symbolic links in @file{~/quicklisp/local-projects/} that
-point to the @file{roan.asd} and @file{roan-base.asd} files in the unzipped Roan
+points to the @file{roan.asd} and @file{roan-base.asd} files in the untarred Roan
 directory.
 
 Once this is done, and Lisp has been restarted if necessary, Roan can be loaded into Lisp
@@ -188,7 +189,8 @@ by evaluating @code{(ql:quickload :roan)}. In addition to Roan itself this will 
 the other libraries on which it depends.
 
 I hope to add Roan to the Quicklisp library soon. Once that is done there will no
-longer be a need to explicitly download it from Bitbucket.
+longer be a need to explicitly download it from Bitbucket, unless you prefer to continue
+doing so.
 
 
 @node Reporting bugs
@@ -375,6 +377,7 @@ producing lists of @code{row}s, representing changes.
 @cindex jump changes
 @include inc/write-place-notation-function.texi
 @include inc/place-notation-string-function.texi
+@include inc/canonicalize-place-notation-function.texi
 @include inc/cross-character-variable.texi
 
 
@@ -510,6 +513,7 @@ non-string, or the property list to a non-list.
 @include inc/method-hunt-bells-function.texi
 @include inc/method-working-bells-function.texi
 @include inc/method-rotations-p-function.texi
+@include inc/method-canonical-rotation-key-function.texi
 
 @cindex classification
 @cindex Central Council
@@ -648,14 +652,13 @@ Roan loads the following libraries.
 Note that it does not include them as part of itself, it merely loads them, typically
 over the network from Quicklisp's library server.
 
-That said, I believe all but one are in the public doamin or
-offered under a permissive, open source license, anyway. The exception is zip, part of which is
-offered under a copyleft license; this should make no difference for using Roan, but if
-you wish to distribute something incorporating it you will need to take a closer look---it
-is possible that if, as is likely, you don't actually incorporate the dependcy on zip
-directly it will still be irrelevant---that said, please do your own research and use your
-own judgement. Note also that zip is only used by the @code{update-methods-database}
-function and can easily be excised if necessary.
+While most are in the public doamin or
+offered under a permissive, open source license, two are offered with a
+@url{https://en.wikipedia.org/wiki/Copyleft,,copyleft} license:
+ZIP and S-BASE64. This should make no difference for using Roan in the usual way, with
+the libraries loaded from Quicklisp. But if you distribute something built with Roan
+and include the libraries in it you will have to pay attention to these licenses and be
+sure to adhere to them.
 
 @itemize
 @item
@@ -673,7 +676,9 @@ function and can easily be excised if necessary.
 @item
 @url{https://common-lisp.net/project/trivial-garbage,Trivial Garbage} [public domain]
 @item
-@url{https://common-lisp.net/project/zip/,zip} [BSD+LGPL]
+@url{https://common-lisp.net/project/zip/,ZIP} [BSD+LGPL]
+@item
+@url{https://github.com/svenvc/s-base64,S-BASE64} [LLGPL]
 @end itemize
 
 Several further libraries are used in the construction of Roan, but their license terms should
@@ -688,12 +693,12 @@ the following library is also loaded and used.
 @url{https://github.com/AccelerationNet/lisp-unit2,lisp-unit2} [MIT]
 @end itemize
 
-Also while not loaded during normal use of Roan, when building Roan's documentation (@pxref{building})
-the following libraries are also loaded and used. In distinction to most of the above @code{trivial-documentation}
-is offered under a
-@url{https://en.wikipedia.org/wiki/Copyleft#Strong_and_weak_copyleft,strong copyleft} license, however
-one that to the best of my understanding does not affect those simply copying or distributing Roan,
-so long as they do not include a copy of @code{trivial-documentation} with it.
+Also while not loaded during normal use of Roan, when building Roan's documentation
+(@pxref{building}) the following libraries are also loaded and used. One of this, too,
+@code{trivial-documentation}, is offered under a copyleft license.
+To the best of my understanding this should not affect those simply copying or
+distributing Roan, so long as they do not include a copy of @code{trivial-documentation}
+with it.
 
 @itemize
 @item
@@ -703,9 +708,8 @@ so long as they do not include a copy of @code{trivial-documentation} with it.
 @end itemize
 
 While they are not loaded into Lisp, a variety of other tools are used in building Roan's
-documentation, some of which are distributed with strong copyleft licenses. My
-understanding is that this shouldn't be an issue so long as you don't redistribute or
-modify them, however.
+documentation, some of which are distributed with copyleft licenses. My understanding is
+that this shouldn't be an issue so long as you don't redistribute or modify them, however.
 
 
 @cindex UNIX
@@ -917,7 +921,7 @@ After running @code{(ql:quickload :roan)} once, run @code{(ql:quickload :roan/te
 well. Once that has been done, assuming Roan has
 been installed where @acronym{ASDF} can find it, it should be possible to run all the
 unit tests by simply evaluating @code{(asdf:test-system :roan)}. If the unit tests all succeed
-it will report the success of about 12,700 assertions with no failures. Otherwise, you'll
+it will report the success of about 13,000 assertions with no failures. Otherwise, you'll
 have some debugging to do.
 
 A few caveats:

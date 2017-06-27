@@ -1222,3 +1222,12 @@
                                    :from (+ *jump-change-coverage-maximum-stage* 1)
                                    :to +maximum-stage+)
                               (appending (random-changes stage 100)))))))
+
+(define-test test-canonicalize-place-notation ()
+  (let ((pn "-5.-14..5Tx5.30.4x.70.1t.36-9.30.8-18.9t-18-T,1"))
+    (assert-equal "x5x4.5x5.30.4x70.1.36x9.30.8x8.9x8x1,T"
+                  (canonicalize-place-notation pn :stage 12))
+    (let ((*default-stage* 12))
+      (assert-equal "X5X4.5X5.30.4X70.1t.36X9.30.8X8.9X8X1t,1t"
+                    (canonicalize-place-notation pn  :cross #\X :upper-case nil :elide :interior)))))
+

@@ -38,6 +38,7 @@
            #:call-application-error
            #:call-apply
            #:canonicalize-method-place-notation
+           #:canonicalize-place-notation
            #:changep
            #:copy-row
            #:cycles
@@ -91,6 +92,7 @@
            #:match-counter-pattern
            #:match-counter-stage
            #:method
+           #:method-canonical-rotation-key
            #:method-changes
            #:method-classification
            #:method-contains-jump-changes

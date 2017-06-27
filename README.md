@@ -29,7 +29,7 @@ Roan provides
 
 * there's more in the works, just not ready for public release yet
 
-Roan is distributed under an MIT open source license. which means that you can just use Roan for nearly anything you like.
+Roan is distributed under an MIT open source license, which mostly means that you can just use Roan for nearly anything you like.
 See the file `LICENSE` for details.
 
 ### Installing Roan
@@ -42,8 +42,8 @@ and loaded. The following assumes that you have Quicklisp installed
 and configured in the usual way.
 
 After installing Quicklisp
-either clone this Bitbucket repository or download and unzip
-[the zip file of its contents](https://bitbucket.org/dfmorrison/roan/downloads/latest-version.zip "Latest Version").
+either clone this Bitbucket repository or download and unpack
+[bzip2ed tar archive of its contents](https://bitbucket.org/dfmorrison/roan/downloads/current-version.tar.bz2 "Current Version").
 Move the resulting directory somewhere Quicklisp has been configured to look for systems. By default it looks in
 
 `~/common-lisp/`
@@ -68,16 +68,16 @@ support the libraries on which Roan depends.
 
 ### Documentation
 
-The [Roan manual](https://bytebucket.org/dfmorrison/roan/wiki/roan.pdf "Roan manual PDF version") is available online.
+The [Roan manual](https://bytebucket.org/dfmorrison/roan/wiki/roan-manual.pdf "Roan manual PDF version") is available online.
 It can also be downloaded in four different formats:
 
-* [a PDF file](https://bitbucket.org/dfmorrison/roan/downloads/roan.pdf)
+* [a PDF file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual.pdf)
 
-* [a single HTML page](https://bitbucket.org/dfmorrison/roan/downloads/roan-html-single-page.zip)
+* [a single HTML page](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-html-single-page.bz2)
 
-* [multiple HTML pages](https://bitbucket.org/dfmorrison/roan/downloads/roan-html-multiple-pages.zip)
+* [multiple HTML pages](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-html-multiple-pages.tar.bz2)
 
-* [an Info file](https://bitbucket.org/dfmorrison/roan/downloads/roan-info.zip)
+* [an Info file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-info.bz2)
 
 ### Reporting Bugs
 

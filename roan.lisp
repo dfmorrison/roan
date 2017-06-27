@@ -525,6 +525,8 @@ supertype of @code{bell}, and of sufficient length or adjustable."
 ;; force implementation of the former. If it were needed more could be done, but it
 ;; doesn't seem worth the trouble.
 
+(declaim (inline %permute %fill-bells-vector))
+
 (defun %permute (from-bells by-bells to-bells)
   ;; to-bells must be at least as long as from-bells and by-bells
   (declare (optimize (speed 3) (safety 0) (space 0) (compilation-speed 0) (debug 0)))
@@ -552,8 +554,6 @@ supertype of @code{bell}, and of sufficient length or adjustable."
         (for i :from (length from-bells) :below (length to-bells))
         (declare (type bell i))
         (setf (aref to-bells i) i)))
-
-(declaim (inline %permute %fill-bells-vector))
 
 (defun permute (row &optional (change nil change-supplied) &rest changes)
  "===lambda: (row &rest changes)
@@ -1826,11 +1826,12 @@ occurs."
 (defun place-notation-string (changes &rest keys
                               &key comma elide cross upper-case allow-jump-changes)
   "===lambda: (changes &key comma elide cross upper-case allow-jump-changes)
-Creates a string of the place notation representing the list @var{changes}. The
+Returns a string of the place notation representing the list @var{changes}. The
 arguments are the same as the like named arguments to @code{write-place-notation}. A
-leading '#!' is never included in the result. Returns two values, the first the string,
-and the second a generalized Boolean indicating whether or not a comma was included in the
-result. Signals an error if @var{changes} is empty or contains rows of different stages.
+leading '#!' is never included in the result.
+
+Signals a @code{type-error} if any elements of @var{changes} are not @code{row}s. Signals
+an error if @var{changes} is empty or contains rows of different stages.
 @example
 @group
  (multiple-value-list
@@ -1847,3 +1848,45 @@ result. Signals an error if @var{changes} is empty or contains rows of different
   (declare (ignore comma elide cross upper-case allow-jump-changes))
   (with-output-to-string (s)
     (apply #'write-place-notation changes :stream s :escape nil keys)))
+
+(defun canonicalize-place-notation (string-or-changes &rest keys
+                                    &key (stage *default-stage* stage-supplied)
+                                      (comma t) &allow-other-keys)
+  "===lambda: (string-or-changes &key stage comma elide cross upper-case allow-jump-changes)
+Returns a string representing the place notation in a canonical form. If
+@var{string-or-changes} is a string it should be parseable as place notation at
+@var{stage}, which defaults to the current value of @code{*default-stage*}, and otherwise
+it should be a list of @code{row}s, all of the same stage. Unless overridden by the other
+keyword arguments, which have the same effects as for @code{write-place-notation}, the
+canonical form is a compact one usin lower case @samp{x} for cross, upper case letters for
+place high place names, @code{lead-end} style elision of external places, a comma for
+unfolding if possible, and notating jump changes as jumps within parentheses.
+
+Signals a @code{type-error} if @var{string-or-changes} is neither a string nor a list, or
+if it is a list containing anything other than @code{row}s. Signals a @code{parse-error} if
+@var{string-or-changes} is a string and is not parseable at @var{stage}, or if @var{stage}
+is not a @code{stage}. Signals an error if @var{cross} is not a suitable character
+designator, if @var{allow-jump-changes} is not one of its allowed values, or if
+@var{string-or-changes} is a list containing @code{row}s of different stages.
+@xref{write-place-notation}.
+@example
+@group
+ (multiple-value-list
+   (canonicalize-place-notation \"-16.X.14-6X1\" :stage 6))
+     @result{} (\"x1x4,6\" t)
+ (multiple-value-list
+   (canonicalize-place-notation \"-3-[134265]-1T-\" :stage 12))
+     @result{} (\"x3x(24)x1x\" nil)
+@end group
+@end example"
+  (let ((changes (cond ((listp string-or-changes)
+                        (when (and stage-supplied
+                                   (rowp (first string-or-changes))
+                                   (not (eql (stage (first string-or-changes)) stage)))
+                          ;; if it's not a row place-notation-string will signal the error
+                          (error ":stage ~D was supplied, but ~S is of a different stage"
+                                 stage (first string-or-changes)))
+                        string-or-changes)
+                       (t (parse-place-notation string-or-changes :stage stage)))))
+    (with-initial-format-characters
+      (apply #'place-notation-string changes :comma comma :allow-other-keys t keys))))

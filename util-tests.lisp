@@ -146,11 +146,6 @@
     (assert-equal 2 (hash-set-count s1))
     (assert-equalp '("123564" "135246")
                    (sort (mapcar #'row-string (hash-set-elements s1)) #'string-lessp))
-    (with-sink-stream
-      (assert-prints "#<HASH-SET 0>" (princ s2))
-      (assert-prints "#<HASH-SET 0>" (prin1 s2))
-      (assert-prints "#<HASH-SET 2>" (princ s1))
-      (assert-prints "#<HASH-SET 2>" (prin1 s1)))
     (assert-eq s2 (hash-set-nadjoin s2 !35246 !123564 !135246))
     (assert-false (equalp s1 (hash-set-nadjoin s3 !35246)))
     (assert-equalp s1 (hash-set-nadjoin s3 !23564))

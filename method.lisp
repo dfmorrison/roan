@@ -168,15 +168,25 @@ nor a string; or if @code{properties} is supplied and is not a list."
     result))
 
 (defmethod print-object ((method method) stream)
-  (if *print-escape*
-      (with-slots (stage name place-notation properties) method
-        (format stream "(~S~:[~2*~; ~S ~S~] ~S ~S~:[~2*~; ~S ~S~]~:[~2*~; ~S ~S~])"
-                'method
-                name :name name
-                :stage stage
-                place-notation :place-notation place-notation
-                properties :properties properties))
-      (format stream "~A" (method-title method t))))
+  (cond (*print-readably*
+         (with-slots (stage name place-notation properties) method
+           (format stream "(~S~:[~2*~; ~S ~S~] ~S ~S~:[~2*~; ~S ~S~]~:[~2*~; ~S ~S~])"
+                   'method
+                   name :name name
+                   :stage stage
+                   place-notation :place-notation place-notation
+                   properties :properties properties)))
+        (*print-escape*
+         (print-unreadable-object (method stream :type t :identity t)
+           (with-slots (stage name place-notation) method
+             (when name (princ name stream))
+             (when stage
+               (when name (princ #\Space stream))
+               (princ stage stream))
+             (when place-notation
+               (when (or name stage) (princ #\Space stream))
+               (princ place-notation stream)))))
+        (t (format stream "~A" (method-title method t)))))
 
 (defun method-property (method key &optional default)
   "Returns the property attached to @var{method} with the given @var{key}, if there is
@@ -279,19 +289,22 @@ properly parsed as place notation at @var{method}'s stage.
 @end example")
 
 (defun canonicalize-method-place-notation (method &rest keys &key (comma t) &allow-other-keys)
-  "Replaces @var{method}'s place-notation by an equivalent string in canonical form, and
-returns that canonical notation. Unless overriden by keyword arguments this is a compact
-version with leading and lying changes elided according to @code{:lead-end} format as for
-@code{write-place-notation}, partitioned with a comma, if possible, with upper case
-letters for high number bells and a lower case @samp{x} for cross. The behavior can be
-changed by passing keyword arguments as for @code{write-place-notation}. If @var{method}
-has no place-notation or no stage, this function does nothing, and returns @code{nil}; in
-particular, if there is place-notation but no stage, the place-notation will be unchanged.
+  "===lambda: (method &key comma elide cross upper-case allow-jump-changes)
+Replaces @var{method}'s place-notation by an equivalent string in canonical form, and
+returns that canonical notation as a string. Unless overriden by keyword arguments this is
+a compact version with leading and lying changes elided according to @code{:lead-end}
+format as for @code{write-place-notation}, partitioned with a comma, if possible, with
+upper case letters for high number bells and a lower case @samp{x} for cross. The behavior
+can be changed by passing keyword arguments as for @code{write-place-notation}. If
+@var{method} has no place-notation or no stage, this function does nothing, and returns
+@code{nil}; in particular, if there is place-notation but no stage, the place-notation
+will be unchanged.
+
 Signals a @code{type-error} if @var{method} is not a @code{method}, and signals an error
 if any of the keyword arguments do not have suitable values for passing to
 @code{write-place-notation}. Signals a @code{parse-error} if the place notation string
 cannot be properly parsed as place notation at @var{method}'s stage.
-@xref{write-place-notation}.
+@xref{canonicalize-place-notation} and @ref{write-place-notation}.
 @example
 @group
  (let ((m (method :stage 6
@@ -1085,6 +1098,146 @@ stage.
                 (setf result candidate))))
           (finally (return result)))))
 
+(define-constant +huffman-table+
+    (iter (with result := (make-array 128 :initial-element nil))
+          ;; Note that it is impossible in well formed place notation for a cross or dot
+          ;; to follow an open paren, or for a dot to follow a comma or a cross.
+          (for (codes . chars)
+               :in '((("1111100100000") #\()
+                     (("1001" "111110010011110" "111110010011111") #\))
+                     (("0110" "111110010010010") #\,)
+                     (("00111010" "1010000" "1111100101") #\0)
+                     (("00110" "101110" "101001") #\1)
+                     (("1101" "01011" "101101") #\2)
+                     (("000" "11100" "01001") #\3)
+                     (("10101" "1100" "11101") #\4)
+                     (("1000" "0010" "11110") #\5)
+                     (("101111" "0111" "01000") #\6)
+                     (("111111" "1111101" "001111") #\7)
+                     (("101100" "01010" "11111000") #\8)
+                     (("0011100" "101000100" "00111011") #\9)
+                     (("111110010011101" "1111100100101101" "111110010010111") #\A #\a)
+                     (("1111100100001" "1111100100011" "111110010010000100") #\B #\b)
+                     (("111110010010001" "111110010010000000011001" "111110010011100") #\C #\c)
+                     (("1111100100010" "11111001001010" "1111100100100000000100") #\D #\d)
+                     (("101000111" "1111100100110" "111110011") #\E #\e)
+                     (("11111001001000001" "11111001001000000000111" "1111100100100000000111011") #\F #\f)
+                     (("1111100100100001011" "11111001001011000" "111110010010000000011011") #\G #\g)
+                     (("111110010010000001" "11111001001000000000101" "111110010010000000010100") #\H #\h)
+                     (("1111100100100001010" "11111001001011001" "1111100100100000000001") #\J #\j)
+                     (("1111100100100000000111010" "1111100100100000000101010" "1111100100100000000101011") #\K #\k)
+                     (("11111001001000000000100" "1111100100100000001" "11111001001000000001111") #\L #\l)
+                     (("111110010010000000011010" "111110010010000000011100" "11111001001000000000110") #\M #\m)
+                     (("11111001001000000000000" "11111001001000000000001" "111110010010000000011000") #\N #\n)
+                     (("101000101" "101000110" "111110010010011") #\T #\t)
+                     (("11111001001000000001011" "11111001001000011") #\x #\X #\-)))
+          (for bits-info := (mapcar #'(lambda (string)
+                                        (cons (parse-integer string :radix 2)
+                                              (length string)))
+                                    codes))
+          (iter (for c :in chars)
+                (setf (aref result (char-code c)) bits-info))
+          (finally (return result)))
+  :test #'equalp)
+
+(defun encode-place-notation (notation stage)
+  ;; Huffman encodes the stage + place notation, based on the frequencies in the methods
+  ;; database as of June 2017. Only place notation characters are allowed, including
+  ;; parens and commas (but no brackets). Note that digraphs ending in dot or cross get
+  ;; their own encodings.
+  (let ((result (make-array (length notation)
+                            :element-type '(unsigned-byte 8)
+                            :adjustable t
+                            :fill-pointer 0))
+        (buffer 0)
+        (index 0))
+    (labels ((encode-char (c access-fn)
+               (iter (with (code . len) := (funcall access-fn (aref +huffman-table+ (char-code c))))
+                     (initially (setf (ldb (byte len index) buffer) code)
+                                (incf index len))
+                     (while (>= index 8))
+                     (vector-push-extend (ldb (byte 8 0) buffer) result)
+                     (setf buffer (ash buffer -8))
+                     (decf index 8))))
+      (iter (with prev := (bell-name (- stage 1)))
+            (for c :in-string notation)
+            (cond ((not prev)
+                   (setf prev c))
+                  ((eql c #\x)
+                   (encode-char prev #'second)
+                   (setf prev nil))
+                  ((eql c #\.)
+                   (encode-char prev #'third)
+                   (setf prev nil))
+                  (t (encode-char prev #'first)
+                     (setf prev c)))
+            (finally (when prev
+                       (encode-char prev #'first))))
+      ;; We follow the place notation by an unbalanced close paren as an end token to
+      ;; ensure unused bits in the last byte don't cause false positives when comparing
+      ;; two encodings.
+      (encode-char #\) #'first)
+      (unless (zerop index)
+        (vector-push-extend buffer result))
+      (string-right-trim "=" (with-output-to-string (s)
+                               (s-base64:encode-base64-bytes result s nil))))))
+
+;; (with-methods-database (conn)
+;;   (iter (with table := (make-hash-table))
+;;         (initially (iter (for c :in-string (format nil "~Ax,()" +bell-names+))
+;;                          (setf (gethash c table) (list 0 0 0))))
+;;         (for (stage notation)
+;;              :in-sqlite-query "select stage, notation from methods"
+;;              :on-database conn)
+;;         (when (> (length notation) 0)
+;;           (iter (with prev := nil)
+;;                 (for c :in-string (format nil "~C~A)"
+;;                                           (bell-name (- stage 1))
+;;                                           (canonicalize-place-notation notation :stage stage)))
+;;                 (cond ((and (eql c #\x) prev)
+;;                        (incf (second (gethash prev table)))
+;;                        (setf prev nil))
+;;                       ((and (eql c #\.) prev)
+;;                        (incf (third (gethash prev table)))
+;;                        (setf prev nil))
+;;                       (prev
+;;                        (incf (first (gethash prev table)))
+;;                        (setf prev c))
+;;                       (t (setf prev c)))
+;;                 (finally (when prev
+;;                            (incf (first (gethash prev table)))))))
+;;         (finally (iter (for (c . nums) :in (sort (hash-table-alist table) #'char< :key #'car))
+;;                        (format t "~&~C   ~{~:D  ~}" c nums)))))
+;;
+;;         (   34  0  0
+;;         )   20,567  16  17
+;;         ,   19,413  13  0
+;;         0   1,057  2,411  439
+;;         1   8,378  5,901  5,393
+;;         2   25,943  9,695  5,534
+;;         3   29,206  13,333  9,301
+;;         4   10,852  25,081  13,377
+;;         5   20,166  15,194  13,464
+;;         6   6,207  19,901  8,890
+;;         7   7,487  3,374  4,695
+;;         8   5,421  9,335  1,623
+;;         9   1,878  566  1,076
+;;         A   15  8  14
+;;         B   36  47  1
+;;         C   12  0  15
+;;         D   46  27  0
+;;         E   730  62  916
+;;         F   3  0  0
+;;         G   1  3  0
+;;         H   1  0  0
+;;         J   1  3  0
+;;         K   0  0  0
+;;         L   0  1  0
+;;         M   0  0  0
+;;         N   0  0  0
+;;         T   585  637  13
+;;         x   0  3  0
+
 (defun method-rotations-p (method-1 method-2)
   "Returns true if and only if the changes constituting a lead of @var{method-1} are the
 same as those constituting a lead of @var{method-2}, possibly rotated. If the changes are
@@ -1116,7 +1269,6 @@ place notation at its stage.
      @result{} nil)
 @end group
 @end example"
-  ;; TODO there is almost certainly a better algorithm than this
   (labels ((fail (method)
              (error 'no-place-notation-error :method method)))
     (let ((c1 (method-changes method-1)) (c2 (method-changes method-2)))
@@ -1126,11 +1278,47 @@ place notation at its stage.
          (equalp (canonical-rotation (or c1 (fail method-1)))
                  (canonical-rotation (or c2 (fail method-2))))))))
 
+(defun method-canonical-rotation-key (method)
+  "If @var{method} has its stage and place notation set returns a string uniquely
+identifying, using @code{equal}, the changes of a lead of this method, invariant under
+rotation. That is, if two methods are rotations of one another their
+@code{method-canonical-rotation-key}s will always be @code{equal}. The string is, other
+than being a string, essentially an opaque type and should generally not be displayed to
+an end user or otherwise have its structure depended upon. Case is significant;
+@code{equalp} should not be used to compare these keys. While, within one version of Roan,
+this key can be counted on to be the same in different sessions and on different machines,
+it may change between versions of Roan. If @var{method} does not have both its stage and
+place notation set @code{method-canonical-rotation-key} returns @code{nil}.
+
+Signals a @code{type-error} of @var{method} is not a @code{method}. Signals a
+@code{parse-error} if @var{method}'s place notation cannot be properly parsed at its
+stage.
+@example
+@group
+ (method-canonical-rotation-key
+   (lookup-method \"Cambridge Surprise\" 8))
+     @result{} \"bAvzluTjWO5P\"
+ (method-canonical-rotation-key
+   (method :stage 8 :place-notation \"5x6x7,x4x36x25x4x3x2\"))
+     @result{} \"bAvzluTjWO5P\"
+ (method-canonical-rotation-key
+   (method :stage 8 :place-notation \"x1x4,2\"))
+     @result{} \"bEvy3Zo\"
+ (method-canonical-rotation-key
+   (method :stage 10 :place-notation \"x1x4,2\"))
+     @result{} \"Oi3Jd2sC\"
+
+ (method-canonical-rotation-key (method) @result{} nil
+@end group
+@end example"
+  (when-let ((changes (method-changes method)))
+    (encode-place-notation (canonicalize-place-notation (canonical-rotation changes))
+                           (method-stage method))))
+
 
 ;;; Falseness
 
-(defstruct (fch-group (:copier nil)
-                      (:print-object print-fch-group))
+(defstruct (fch-group (:copier nil))
   "===summary===
 Most methods that have been rung and named at stages major and above have been rung at
 even stages, with Plain Bob lead ends and lead heads, without jump changes, and with the
@@ -1178,17 +1366,17 @@ for a higher stage @code{fch-group} are royal @code{row}s."
   (parity nil :type symbol :read-only t)
   (elements () :type list :read-only t))
 
-(defun print-fch-group (fch-group stream)
+(defmethod print-object ((fch-group fch-group) stream)
   (cond (*print-readably*
          (format stream "(FCH-GROUP ~S~:[~*~; T ~:[NIL~;T~]~])"
                  (fch-group-name fch-group)
                  (fch-group-parity fch-group)
                  (eq (fch-group-parity fch-group) :out-of-course)))
         (*print-escape*
-         (format stream "#<FCH-GROUP ~A ~(~A~) #x~X>"
-                 (fch-group-name fch-group)
-                 (fch-group-parity fch-group)
-                 (sxhash fch-group)))
+         (print-unreadable-object (fch-group stream :type t :identity t)
+           (format stream "~A~@[ ~(~A~)~]"
+                   (fch-group-name fch-group)
+                   (fch-group-parity fch-group))))
         (t (princ (fch-group-name fch-group) stream))))
 
 (defparameter *fch-groups-by-name* (make-hash-table :test #'equal :size 41))

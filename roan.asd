@@ -31,6 +31,8 @@
   :in-order-to ((test-op (test-op "roan/test"))))
 
 (defsystem :roan/test
+  :license "MIT"
+  :author "Don Morrison <dfm@ringing.org>"
   :description "Unit tests for Roan"
   :depends-on (:roan :alexandria :iterate :lisp-unit2 :cl-ppcre :cl-fad)
   :components ((:file "tests")
@@ -43,6 +45,8 @@
              (uiop:symbol-call :roan/test '#:test-roan)))
 
 (defsystem :roan/doc
+  :license "MIT"
+  :author "Don Morrison <dfm@ringing.org>"
   :description "Support for building the documentation for Roan"
   :depends-on (:roan :alexandria :iterate :trivial-documentation :cl-fad :cl-ppcre :asdf)
   :components ((:file "extract-documentation")))

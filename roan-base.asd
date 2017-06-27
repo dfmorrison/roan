@@ -24,7 +24,7 @@
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :description "A library to support change ringing applications, sans the method library support"
-  :depends-on (:alexandria :iterate :trivial-garbage :cl-ppcre :asdf)
+  :depends-on (:alexandria :iterate :trivial-garbage :cl-ppcre :s-base64 :asdf)
   :components ((:file "package")
                (:file "util" :depends-on ("package"))
                (:file "roan" :depends-on ("package" "util"))

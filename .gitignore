@@ -3,6 +3,7 @@ todo.txt
 *.fasl
 *.fas
 *.?x??fsl
+*.bz2
 doc/inc/*
 doc/roan/*
 doc/roan.html

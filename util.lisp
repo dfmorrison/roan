@@ -189,8 +189,7 @@ Returns @code{t} if there was such an element, and @code{nil} otherwise."
 (defstruct (hash-set
              (:constructor %make-hash-set (table))
              (:copier nil)
-             (:print-object (lambda (set stream)
-                              (format stream "#<HASH-SET ~D>" (hash-set-count set)))))
+             (:print-object prin1-hash-set))
   "===summary===
 @cindex sets
 @cindex @code{equalp}
@@ -269,6 +268,12 @@ contains. Signals a @code{type-error} if @var{set} is not a @code{hash-set}.
 @end group
 @end example"
   (hash-table-count (checked-hash-set-table set)))
+
+(defun prin1-hash-set (set stream)
+  (if *print-readably*
+      (prin1 (cons 'hash-set (hash-set-elements set)) stream)
+      (print-unreadable-object (set stream :type t :identity t)
+        (princ (hash-set-count set) stream))))
 
 (declaim (inline hash-set-empty-p))
 (defun hash-set-empty-p (set)
