@@ -1101,7 +1101,8 @@ stage.
 (define-constant +huffman-table+
     (iter (with result := (make-array 128 :initial-element nil))
           ;; Note that it is impossible in well formed place notation for a cross or dot
-          ;; to follow an open paren, or for a dot to follow a comma or a cross.
+          ;; to follow an open paren, or for a dot to follow a comma, a cross or another
+          ;; dot, and that all dots are parts of digraphs encoded specially.
           (for (codes . chars)
                :in '((("1111100100000") #\()
                      (("1001" "111110010011110" "111110010011111") #\))
