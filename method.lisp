@@ -974,7 +974,7 @@ it (@url{http://methods.org.uk/online/notes.htm}). While officially just a conve
 these collections it has become a de facto standard. Unfortunately these codes are not
 precisely defined, and there are ambiguities for some uncommon hunt paths. Consequently
 this function only returns a non-@code{nil} result for single hunt, non-hybrid methods,
-including little methods, that do not contain any jump chanages. Thus there are cases
+including little methods, that do not contain any jump changes. Thus there are cases
 where a code is used in a CCCBR collection, but not returned by
 @code{method-lead-head-code}. It is also worth noting that for odd stages there are
 Plain Bob lead heads for which the CCCBR does not define any code; when called on such a

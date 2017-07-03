@@ -660,7 +660,7 @@ the following library is also loaded and used.
 @end itemize
 
 Also while not loaded during normal use of Roan, when building Roan's documentation
-(@pxref{building}) the following libraries are also loaded and used. One of this, too,
+(@pxref{building}) the following libraries are also loaded and used. One of these, too,
 @code{trivial-documentation}, is offered under a copyleft license.
 To the best of my understanding this should not affect those simply copying or
 distributing Roan, so long as they do not include a copy of @code{trivial-documentation}
@@ -692,7 +692,7 @@ that this shouldn't be an issue so long as you don't redistribute or modify them
 @appendix History
 
 Roan started out in the mid-1970s as code to support searching for compositions using
-Portable Standard Lisp on a Digital Equiptment Corporation DEC-10 machine. A few years
+Portable Standard Lisp on a Digital Equipment Corporation DEC-10 machine. A few years
 later a bunch of utilities for UNIX, written in @acronym{C}, were added. By the mid-1980s
 it had expanded significantly into collections of Apollo Domain Lisp and Lisp Machine Lisp
 code. From there to a highly portability-challenged version for Digitool Macintosh Common
@@ -701,7 +701,8 @@ with CLISP. Over the years I've even ``ported'' it (if you can call a complete r
 a different language a ``port'') to a few other programming languages where I used it for
 various lengths of time. Eventually I tried to make a more tidy, fairly portable Common
 Lisp version, and have been happily using this for my compositional activities in recent
-years.
+years. It also underpins most of the method presentation stuff on the
+@url{http://www.ringing.org/,ringing.org} web site.
 
 Over the years several folks received copies of it, and in some cases used it, at least
 for a little while. I think it was used for a time on a Lisp Machine to drive a set of
@@ -721,7 +722,7 @@ well together, but there's still a lot of work to do resurrecting, tidying and d
 other features of varied antiquity and robustness. I'm hopeful that in coming months and
 years I'll be able to offer more releases with more good stuff added to them. Two
 additions that should be coming soon are a fairly general notion of calls amending the
-changes of leads of methods, and a mechanism for drawing blueines.
+changes of leads of methods, and a mechanism for drawing bluelines.
 
 
 @node What's with the name?
@@ -893,7 +894,7 @@ have some debugging to do.
 A few caveats:
 @itemize
 @item
-The unit tests assume the full version of Roan (@code{(ql:quickload :roan)}) is installed,
+The unit tests assume the full version of Roan, @code{(ql:quickload :roan)}, is installed,
 not just @code{:roan-base}.
 
 @item
@@ -913,7 +914,7 @@ If you make changes to Roan I suggest you run the unit tests frequently. If you 
 portability, run them at least occasionally on as many different Lisp implementations as
 you have access to. And if you add functions to Roan, add unit tests for them, too.
 
-Writing decent, reusable tests is often harder and more time consuming, than writing code;
+Writing decent, reusable tests is often harder and more time consuming than writing code;
 but it's a lot easier and less time consuming than debugging things days, weeks, months or
 years after they were first written. This is especially true for a relatively low-level
 library such as Roan.

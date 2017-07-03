@@ -255,7 +255,7 @@ harm when they are evaluated.
 
 Similarly, @code{row}s are printed using this same notation,
 @url{http://www.lispworks.com/documentation/HyperSpec/Body/v_pr_esc.htm#STprint-escapeST,,@code{*print-escape*}}
-controlling whether or not it is preceded by a @samp{!} character. Note that the
+controlling whether or not they are preceded by @samp{!} characters. Note that the
 characters used to represent bells in this printed representation differ from the small
 integer @code{bell}s used to represent them internally, since the latter are zero based.
 For example, the treble is represented internally by the integer 0, but in this printed
@@ -853,7 +853,7 @@ Signals an error if @var{initial-row} is neither a @code{row} nor @code{nil}, if
   (generate-rows-error changes))
 
 (defun permute-by-inverse (row change)
-  "Equivalent to @code{(permuate @var{row} (inverse @var{change}))}. Signals a
+  "Equivalent to @code{(permute @var{row} (inverse @var{change}))}. Signals a
 @code{type-error} if either @var{row} or @var{change} is not a @code{row}.
 @example
 @group
