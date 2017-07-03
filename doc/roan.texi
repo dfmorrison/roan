@@ -105,6 +105,35 @@ Roan also loads and uses a variety of other libraries. @xref{dependencies}.
 
 @node Obtaining and installing Roan
 @section Obtaining and installing Roan
+
+@cindex Quicklisp
+@cindex installation
+@cindex downloading
+@cindex ASDF
+@cindex library
+@cindex Bitbucket
+While @url{http://quicklisp.org,Quicklisp} is not required to run Roan, it is recommended.
+With Quicklisp installed and configured, you can download and install Roan by simply
+evaluating @code{(ql:quickload :roan)}.
+
+Quicklisp's @code{quickload} function, above, will also pull in all the other libraries
+upon which Roan depends; if you don't use Quicklisp you will have to ensure that those
+libraries are available and loaded. If you don't want to use Quicklisp, and prefer to load
+Roan by hand, the repository for Roan itself is at
+@url{https://bitbucket.org/dfmorrison/roan.git}.
+
+One of the libraries on which Roan depends, @code{cl-sqlite}, depends upon a C language
+library, @code{libsqlite3}, already being installed. It may already be on
+your system, but if not it is readily available from the
+@url{https://www.sqlite.org/,SQLite web site}.
+When loading Roan, below, if this library is not present an error will be signaled, and
+you will typically be thrown into your Lisp's debugger when Quicklisp is loading
+@code{cl-sqlite}. If for some reason you prefer not to install @code{libsqlite}
+there is a version of Roan with slightly reduced functionality, @code{roan-base}, that
+does not contain the method lookup functions and does not load @code{cl-sqlite}. To use
+it instead simply evaluate @code{(ql:quickload :roan-base)}.
+@xref{Methods database}.
+
 @cindex Lisp implementations
 Roan has been tested with
 @itemize
@@ -130,75 +159,12 @@ currently (as of June 2017) do not work or cannot be loaded in those Lisp implem
 @xref{update-methods-database} for further details and workarounds.
 
 
-
-@cindex Quicklisp
-While @url{http://quicklisp.org,Quicklisp} is not required to run Roan, it is
-recommended.
-Quicklisp's @code{quickload} function will also pull in all the other libraries
-upon which Roan depends;
-if you don't use Quicklisp you will have to ensure that those libraries
-are available and loaded.
-The rest of this section assumes that you have Quicklisp installed and
-configured in the usual way.
-
-One of the libraries on which Roan depends, @code{cl-sqlite}, depends upon a C language
-library, @code{libsqlite3}, already being installed. It may already be on
-your system, but if not it is readily available from the
-@url{https://www.sqlite.org/,SQLite web site}.
-When loading Roan, below, if this library is not present an error will be signaled, and
-you will typically be thrown into your Lisp's debugger when Quicklisp is loading
-@code{cl-sqlite}. If for some reason you prefer not to install @code{libsqlite}
-there is version of Roan with slightly reduced functionality, @code{roan-base}, that
-does not contain the method lookup functions and does not load @code{cl-sqlite}. To use
-it instead simply replace @code{:roan} by @code{:roan-base} when loading Roan into Lisp,
-below.
-@xref{Methods database}.
-
-
-@cindex installation
-@cindex downloading
-@cindex Quicklisp
-@cindex ASDF
-@cindex library
-@cindex Bitbucket
-To install Roan, download the
-@url{https://bitbucket.org/dfmorrison/roan/downloads/roan-current-version.tar.bz2,Roan bzip2ed, tar archive}
-from Bitbucket and untar it, typically with @code{tar -xjf}.
-Or, alternatively, clone the
-@url{https://bitbucket.org/dfmorrison/roan.git,Roan git repository}
-In either case move the resulting directory to one of
-@itemize
-@item
-@file{~/common-lisp/}
-@item
-@file{~/quicklisp/local-projects/}
-@item
-@file{~/.local/share/common-lisp/source/}
-@item
-or some other location into which @url{http://www.cliki.net/asdf,ASDF} is configured
-to look for systems.
-@end itemize
-@noindent
-Alternatively the directory can be left anywhere you like
-by adding symbolic links in @file{~/quicklisp/local-projects/} that
-points to the @file{roan.asd} and @file{roan-base.asd} files in the untarred Roan
-directory.
-
-Once this is done, and Lisp has been restarted if necessary, Roan can be loaded into Lisp
-by evaluating @code{(ql:quickload :roan)}. In addition to Roan itself this will also load
-the other libraries on which it depends.
-
-I hope to add Roan to the Quicklisp library soon. Once that is done there will no
-longer be a need to explicitly download it from Bitbucket, unless you prefer to continue
-doing so.
-
-
 @node Reporting bugs
 @section Reporting bugs
 
-The best way to report bugs is to submit them with the
-@url{https://bitbucket.org/dfmorrison/roan/issues,BitBucket issue tracker}.
-If that doesn't work of you you can also send mail to Don Morrison <@email{dfm@@ringing.org}>.
+The best way to report bugs is to submit them with
+@url{https://bitbucket.org/dfmorrison/roan/issues,Roan's Bitbucket issue tracker}.
+If that doesn't work for you you can also send mail to Don Morrison <@email{dfm@@ringing.org}>.
 
 It would be helpful, and will be more likely to lead to successful resolution of the bug,
 if a bug report includes

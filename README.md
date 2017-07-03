@@ -35,25 +35,15 @@ See the file `LICENSE` for details.
 ### Installing Roan
 
 While [Quicklisp](http://quicklisp.org) is not required to run Roan,
-it is recommended. Quicklisp's `quickload` function will also pull in
-all the other libraries upon which Roan depends; if you don't use
-Quicklisp you will have to ensure that those libraries are available
-and loaded. The following assumes that you have Quicklisp installed
-and configured in the usual way.
+it is recommended.
+With Quicklisp installed and configured, you can download and install Roan by simply
+executing in Lisp `(ql:quickload :roan)`.
 
-After installing Quicklisp
-either clone this Bitbucket repository or download and unpack
-[bzip2ed tar archive of its contents](https://bitbucket.org/dfmorrison/roan/downloads/roan-current-version.tar.bz2 "Current Version").
-Move the resulting directory somewhere Quicklisp has been configured to look for systems. By default it looks in
-
-`~/common-lisp/`
-
-`~/quicklisp/local-projects/`
-
-`~/.local/share/common-lisp/source/`
-
-After that's done executing in Lisp `(ql:quickload :roan)` will download and make available all the other libraries
-on which Roan depends, and then load Roan itself.
+Quicklisp's `quickload` function, above, will also pull in all the other libraries
+upon which Roan depends; if you don't use Quicklisp you will have to ensure that those
+libraries are available and loaded. If you don't want to use Quicklisp, and prefer to load
+Roan by hand, the repository for Roan itself is at
+[https://bitbucket.org/dfmorrison/roan.git](https://bitbucket.org/dfmorrison/roan.git).
 
 Roan has been tested with
 
@@ -73,15 +63,15 @@ It can also be downloaded in four different formats:
 
 * [a PDF file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual.pdf)
 
-* [a single HTML page](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-html-single-page.bz2)
+* [a single HTML page](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-single-page.html.bz2)
 
-* [multiple HTML pages](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-html-multiple-pages.tar.bz2)
+* [multiple HTML pages](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-multiple-pages-html.tar.bz2)
 
-* [an Info file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-info.bz2)
+* [an Info file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual.info.bz2)
 
 ### Reporting Bugs
 
-The best way to report bugs is to submit them with the
-[BitBucket issue tracker](https://bitbucket.org/dfmorrison/roan/issues)
-If that doesn't work of you you can also send mail to Don Morrison <dfm@ringing.org>.
+The best way to report bugs is to submit them with
+[Roan's Bitbucket issue tracker](https://bitbucket.org/dfmorrison/roan/issues)
+If that doesn't work for you you can also send mail to Don Morrison <dfm@ringing.org>.
 

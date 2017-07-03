@@ -32,7 +32,7 @@ doc/inc/roan-version.texi: $(SOURCES) roan.asd extract-documentation.lisp
 
 make-archives:
 	cd doc; cp roan.html roan-manual-single-page.html; bzip2 roan-manual-single-page.html
-	cd doc; tar -cjf roan-manual-multe-page-html.tar.bz2 roan
+	cd doc; tar -cjf roan-manual-multiple-pages-html.tar.bz2 roan
 	cd doc; cp roan.info roan-manual.info; bzip2 roan-manual.info
 
 tidy:
@@ -41,8 +41,9 @@ tidy:
 
 clean: tidy
 	-rm -rf doc/roan doc/roan.pdf doc/roan.info doc/roan.html \
-	        doc/roan-manual-html-single-page.bz2 doc/roan-manual-html-multiple-pages.tar.bz2 \
-	        doc/roan-manual-info.bz2
+	        doc/roan-manual-single-page.html.bz2 \
+                doc/roan-manual-multiple-pages-html.tar.bz2 \
+	        doc/roan-manual.info.bz2
 
 TAGS: $(SOURCES)
 	etags $(SOURCES)
