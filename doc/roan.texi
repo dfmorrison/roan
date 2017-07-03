@@ -120,7 +120,7 @@ Quicklisp's @code{quickload} function, above, will also pull in all the other li
 upon which Roan depends; if you don't use Quicklisp you will have to ensure that those
 libraries are available and loaded. If you don't want to use Quicklisp, and prefer to load
 Roan by hand, the repository for Roan itself is at
-@url{https://bitbucket.org/dfmorrison/roan.git}.
+@url{https://bitbucket.org/dfmorrison/roan}.
 
 One of the libraries on which Roan depends, @code{cl-sqlite}, depends upon a C language
 library, @code{libsqlite3}, already being installed. It may already be on

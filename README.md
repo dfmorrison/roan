@@ -43,7 +43,7 @@ Quicklisp's `quickload` function, above, will also pull in all the other librari
 upon which Roan depends; if you don't use Quicklisp you will have to ensure that those
 libraries are available and loaded. If you don't want to use Quicklisp, and prefer to load
 Roan by hand, the repository for Roan itself is at
-[https://bitbucket.org/dfmorrison/roan.git](https://bitbucket.org/dfmorrison/roan.git).
+[https://bitbucket.org/dfmorrison/roan](https://bitbucket.org/dfmorrison/roan).
 
 Roan has been tested with
 
