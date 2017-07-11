@@ -562,6 +562,27 @@
   (assert-error 'type-error (set-method-classified-name nil "Foo"))
   (assert-error 'type-error (set-method-classified-name 'method "Foo")))
 
+(define-test test-cccbr-name ()
+  (assert-equal "Slink" (cccbr-name "Slink Differential Little Place"))
+  (assert-equal "Slink Differential Little Place Maximus"
+                (cccbr-name "Slink Differential Little Place Maximus"))
+  (assert-equal "" (cccbr-name "Little Bob"))
+  (assert-equal "Cambridge" (cccbr-name "Cambridge Surprise"))
+  (assert-equal "Cambridge" (cccbr-name "Cambridge surprise"))
+  (assert-equal "cambridge" (cccbr-name "cambridge Surprise"))
+  (assert-equal "Cambridge" (cccbr-name (method :name "Cambridge Surprise" :stage 8)))
+  (assert-equal "Cambridge" (cccbr-name (method :name "Cambridge Surprise" :stage nil)))
+  (iter (for class-name :in '("Bob" "Place" "Treble Bob" "Surprise" "Delight" "Treble Place"
+                         "Alliance" "Hybrid"))
+        (assert-equal "Spitalfields Festival"
+                      (cccbr-name (format nil "Spitalfields Festival ~A" class-name))))
+  (assert-equal "Cambridge" (cccbr-name "Cambridge       Surprise"))
+  (assert-equal "Cambridge" (cccbr-name "Cambridge  Differential     Little    Surprise"))
+  (assert-error 'type-error (cccbr-name nil))
+  (assert-error 'type-error (cccbr-name 17))
+  (assert-error 'type-error (cccbr-name '("Cambridge Surprise")))
+  (assert-error 'type-error (cccbr-name '|Cambridge Surprise|)))
+
 (define-test test-method-lead-head-code ()
   (labels ((test (name &optional even odd)
              (iter (for i :from +minimum-stage+ :to +maximum-stage+)

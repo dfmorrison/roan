@@ -39,6 +39,7 @@
            #:call-apply
            #:canonicalize-method-place-notation
            #:canonicalize-place-notation
+           #:cccbr-name
            #:changep
            #:copy-row
            #:cycles

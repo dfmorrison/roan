@@ -961,6 +961,37 @@ already has a name and @code{set-method-classified-name} would change that name.
           (setf (method-name method) result))))
   method)
 
+(defparameter +cccbr-name-pattern+
+  (ppcre:create-scanner
+   (format nil "^(.*?)(?: *\\bDifferential)?(?: *\\bLittle)?(?: *(?:\\b~{~A~^|~}))$"
+           '("Bob" "Place" "Treble Bob" "Surprise" "Delight" "Treble Place"
+             "Alliance" "Hybrid"))
+   :case-insensitive-mode t))
+
+(defun cccbr-name (method-or-string)
+  "Strips the class name and Little and Differential modifiers off a method name to leave
+just that portion that the CCCBR considers a method's name. The argument can be either a
+string or a @code{method}, in which latter case it's @code{method-name} is used. In either
+case the value returned is a string. It is strict about the ordering of Differential and
+Little, and does not strip off stage names. Signals a @code{type-error} if
+@var{method-or-string} is neither a method nor a string.
+See also @ref{method-classification}.
+@example
+@group
+ (cccbr-name \"Slink Differential Little Place\")
+   @result{} \"Slink\"
+ (cccbr-name \"Little Bob\")
+   @result{} \"\"
+ (cccbr-name \"Cambridge Major\")
+   @result{} \"Cambridge Major\"
+@end group
+@end example"
+  (let ((s (if (typep method-or-string 'method)
+               (method-name method-or-string)
+               method-or-string)))
+    (check-type* s string)
+    (or (ppcre:register-groups-bind (result) (+cccbr-name-pattern+ s) result) s)))
+
 (define-method-trait lead-head-code (%update-classification classification)
   "Returns the lead head code for @var{method} if its stage and place notation are set and
 it has Plain Bob lead ends, and otherwise returns @code{nil}. Considers neither twin hunt
