@@ -46,7 +46,7 @@ notice and this notice are preserved.
 @cindex introduction
 @cindex Ringing Class Library
 @cindex features
-Roan is a libary of
+Roan is a library of
 @url{http://en.wikipedia.org/wiki/Common_Lisp,Common Lisp}
 code for writing applications related to
 @url{http://www.ringing.org/change-ringing,change ringing}.
