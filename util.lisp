@@ -24,11 +24,12 @@
 ;;; check-type*
 
 (defmacro check-type* (object type)
-  ;; Similar to check-type, but if object is not of type it signals a non-continuable
-  ;; error.
+  ;; Similar to check-type, but object need not be a place, and if object is not of type
+  ;; the error it signals is non-continuable error; returns object if no error.
   (once-only (object)
-    `(unless (typep ,object ',type)
-       (error 'type-error :expected-type ',type :datum ,object))))
+    `(if (typep ,object ',type)
+         ,object
+         (error 'type-error :expected-type ',type :datum ,object))))
 
 
 ;;; define-thread-local
