@@ -445,7 +445,7 @@ indicates the corresponding attribute of @var{method} is unknown. The value retu
 @code{method-properties} is a list, possibly empty.
 Note that the name is not
 just the portion that the Central Council considers its name: it also includes any
-explictly named class, such as @samp{Surprise}, as well as modifiers such as @samp{Little}
+explicitly named class, such as @samp{Surprise}, as well as modifiers such as @samp{Little}
 or @samp{Differential}. For example, the name of Littleport Little Surprise Royal is
 @samp{Littleport Little Surprise}.
 All these functions may be used with @code{setf} to set the relevant attributes of @var{method}.
