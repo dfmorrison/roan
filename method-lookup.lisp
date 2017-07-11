@@ -69,11 +69,11 @@
                    limit update url database busy-timeout))
 
 (defun %lookup-method (name stage)
-  (let ((result (%lookup-methods-by-name name stage nil nil nil nil nil)))
-    (case (length result)
-      (0 nil)
-      (1 (first result))
-      (otherwise (error 'too-many-methods-error :count (length result))))))
+  (check-type* stage stage)
+  (check-type* name string)
+  (let ((result (%lookup-methods stage "name = ? collate nocase" name nil nil nil nil nil)))
+    (assert (null (rest result)))
+    (first result)))
 
 (defun %lookup-methods-by-notation (place-notation stage rotations limit update url
                                     database busy-timeout)

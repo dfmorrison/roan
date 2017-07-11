@@ -2093,12 +2093,13 @@ total of four backslashes. Any other use of backslash in a @var{name} pattern ot
 escaping @samp{?}, @samp{*} or @samp{\\} signals an error.
 
 For the common case of looking up a single method by name the function
-@code{lookup-method} is available. If one @code{method} is found it is returned; if none
-are found @code{nil} is returned; and if multiple @code{method}s are found a
-@code{too-many-methods-error} is signaled. Apart from the name, which may contain
-wildards, and the stagge, no other arguments may be supplied, @code{lookup-method}
-behaving similarly to @code{lookup-methods-by-name} when @var{limit}, @var{update},
-@var{url}, @var{database} and @var{busy-timeout} are all @code{nil} or unsupplied.
+@code{lookup-method} is available. If a @code{method} is found it is returned and
+otherwise @code{nil} is returned. Apart from the @var{name}, which may not contain
+wildards, and the optiional @var{stage}, which defaults to the current value of
+@code{*default-stage*}, no other arguments may be supplied. Apart from not allowing
+wildcards, @code{lookup-method} behaves similarly to @code{lookup-methods-by-name} when
+@var{limit}, @var{update}, @var{url}, @var{database} and @var{busy-timeout} are all
+@code{nil} or unsupplied.
 
 The @code{lookup-methods-by-notation} function returns a list of @code{method}s of a given
 @var{stage} and with a plain lead defined by the place notation @var{notation}, a
@@ -2184,12 +2185,10 @@ A @code{type-error} is signaled if @var{stage} is not a @code{stage}; @var{name}
 @var{limit} is neither @code{nil} nor a positive integer; @var{update} is not of any of
 the types itemized above; @var{url} is neither @code{nil} nor a string; @var{database} is
 not a pathname designator; or @var{busy-timeout} is neither @code{nil} nor a non-negative
-integer. A @code{too-many-methods-error} is signaled if two or more methods match the
-specification provided to @code{lookup-method}. A @code{parse-error} is signaled if
-@var{notation} is a string and is not parseable as place notation at @var{stage}. An
-@code{error} is signaled if @var{name} contains a @samp{\\} followed by anything other
-than @samp{?}, @samp{*} or @samp{\\}; or if @var{changes} is a list of @code{row}s, but
-they are not all of the same stage.
+integer. A @code{parse-error} is signaled if @var{notation} is a string and is not
+parseable as place notation at @var{stage}. An @code{error} is signaled if @var{name}
+contains a @samp{\\} followed by anything other than @samp{?}, @samp{*} or @samp{\\}; or
+if @var{changes} is a list of @code{row}s, but they are not all of the same stage.
 
 A variety of SQLite, file system or network errors may be signaled if there is difficulty
 opening the database file or, if necessary, reaching the server to download a fresh
@@ -2201,9 +2200,6 @@ database.
      @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
  (method-place-notation
    (first (lookup-methods-by-name \"A?ve?t Sur*e\" :stage 8)))
-     @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
- (method-place-notation
-   (lookup-method \"Advent Sur?rise\" 8))
      @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
 @end group
 @group
@@ -2250,15 +2246,6 @@ database.
    @result{} (\"Grandsire Doubles\" \"New Grandsire Doubles\")
 @end group
 @end example")
-
-(define-condition too-many-methods-error (error)
-  ((count :reader too-many-methods-error-count :initarg :count))
-  (:documentation "Signaled in circumstances when only a single method was expected but
-multiple were found. Contains one potentially useful slot accessible with
-@code{too-many-methods-error-count}, the number of matching methods found.")
-  (:report (lambda (condition stream)
-             (format stream "Too many~@[, ~D,~] methods match the retrieval specification."
-                     (too-many-methods-error-count condition)))))
 
 (define-method-lookup lookup-method (name &optional (stage *default-stage*))
   "===merge: lookup-methods-by-name 1")

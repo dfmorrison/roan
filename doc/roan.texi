@@ -487,6 +487,7 @@ non-string, or the property list to a non-list.
 @cindex Methods Committee
 @include inc/method-classification-function.texi
 @include inc/set-method-classified-name-function.texi
+@include inc/cccbr-name-function.texi
 @include inc/no-place-notation-error-class.texi
 
 @cindex falseness
@@ -552,7 +553,6 @@ All three functions signal a @code{type-error} if @var{group} is not a @code{fch
 @include inc/update-methods-database-function.texi
 @include inc/methods-database-attributes-function.texi
 @include inc/with-methods-database-macro.texi
-@include inc/too-many-methods-error-class.texi
 
 @c @cindex calls
 @c @cindex immutable
