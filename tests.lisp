@@ -28,6 +28,12 @@
                 #:*fch-groups-by-name*
                 #:*pattern-cache*
                 #:cache-count
+                #:call-changes
+                #:call-following
+                #:call-fraction
+                #:call-from-end
+                #:call-offset
+                #:call-replace
                 #:canonical-rotation
                 #:changes
                 #:clear-method-traits
