@@ -69,8 +69,12 @@
                    limit update url database busy-timeout))
 
 (defun %lookup-method (name stage)
-  (check-type* stage stage)
+  (check-type* stage (or null stage))
   (check-type* name string)
+  (unless stage
+    (multiple-value-setq (name stage) (parse-method-title name)))
+  (unless stage
+    (setf stage *default-stage*))
   (let ((result (%lookup-methods stage "name = ? collate nocase" name nil nil nil nil nil)))
     (assert (null (rest result)))
     (first result)))

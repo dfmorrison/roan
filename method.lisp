@@ -117,9 +117,9 @@ the name and stage of @var{method}.
 
 (defun parse-method-title (string)
   "Returns two values, the method name and the stage extracted from @var{string}, if they
-are present. If one or both components is missing @code{nil} is returned as the
-corresponding value. Signals a @code{type-error} if @var{string} is neither a non-empty
-string nor @code{nil}.
+are present. If one or both components is missing then @code{nil} is returned as the
+corresponding value. Signals a @code{type-error} if @var{string} is neither a string nor
+@code{nil}.
 @example
 @group
  (multiple-value-list
@@ -127,16 +127,17 @@ string nor @code{nil}.
      @result{} (\"Advent Surprise\" 8)
 @end group
 @end example"
-  (unless string
+  (unless string 
     (return-from parse-method-title (values nil nil)))
-  (when (stringp string)
-    (setf string (collapse-whitespace string)))
-  (check-type* string (and string (not (string 0))))
-  (let* ((space-pos (position #\Space string :from-end t))
-         (stage (stage-from-name (subseq string (if space-pos (1+ space-pos) 0))))
-         (name (cond ((null stage) string)
-                     (space-pos (subseq string 0 space-pos)))))
-    (values name stage)))
+  (check-type* string string)
+  (setf string (collapse-whitespace string))
+  (if (> (length string) 0)
+      (let* ((space-pos (position #\Space string :from-end t))
+             (stage (stage-from-name (subseq string (if space-pos (1+ space-pos) 0))))
+             (name (cond ((null stage) string)
+                         (space-pos (subseq string 0 space-pos)))))
+        (values name stage))
+      (values nil nil)))
 
 (defsetf method-title (method &optional show-unknown) (string)
   `(multiple-value-bind (name stage) (parse-method-title ,string)
@@ -2097,11 +2098,13 @@ escaping @samp{?}, @samp{*} or @samp{\\} signals an error.
 For the common case of looking up a single method by name the function
 @code{lookup-method} is available. If a @code{method} is found it is returned and
 otherwise @code{nil} is returned. Apart from the @var{name}, which may not contain
-wildards, and the optiional @var{stage}, which defaults to the current value of
-@code{*default-stage*}, no other arguments may be supplied. Apart from not allowing
-wildcards, @code{lookup-method} behaves similarly to @code{lookup-methods-by-name} when
-@var{limit}, @var{update}, @var{url}, @var{database} and @var{busy-timeout} are all
-@code{nil} or unsupplied.
+wildards, and the optiional @var{stage}, no other arguments may be supplied. If
+@var{stage} is not supplied, or is @code{nil}, then @var{name} is treated as a method
+title if it ends with a stage name, that stage being used, and otherwise @var{stage}
+defaults to the current value of @code{*default-stage*}. In other respects
+code{lookup-method} behaves similarly to @code{lookup-methods-by-name}, when @var{limit},
+@var{update}, @var{url}, @var{database} and @var{busy-timeout} are all @code{nil} or
+unsupplied in that latter fucntion.
 
 The @code{lookup-methods-by-notation} function returns a list of @code{method}s of a given
 @var{stage} and with a plain lead defined by the place notation @var{notation}, a
@@ -2178,19 +2181,20 @@ There is no guarantee that any @code{method} object returned by any of these fun
 distinct from that returned by a different call to the same one or a different one that
 needs to return such an object describing the same underlying method. For example, if two
 different invocations of one or two of these methods are asked to provide a definition for
-Cambridge Surprise Majoy the resulting @code{method} objects may or may not be @code{eq},
+Cambridge Surprise Major the resulting @code{method} objects may or may not be @code{eq},
 and subsequent changes to one may or may not be reflected in the ``other'' (since it may
 or may not be the same one).
 
-A @code{type-error} is signaled if @var{stage} is not a @code{stage}; @var{name} or
-@var{notation} is not a string; @var{changes} is not a non-empty list of @code{row}s;
-@var{limit} is neither @code{nil} nor a positive integer; @var{update} is not of any of
-the types itemized above; @var{url} is neither @code{nil} nor a string; @var{database} is
-not a pathname designator; or @var{busy-timeout} is neither @code{nil} nor a non-negative
-integer. A @code{parse-error} is signaled if @var{notation} is a string and is not
-parseable as place notation at @var{stage}. An @code{error} is signaled if @var{name}
-contains a @samp{\\} followed by anything other than @samp{?}, @samp{*} or @samp{\\}; or
-if @var{changes} is a list of @code{row}s, but they are not all of the same stage.
+A @code{type-error} is signaled if @var{stage} is not a @code{stage} (or, in the case of
+@code{lookup-method} only, @code{nil}); @var{name} or @var{notation} is not a string;
+@var{changes} is not a non-empty list of @code{row}s; @var{limit} is neither @code{nil}
+nor a positive integer; @var{update} is not of any of the types itemized above; @var{url}
+is neither @code{nil} nor a string; @var{database} is not a pathname designator; or
+@var{busy-timeout} is neither @code{nil} nor a non-negative integer. A @code{parse-error}
+is signaled if @var{notation} is a string and is not parseable as place notation at
+@var{stage}. An @code{error} is signaled if @var{name} contains a @samp{\\} followed by
+anything other than @samp{?}, @samp{*} or @samp{\\}; or if @var{changes} is a list of
+@code{row}s, but they are not all of the same stage.
 
 A variety of SQLite, file system or network errors may be signaled if there is difficulty
 opening the database file or, if necessary, reaching the server to download a fresh
@@ -2199,6 +2203,9 @@ database.
 @group
  (method-place-notation
    (lookup-method \"Advent Surprise\" 8))
+     @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
+ (method-place-notation
+   (lookup-method \"Advent Surprise Major\"))
      @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
  (method-place-notation
    (first (lookup-methods-by-name \"A?ve?t Sur*e\" :stage 8)))
@@ -2249,7 +2256,7 @@ database.
 @end group
 @end example")
 
-(define-method-lookup lookup-method (name &optional (stage *default-stage*))
+(define-method-lookup lookup-method (name &optional stage)
   "===merge: lookup-methods-by-name 1")
 
 (define-method-lookup lookup-methods-by-notation
