@@ -32,7 +32,29 @@
          (error 'type-error :expected-type ',type :datum ,object))))
 
 
-;;; define-thread-local
+;;; Threading support
+
+(defparameter *threading-p* (member :bordeaux-threads *features*))
+
+(defun thread-call (name &rest args)
+  (apply (symbol-function (find-symbol (string name) :bordeaux-threads)) args))
+
+(defmacro deflock (name)
+  (check-type* name symbol)
+  `(defparameter ,name (when *threading-p*
+                         (thread-call :make-lock ,(string-trim "*+" name)))))
+
+(defmacro with-lock ((lock) &body body)
+  `(%with-lock ,lock #'(lambda () ,@body)))
+
+(defun %with-lock (lock thunk)
+  (if *threading-p*
+      (unwind-protect
+           (progn
+             (thread-call :acquire-lock lock t)
+             (funcall thunk))
+        (thread-call :release-lock lock))
+      (funcall thunk)))
 
 (defmacro define-thread-local (name &optional initial-value)
   ;; Note that initial-value will typically be evaluated multiple times, once in each
@@ -40,7 +62,7 @@
   (check-type name (and symbol (not keyword) (not (member nil t))))
   `(progn
      (defparameter ,name ,initial-value)
-     (when (member :bordeaux-threads *features*)
+     (when *threading-p*
        (pushnew '(,name . ,initial-value)
                 (symbol-value (find-symbol "*DEFAULT-SPECIAL-BINDINGS*" :bordeaux-threads))
                 :key #'car))))
