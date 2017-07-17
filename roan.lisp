@@ -1309,7 +1309,7 @@ Signals a @code{type-error} if @var{row} is not a @code{row}.
 (define-thread-local *change-cache* nil)
 
 (defun place-notation-error (parsing format-string &rest args)
-  (funcall (if parsing #'simple-parse-error #'error) format-string args))
+  (apply (if parsing #'simple-parse-error #'error) format-string args))
 
 (defmacro with-bell-property-resolver (&body body)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
@@ -1459,6 +1459,8 @@ place notation suitable for @var{stage} a @code{parse-error} is signaled. If
   (check-type* stage stage)
   (check-type* start (integer 0))
   (check-type* end (or null (integer 0)))
+  (when (equal string "")
+    (place-notation-error t "Can't parse an empty string as place notation."))
   ;; Curiously scan-to-strings accepts only an integer, and not a bounding index
   ;; designator, as the value of :END.
   (unless end
