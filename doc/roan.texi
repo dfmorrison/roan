@@ -567,6 +567,7 @@ All three functions signal a @code{type-error} if @var{group} is not a @code{fch
 @c
 @include inc/call-summary.texi
 @include inc/call-structure.texi
+@include inc/call-function.texi
 @include inc/call-apply-function.texi
 @include inc/call-application-error-class.texi
 

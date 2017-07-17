@@ -2102,7 +2102,7 @@ wildards, and the optiional @var{stage}, no other arguments may be supplied. If
 @var{stage} is not supplied, or is @code{nil}, then @var{name} is treated as a method
 title if it ends with a stage name, that stage being used, and otherwise @var{stage}
 defaults to the current value of @code{*default-stage*}. In other respects
-code{lookup-method} behaves similarly to @code{lookup-methods-by-name}, when @var{limit},
+@code{lookup-method} behaves similarly to @code{lookup-methods-by-name}, when @var{limit},
 @var{update}, @var{url}, @var{database} and @var{busy-timeout} are all @code{nil} or
 unsupplied in that latter fucntion.
 
@@ -2366,11 +2366,10 @@ cannot be opened or is not in the correct format.")
 
 (defstruct (call (:copier nil) (:predicate nil))
   "===summary===
-Roan provides an immutable @code{call} object which describes a change ringing call, such
-as a bob or single, that modifies a lead of a @code{method}. A @code{call} has a list of
-zero or more changes that are added to the the sequence of changes constituting the lead,
-typically replacing some existing changes in the lead. The changes in a call must all be
-of the same stage as the method to which it will be applied.
+Roan provides an immutable @code{call} object that describes a change ringing call, such
+as a bob or single, that modifies a lead of a @code{method}. A @code{call} usually has a
+fragment of place notation representing changes that are added to the the sequence of
+changes constituting the lead, typically replacing some existing changes in the lead.
 
 A @code{call} has an offset, which specifies where in the lead the changes are added,
 replaced or deleted; this offset can be indexed from the beginning or the end of a lead,
@@ -2386,11 +2385,11 @@ the lead by deleting changes; or even to add more or fewer changes than it repla
 
 Typically a call only affects the lead of a method to which is is applied. In exceptional
 cases, most notably doubles variations, it may also affect the subsequent lead. To support
-such use a @code{call} may have following changes and a following replacement length. Such
-use is always restricted to being positioned at the beginning of the subsequent lead, and
-in the main lead the call must replace changes all the way to the end of the lead. Note
-that by starting the call at the end of the lead this could be simply adding changes, or
-even doing nothing.
+such use a @code{call} may have a following place notation fragment and a following
+replacement length. Such use is always restricted to being positioned at the beginning of
+the subsequent lead, and in the main lead the call must replace changes all the way to the
+end of the lead. Note that by starting the call at the end of the lead this could be
+simply adding changes, or even doing nothing.
 
 A @code{call} is applied to a lead with the function @code{call-apply}. This can take
 multiple @code{call}s, all of which are applied to the same lead. They must not, however,
@@ -2404,17 +2403,17 @@ Two @code{call}s may be compared with @code{equalp}.
 Examples of @code{call}s:
 @itemize
 @item
-The usual bob for Cambridge Surprise Major is @code{(call #8!4)}.
+The usual bob for Cambridge Surprise is @code{(call \"4\")}.
 @item
-The usual single for Grandsire Caters is @code{(call #9!3.123 :offset 2)}.
+The usual single for Grandsire is @code{(call \"3.123\" :offset 2)}.
 @item
-The usual bob for Erin Triples is @code{(call #7!5 :from-end nil)}.
+The usual bob for Erin Triples is @code{(call \"7\" :from-end nil)}.
 @item
-A 58 half-lead bob for Bristol Major is @code{(call #8!5 :fraction 1/2)}.
+A 58 half-lead bob for Bristol Major is @code{(call \"5\" :fraction 1/2)}.
 @item
-A bob in April Day Doubles is @code{(call #5!3.123 :following-changes #5!3)}.
+A bob in April Day Doubles is @code{(call \"3.123\" :following \"3\")}.
 @item
-A call for Cambridge Surprise Major that shortens the lead by omitting the first two
+A call for surprise that shortens the lead by omitting the first two
 blows, so that ringing of the lead commences at the backstroke snap is
 @code{(call nil :from-end nil :replace 2)}.
 @end itemize
@@ -2465,49 +2464,47 @@ An immutable object describing a change ringing call, such as a bob or single."
                               (following nil following-supplied-p)
                               (following-replace nil following-replace-supplied-p))
   "Creates and returns a @code{call}, which modifies the changes of a lead of a
-@code{method}. The @var{changes} argument is a list of @code{row}s, the changes which
-applying the @code{call} will add or replace in a lead of the @code{method}; it may be an
-empty list. The @var{offset}, a non-negative integer, is the position at which to begin
-modifying the lead, and is measured from the beginning of the lead if the generalized
-boolean @var{from-end} is false, and from the end, otherwise. This can be further modifed
-by @var{fraction} which is multiplied by the lead length; the offset is counted forward or
-backward from that product. The @code{fraction}, if non-nill, must be a ratio greater than
-@code{0} and less than @code{1}, whose denominator evenly divides the lead length. The
-non-negative integer @var{replace} is the number of changes in the lead to be deleted or
-replaced. It is typically equal to the length of @var{changes}, which results in exact
-replacement of changes in the lead, but may be greater or less than that length, in which
-case the resulting lead is of a different length than a plain lead.
+@code{method}. The @var{place-notation} argument is a string of place, the changes
+corresponding to which will add or replace changes in a a lead of the @code{method} when
+applying the @code{code}. The @var{place-notation} may be @code{nil}, in which case no
+changes are add or replace existing ones. The @var{offset}, a non-negative integer, is the
+position at which to begin modifying the lead, and is measured from the beginning of the
+lead if the generalized boolean @var{from-end} is false, and from the end, otherwise. This
+can be further modifed by @var{fraction} which is multiplied by the lead length; the
+offset is counted forward or backward from that product. The @code{fraction}, if non-nill,
+must be a ratio greater than @code{0} and less than @code{1}, whose denominator evenly
+divides the lead length. The non-negative integer @var{replace} is the number of changes
+in the lead to be deleted or replaced. It is typically equal to the length of
+@var{changes}, which results in exact replacement of changes in the lead, but may be
+greater or less than that length, in which case the resulting lead is of a different
+length than a plain lead.
 
-If either or both of @var{following-changes} or @var{following-replace} are supplied the
-call is intended to also apply to the subsequent lead. These operate just like
-@var{changes} and @var{replace}, but on the subsequent lead, and always at the begining of
-that lead. This use also depends upon the caller of @code{call-apply} making correct use
-of its second return value.
+If either or both of @var{following} or @var{following-replace} are supplied the call is
+intended to also apply to the subsequent lead. These operate just like
+@var{place-notation} and @var{replace}, but on the subsequent lead, and always at the
+begining of that lead. This use also depends upon the caller of @code{call-apply} making
+correct use of its second return value.
 
-If @var{replace} is not supplied or is @code{nil} it defaults to the length of
-@var{changes}. If @var{offset} is not supplied or is @code{nil}, it defaults to @code{0}
-if @var{from-end} is false, and otherwise to the value of @var{replace}, which may itself
-have been defaulted from the length of @var{changes}. The default value of @var{from-end}
-is @code{t}. The default value of @var{fraction} is @code{nil}. If @var{following-changes}
-is supplied but @var{following-replace} is not, @var{following-replace} defaults to the
-length of @var{following-changes}. If @var{following-replace} is supplied but
-@var{following-changes} is not, @var{following-changes} defaults to @code{nil}. If
-@var{following-replace} is supplied and is @code{nil}, it defaults to the length of
-@code{following-changes}, which will be @code{0} if @var{following-changes} defaults to
-@code{nil}.
+If @var{replace} is not supplied or is @code{nil} it defaults to the number of changes
+represented by the @var{place-notation}. If @var{offset} is not supplied or is @code{nil},
+it defaults to @code{0} if @var{from-end} is false, and otherwise to the value of
+@var{replace}, which may itself have been defaulted from the value of
+@var{place-notation}. The default value of @var{from-end} is @code{t}. The default value
+of @var{fraction} is @code{nil}. If @var{following} is supplied but
+@var{following-replace} is not, @var{following-replace} defaults to the number of changes
+represetned by @var{following}. If @var{following-replace} is supplied but @var{following}
+is not, @var{following} defaults to @code{nil}.
 
-A @code{type-error} is signaled if @var{changes} is not a list or contains any elements
-that are not @code{row}s; if @var{offset} is supplied and is neither @code{nil} nor a
+A @code{parse-error} is signaled if either @var{place-notation} or @var{following} is
+non-@code{nil} but not interpretable as place notation at the stage of @var{method}. A
+@code{type-error} is signaled if @var{offset} is supplied and is neither @code{nil} nor a
 non-negative integer; if @var{replace} is supplied and is neither @code{nil} nor a
 non-negative integer; @var{fraction} is supplied and is neither @code{nil} nor a ratio
-between @code{0} and @code{1}, exclusive; if @var{following-changes} is supplied is not a
-list, or contains any elements that are not @code{row}s; or if @var{following-replace}
-is supplied and is neither @code{nil} nor a non-negative integer. An @code{error} is
-signaled if all the @code{row}s in the union of @var{changes} and
-@var{following-changes} are not of the same stage."
+between @code{0} and @code{1}, exclusive; or if @var{following-replace} is supplied and is
+neither @code{nil} nor a non-negative integer."
   (check-type* place-notation (or null string))
   (check-type* offset (or null (integer 0)))
-  (check-type* fraction (or null (rational 0 1)))
+  (check-type* fraction (or null (rational (0) (1))))
   (check-type* replace (or null (integer 0)))
   (check-type* following (or null string))
   (check-type* following-replace (or null (integer 0)))
@@ -2597,12 +2594,13 @@ Signals a @code{type-error} if @var{method} is not a @code{method} or if any of 
 @var{calls} are neither a @code{call} nor @code{nil}. Signals a @code{parse-error} if
 @var{method} does not have its stage or place-notation defined. Signals a
 @code{call-application-error} in any of the following circumstances: if the stage of
-@var{method} does not match that of one or more of the @var{calls}; if an attempt is made
-to apply a fractional lead @code{call} where the denominator of the fraction does not
-evenly divide the lead length; if the @code{call} would be positioned, or replace changes,
-that lie outside the lead; if a @code{call} with following changes does not replace
-changes up to the end of the first lead, or an attempt is made to applly two or more
-@code{call}s with following changes to the same lead."
+@var{method} is such that the place notation or following place notation of one or more of
+the @var{calls} is inapplicable; if an attempt is made to apply a fractional lead
+@code{call} where the denominator of the fraction does not evenly divide the lead length;
+if the @code{call} would be positioned, or replace changes, that lie outside the lead; if
+a @code{call} with following changes does not replace changes up to the end of the first
+lead, or an attempt is made to applly two or more @code{call}s with following place
+notation to the same lead."
   (let* ((stage (method-stage method))
          (result (cons nil (method-changes method)))
          (p result)
