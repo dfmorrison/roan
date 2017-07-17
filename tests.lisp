@@ -28,7 +28,6 @@
                 #:*fch-groups-by-name*
                 #:*pattern-cache*
                 #:cache-count
-                #:call-changes
                 #:call-following
                 #:call-fraction
                 #:call-from-end
@@ -39,6 +38,7 @@
                 #:clear-method-traits
                 #:clrcache
                 #:collapse-whitespace
+                #:get-call-changes
                 #:get-newest-key
                 #:get-newest-value
                 #:getcache

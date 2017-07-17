@@ -2449,7 +2449,8 @@ An immutable object describing a change ringing call, such as a bob or single."
                    (call-replace call))
            (when-let ((f (call-following call)))
              (format stream " ~@{~A~^ ~}" (call-place-notation f) (call-replace f)))))
-        (t (format stream "Call~@[-~A~]" (call-place-notation call))))
+        (t (format stream "Call~@[-~A~]~:[~;*~]"
+                   (call-place-notation call) (call-following call))))
   call)
 
 (defconstant +call-changes-vector-length+ (+ (- +maximum-stage+ +minimum-stage+) 1))
