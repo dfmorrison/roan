@@ -2454,6 +2454,12 @@ An immutable object describing a change ringing call, such as a bob or single."
 
 (defconstant +call-changes-vector-length+ (+ (- +maximum-stage+ +minimum-stage+) 1))
 
+(defmacro %get-call-changes (vector stage)
+  `(svref ,vector (- ,stage +minimum-stage+)))
+
+(defmacro get-call-changes (call stage)
+  `(%get-call-changes (call-changes ,call) ,stage))
+
 (defun call (place-notation &key (from-end t) offset fraction replace
                               (following nil following-supplied-p)
                               (following-replace nil following-replace-supplied-p))
@@ -2521,8 +2527,8 @@ signaled if all the @code{row}s in the union of @var{changes} and
               (unless (or primary-instance following-instance)
                 (setf primary-instance primary-changes)
                 (setf following-instance following-changes))
-              (setf (svref primary-vector (- stage +minimum-stage+)) primary-changes)
-              (setf (svref following-vector (- stage +minimum-stage+)) following-changes))
+              (setf (%get-call-changes primary-vector stage) primary-changes)
+              (setf (%get-call-changes following-vector stage) following-changes))
           (parse-error ()))
         (finally
          (when (and place-notation (null primary-instance))
@@ -2596,7 +2602,8 @@ evenly divide the lead length; if the @code{call} would be positioned, or replac
 that lie outside the lead; if a @code{call} with following changes does not replace
 changes up to the end of the first lead, or an attempt is made to applly two or more
 @code{call}s with following changes to the same lead."
-  (let* ((result (cons nil (method-changes method)))
+  (let* ((stage (method-stage method))
+         (result (cons nil (method-changes method)))
          (p result)
          (i 0)
          (end (method-lead-length method)))
@@ -2618,7 +2625,7 @@ changes up to the end of the first lead, or an attempt is made to applly two or 
                (setf p (nthcdr (- start i) p))
                (setf i start)
                (let* ((e (+ i (call-replace call)))
-                      (changes (copy-list (call-changes call)))
+                      (changes (copy-list (get-call-changes call stage)))
                       (q (last changes)))
                  (when (> e end)
                    (err call "can't replace changes past the end of the lead"))
@@ -2630,9 +2637,12 @@ changes up to the end of the first lead, or an attempt is made to applly two or 
         (err nil "method is insufficiently defined to apply calls to"))
       (iter (for c :in calls)
             (when c
-              (when-let ((row (first (call-changes c))))
-                (unless (eql (stage row) (method-stage method))
-                  (err c "call is not for same stage as method")))
+              (when (or (and (call-place-notation c)
+                             (null (get-call-changes c stage)))
+                        (when-let ((sub-call (call-following c)))
+                          (and (call-place-notation sub-call)
+                               (null (get-call-changes sub-call stage)))))
+                (err c "call is not applicable to ~A methods" (stage-name stage)))
               (collect (cons (start c) c) :into alist))
             (finally (iter (with following := nil)
                            (for (s . c) :in (sort alist #'< :key #'car))
