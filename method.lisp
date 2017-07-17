@@ -127,7 +127,7 @@ corresponding value. Signals a @code{type-error} if @var{string} is neither a st
      @result{} (\"Advent Surprise\" 8)
 @end group
 @end example"
-  (unless string 
+  (unless string
     (return-from parse-method-title (values nil nil)))
   (check-type* string string)
   (setf string (collapse-whitespace string))
@@ -2420,43 +2420,43 @@ blows, so that ringing of the lead commences at the backstroke snap is
 @end itemize
 ===endsummary===
 An immutable object describing a change ringing call, such as a bob or single."
-  (changes nil :read-only t :type list)
+  (place-notation nil :read-only t :type (or null string))
   (offset 0 :read-only t :type (integer 0))
   (from-end t :read-only t)
   (fraction nil :read-only t :type (or null (rational (0) (1))))
-  (replace nil :read-only t :type (integer 0))
-  (following nil :read-only t))
+  (replace 0 :read-only t :type (integer 0))
+  (following nil :read-only t)
+  (changes #() :read-only t :type simple-vector))
 
 (defmethod print-object ((call call) stream)
-  (labels ((wpn (c)
-             (when-let ((changes (call-changes c)))
-               (write-place-notation changes
-                                     :stream stream
-                                     :escape nil
-                                     :comma t
-                                     :elide :lying
-                                     :jump-changes :jumps))))
-    (cond (*print-escape*
-           (print-unreadable-object (call stream :type t :identity t)
-             (princ call stream)
-             (format stream " ~@{~A~^ ~}"
-                     (call-offset call)
-                     (not (not (call-from-end call)))
-                     (call-fraction call)
-                     (call-replace call))
-             (when (call-following call)
-               (format stream " [~A]" (call-replace (call-following call))))))
-          ((call-changes call)
-           (wpn call)
-           (when (call-following call)
-             (princ #\[ stream)
-             (wpn (call-following call))
-             (princ #\] stream)))
-          (t "()"))))
+  (cond (*print-readably*
+         (prin1 `(call ,(call-place-notation call)
+                       ,@(unless (call-from-end call) '(:from-end nil))
+                       ,@(when-let ((offset (call-offset call))) `(:offset ,offset))
+                       ,@(when-let ((fraction (call-fraction call))) `(:fraction ,fraction))
+                       ,@(when-let ((replace (call-replace call))) `(:replace ,replace))
+                       ,@(when-let ((following (call-following call)))
+                                   `(:following ,(call-place-notation following)
+                                     :following-replace ,(call-replace following))))
+                stream))
+        (*print-escape*
+         (print-unreadable-object (call stream :type t :identity t)
+           (format stream "~A ~@{~A~^ ~}"
+                   (call-place-notation call)
+                   (call-offset call)
+                   (not (not (call-from-end call)))
+                   (call-fraction call)
+                   (call-replace call))
+           (when-let ((f (call-following call)))
+             (format stream " ~@{~A~^ ~}" (call-place-notation f) (call-replace f)))))
+        (t (format stream "Call~@[-~A~]" (call-place-notation call))))
+  call)
 
-(defun call (changes &key (from-end t) offset fraction replace
-                       (following-changes nil following-changes-supplied-p)
-                       (following-replace nil following-replace-supplied-p))
+(defconstant +call-changes-vector-length+ (+ (- +maximum-stage+ +minimum-stage+) 1))
+
+(defun call (place-notation &key (from-end t) offset fraction replace
+                              (following nil following-supplied-p)
+                              (following-replace nil following-replace-supplied-p))
   "Creates and returns a @code{call}, which modifies the changes of a lead of a
 @code{method}. The @var{changes} argument is a list of @code{row}s, the changes which
 applying the @code{call} will add or replace in a lead of the @code{method}; it may be an
@@ -2498,38 +2498,60 @@ list, or contains any elements that are not @code{row}s; or if @var{following-re
 is supplied and is neither @code{nil} nor a non-negative integer. An @code{error} is
 signaled if all the @code{row}s in the union of @var{changes} and
 @var{following-changes} are not of the same stage."
-  (let ((stage (or (and changes (stage (first changes)))
-                   (and following-changes (stage (first following-changes)))))
-        (following-supplied-p (or following-changes-supplied-p
-                                  following-replace-supplied-p)))
-    (labels ((check-changes (list)
-               (iter (for c :in list)
-                     (check-type* c row)
-                     (unless (eql (stage c) stage)
-                       (error "Changes supplied to call are not all of the same stage ~S."
-                              list)))))
-      (check-changes changes)
-      (check-changes following-changes))
-    (unless replace
-      (setf replace (length changes)))
-    (unless (or following-replace (not following-supplied-p))
-      (setf following-replace (length following-changes)))
-    (let ((result (make-call :changes changes
-                             :offset (or offset (if from-end replace 0))
-                             :from-end from-end
-                             :fraction fraction
-                             :replace replace
-                             :following (and following-supplied-p
-                                             (make-call :changes following-changes
-                                                        :offset 0
-                                                        :from-end nil
-                                                        :replace following-replace)))))
-      (when (and (null changes)
-                 (or (null replace) (zerop replace))
-                 (null following-changes)
-                 (or (null following-replace) (zerop following-replace)))
-        (warn "Vacuous call contains no changes and zero length replacement: ~S." result))
-      result)))
+  (check-type* place-notation (or null string))
+  (check-type* offset (or null (integer 0)))
+  (check-type* fraction (or null (rational 0 1)))
+  (check-type* replace (or null (integer 0)))
+  (check-type* following (or null string))
+  (check-type* following-replace (or null (integer 0)))
+  (when (equal place-notation "")
+    (setf place-notation nil))
+  (when (equal following "")
+    (setf following nil))
+  (iter (with primary-instance)
+        (with following-instance)
+        (with primary-vector := (make-array +call-changes-vector-length+ :initial-element nil))
+        (with following-vector := (make-array +call-changes-vector-length+ :initial-element nil))
+        (for stage :from +minimum-stage+ :to +maximum-stage+)
+        (handler-case
+            (let ((primary-changes (and place-notation (parse-place-notation place-notation
+                                                                             :stage stage)))
+                  (following-changes (and following (parse-place-notation following
+                                                                          :stage stage))))
+              (unless (or primary-instance following-instance)
+                (setf primary-instance primary-changes)
+                (setf following-instance following-changes))
+              (setf (svref primary-vector (- stage +minimum-stage+)) primary-changes)
+              (setf (svref following-vector (- stage +minimum-stage+)) following-changes))
+          (parse-error ()))
+        (finally
+         (when (and place-notation (null primary-instance))
+           (simple-parse-error "Call's place notation, ~A, cannot be interpreted at any stage."
+                               place-notation))
+         (when (and following (null following-instance))
+           (simple-parse-error "Call's :FOLLOWING, ~A, cannot be interepted as place notation at any stage."
+                               following))
+         (unless replace
+           (setf replace (length primary-instance)))
+         (unless following-replace
+           (setf following-replace (length following-instance)))
+         (let ((result (make-call :place-notation place-notation
+                                  :offset (or offset (if from-end replace 0))
+                                  :from-end from-end
+                                  :fraction fraction
+                                  :replace replace
+                                  :changes primary-vector
+                                  :following (and (or following-supplied-p
+                                                      following-replace-supplied-p)
+                                                  (make-call :place-notation following
+                                                             :offset 0
+                                                             :from-end nil
+                                                             :replace following-replace
+                                                             :changes following-vector)))))
+           (when (and (null primary-instance) (zerop replace)
+                      (null following-instance) (zerop following-replace))
+             (warn "Vacuous call contains no changes and zero length replacement: ~S." result))
+           (return result)))))
 
 (define-condition call-application-error (simple-error)
   ((call :initarg :call :reader call-application-error-call)
