@@ -2564,7 +2564,7 @@ neither @code{nil} nor a non-negative integer."
   (:documentation "Signaled when an anaomalous condition is detected while trying to
 apply a @code{call} to a @code{method}. Contains three potentially useful slots
 accessible with @code{call-application-error-call}, @code{call-application-error-method}
-and @code{call-applicaiton-error-details}."))
+and @code{call-application-error-details}."))
 
 (defun call-application-error (call method message &rest args)
   (let ((details (apply #'format nil message args)))
