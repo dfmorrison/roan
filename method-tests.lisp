@@ -393,26 +393,26 @@
     (assert-error 'parse-error (method-canonical-rotation-key m2))))
 
 (define-test test-classification ()
-  (assert-equal '(6 7 8 9) (method-primary-hunt-bells
+  (assert-equal '(6 7 8 9) (method-principal-hunt-bells
                             (method :stage 12 :place-notation "7x7x67x678,x")))
   (assert-equal '(4 5 6 7) (method-secondary-hunt-bells
                             (method :stage 8 :place-notation "x4x4,2")))
   (labels ((test-one (stage notation expect
-                            &optional (primary nil hunts-supplied) secondary)
+                            &optional (principal nil hunts-supplied) secondary)
              (let ((method (method :stage stage :place-notation notation)))
                (assert-equal expect (method-classification method))
                (when hunts-supplied
-                 (assert-equal primary (method-primary-hunt-bells method))
+                 (assert-equal principal (method-principal-hunt-bells method))
                  (assert-equal secondary (method-secondary-hunt-bells method)))))
            (test-rotated (stage notation expect n)
              (test-one stage (rotate-place-notation stage notation n) expect))
-           (test-several (stage notation expect primary secondary)
-             (test-one stage notation expect primary secondary)
+           (test-several (stage notation expect principal secondary)
+             (test-one stage notation expect principal secondary)
              (catch 'too-long
                (iter (for i :from 1)
                      (test-rotated stage notation expect i)))))
-    (macrolet ((deftest (stage notation primary secondary &rest classification)
-                 `(test-several ',stage ',notation ',classification ',primary ',secondary)))
+    (macrolet ((deftest (stage notation principal secondary &rest classification)
+                 `(test-several ',stage ',notation ',classification ',principal ',secondary)))
       (deftest 4 "3.1.2.1,4" (0) () :place)
       (deftest 5 "5.1.5.1.5,125" (0) () :bob)
       (deftest 5 "3.1.5.123.5,125" (0) () :bob)
@@ -453,17 +453,17 @@
                                      (for sub2 :on list2)
                                      (when sub1
                                        (never (eq sub1 sub2)))))))
-           (test-distinct-properties (stage notation classification primary secondary)
+           (test-distinct-properties (stage notation classification principal secondary)
              (let* ((method (method :stage stage :place-notation notation))
                     (c1 (method-classification method))
                     (c2 (method-classification method))
-                    (p1 (method-primary-hunt-bells method))
-                    (p2 (method-primary-hunt-bells method))
+                    (p1 (method-principal-hunt-bells method))
+                    (p2 (method-principal-hunt-bells method))
                     (s1 (method-secondary-hunt-bells method))
                     (s2 (method-secondary-hunt-bells method)))
                (test-distinct classification c1)
                (test-distinct c1 c2)
-               (test-distinct primary p1)
+               (test-distinct principal p1)
                (test-distinct p1 p2)
                (test-distinct secondary s1)
                (test-distinct s1 s2))))
@@ -479,8 +479,8 @@
   (assert-eq nil (method-classification (method)))
   (assert-error 'type-error (method-classification nil))
   (assert-error 'type-error (method-classification :method))
-  (assert-error 'type-error (method-primary-hunt-bells nil))
-  (assert-error 'type-error (method-primary-hunt-bells :method))
+  (assert-error 'type-error (method-principal-hunt-bells nil))
+  (assert-error 'type-error (method-principal-hunt-bells :method))
   (assert-error 'type-error (method-secondary-hunt-bells nil))
   (assert-error 'type-error (method-secondary-hunt-bells :method)))
 
@@ -868,16 +868,18 @@
     (test-fch-summary "Tauron Surprise" 14 "/Oc")
     (test-fch-summary "Cambridge Surprise" 16 "D/B")
     (test-fch-summary "Phobos Moon Surprise" 16 "D/BDa2"))
-  (assert-equalp (hash-set !3254678 !3246578 !2436578 !4326578 !4625378 !3245678
-                           !4253678 !3524678 !2543678 !5342678 !2463578 !2365478
-                           !2435768 !2354768 !3524768 !5234768 !5342768 !4236758
-                           !2345768 !3254768 !4263758 !6452738 !3427568 !2647358
-                           !3547628 !2567438 !6327458 !3274568 !3572468 !5374268
-                           !5276348 !4372658 !6274538 !2734568 !6745238 !2745638
-                           !2435678 !4325678 !4265378 !3625478 !6345278 !2456738
-                           !5263748 !6352748 !2357468 !5237468 !2347658 !3275648
-                           !2573648 !5372648 !7254368 !7543628 !7236548 !7365428
-                           !7243658 !7654328)
+  (assert-equalp (hash-set !13254678 !13246578 !12436578 !14326578 !14625378 !13245678
+                           !12435678 !14325678 !14253678 !13524678 !12543678 !15342678
+                           !12536478 !12463578 !12365478 !14265378 !13625478 !16345278
+                           !12435768 !12354768 !13452768 !14253768 !13524768 !15234768
+                           !15342768 !14236758 !13256748 !12456738 !15263748 !13654728
+                           !16352748 !12345768 !13254768 !12364758 !13462758 !14263758
+                           !16452738 !13427568 !12647358 !12357468 !13527468 !15237468
+                           !12347658 !13547628 !15327648 !14367258 !12567438 !16327458
+                           !13274568 !13572468 !15374268 !13275648 !12573648 !15372648
+                           !13476528 !15276348 !13672548 !14372658 !16274538 !12734568
+                           !16745238 !15734268 !12745638 !13756248 !12763458 !17254368
+                           !17543628 !17236548 !17365428 !17243658 !17654328)
                  (apply #'hash-set (method-falseness (lookup-method "Belfast Surprise" 8))))
   (assert-equalp (hash-set !1325467890ET !1462537890ET !1324567890ET
                            !1432567890ET !1254367890ET !1236547890ET)
@@ -891,13 +893,17 @@
                 (setf (aref incidence i j) (apply #'hash-set x))))
         (finally
          (assert-equalp (make-array '(9 9) :initial-contents
-                                    `((nil nil nil nil nil nil nil nil nil)
+                                    `((nil nil nil nil ,(hash-set !1432567890 !1254367890)
+                                           ,(hash-set !1462537890 !1324567890) nil nil nil)
+                                      (nil nil nil ,(hash-set !1243657890) nil ,(hash-set !1325467890 !1254367890) nil nil
+                                           nil)
                                       (nil nil nil nil nil nil nil nil nil)
-                                      (nil nil nil nil nil nil nil nil nil)
-                                      (nil ,(hash-set !1243657890) nil nil nil nil nil nil nil)
-                                      (,(hash-set !1432567890 !1254367890) nil nil nil nil nil nil nil nil)
+                                      (nil ,(hash-set !1243657890) nil nil nil nil nil ,(hash-set !1462537890 !1236547890)
+                                           ,(hash-set !1325467890 !1432567890))
+                                      (,(hash-set !1432567890 !1254367890) nil nil nil nil nil nil nil
+                                       ,(hash-set !1324567890 !1236547890))
                                       (,(hash-set !1462537890 !1324567890) ,(hash-set !1325467890 !1254367890) nil nil nil
-                                        nil nil nil nil)
+                                       nil nil ,(hash-set !1243657890) nil)
                                       (nil nil nil nil nil nil nil nil nil)
                                       (nil nil nil ,(hash-set !1462537890 !1236547890) nil ,(hash-set !1243657890) nil nil
                                            nil)

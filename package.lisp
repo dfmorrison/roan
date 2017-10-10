@@ -109,7 +109,7 @@
            #:method-place-notation
            #:method-plain-course
            #:method-plain-lead
-           #:method-primary-hunt-bells
+           #:method-principal-hunt-bells
            #:method-properties
            #:method-property
            #:method-rotations-p

@@ -224,7 +224,7 @@ Can be used with @code{setf} to change a property. Signals a @code{type-error} i
   (plain-course nil)
   (course-length nil)
   (hunt-bells nil)
-  (primary-hunt-bells nil)
+  (principal-hunt-bells nil)
   (secondary-hunt-bells nil)
   (working-bells nil)
   (classification nil)
@@ -418,18 +418,18 @@ increasing numeric order. Note that for a method with no hunt bells this functio
 also return @code{nil}.
 
 The CCCBR's taxonomy of methods is largely driven by a division of hunt bells into
-``primary'' hunt bells and ``secondary'' hunt bells (see the
+``principal'' hunt bells and ``secondary'' hunt bells (see the
 @url{http://www.methods.org.uk/ccdecs.htm,Central Council's Decisions} for details). The
-@code{method-primary-hunt-bells} and @code{method-secondary-hunt-bells} functions return
+@code{method-principal-hunt-bells} and @code{method-secondary-hunt-bells} functions return
 lists, again ordered in increasing numeric order, of these hunt bells. The lists returned
 by these two functions are disjoint, and, in the absence of jump changes, their union
 consists exactly of the contents of the list returned by @code{method-hunt-bells}. The
-CCCBR's taxonmy, and its definitions of primary and secondary hunt bells, is predicated on
+CCCBR's taxonomy, and its definitions of principal and secondary hunt bells, is predicated on
 the absence of jump changes, and it is not clear how they would best be extended for
-methods with jump changes. The @code{method-primary-hunt-bells} and
+methods with jump changes. The @code{method-principal-hunt-bells} and
 @code{method-secondary-hunt-bells} functions therefore return @code{nil} for any methods
 containing jump changes; however, @code{method-hunt-bells} can still be usefully used for
-such methods. Note that @code{method-primary-hunt-bells} and
+such methods. Note that @code{method-principal-hunt-bells} and
 @code{method-secondary-hunt-bells} also return @code{nil} for methods without jump changes
 that do not contain any of the relevant hunt bells, as well as for methods that have not
 had both their stage and place-notation set.
@@ -442,13 +442,13 @@ properly parsed as place notation at @var{method}'s stage.
  (method-hunt-bells (method :stage 5
                             :place-notation \"3,1.5.1.5.1\"))
      @result{} (0 1)
- (method-primary-hunt-bells (method :stage 5
+ (method-principal-hunt-bells (method :stage 5
                             :place-notation \"3,1.5.1.5.1\"))
      @result{} (0 1)
  (method-secondary-hunt-bells (method :stage 5
                             :place-notation \"3,1.5.1.5.1\"))
      @result{} nil
- (method-primary-hunt-bells (method :stage 5
+ (method-principal-hunt-bells (method :stage 5
                             :place-notation \"5.1.5.1.125,2\"))
      @result{} (0)
  (method-secondary-hunt-bells (method :stage 5
@@ -588,7 +588,7 @@ notation at @var{method}'s stage.")
   ;; position; in the usual case of the treble single dodging section-length is 4
   (section-length nil))
 
-(define-method-trait primary-hunt-bells (%update-classification classification)
+(define-method-trait principal-hunt-bells (%update-classification classification)
   "===merge: method-hunt-bells 1")
 
 (define-method-trait secondary-hunt-bells (%update-classification classification)
@@ -617,7 +617,7 @@ appends @code{:differential} or @code{:little} to such a classification. Be care
 constructing the titles of such methods as the bands that have rung them have sometimes
 used more complex names, such as ``treble jump'' to describe them.
 
-The CCCBR's taxonmy unfortunately does contain some ambiguities around unusual methods;
+The CCCBR's taxonomy unfortunately does contain some ambiguities around unusual methods;
 for example little treble dodging methods containing multiple hunt bells with different
 cross section locations. The @code{method-classification} function will take its best
 guess in such cases, but there is no guarantee that what it returns is how the Council
@@ -771,57 +771,57 @@ See also @ref{set-method-classified-name} and @ref{method-hunt-bells}.
   (cond ((null (%get-changes method traits)))
         ((method-contains-jump-changes method)
          (setf (method-traits-classification traits) '(:jump)))
-        (t (iter (with primary := '())
+        (t (iter (with principal := '())
                  (with secondary := '())
                  (for b :in (%get-hunt-bells method traits))
                  (for info := (%get-hunt-bell-info method traits b))
-                 (if-first-time (push info primary)
+                 (if-first-time (push info principal)
                                 (let ((diff (labels ((kind-little (x)
                                                        (+ (hunt-path-info-kind x)
                                                           (if (hunt-path-info-little-p x) 1 0))))
                                               (- (kind-little info)
-                                                 (kind-little (first primary))))))
+                                                 (kind-little (first principal))))))
                                   (cond ((zerop diff)
-                                         (push info primary))
+                                         (push info principal))
                                         ((< diff 0)
-                                         (nconcf secondary primary)
-                                         (setf primary (list info)))
+                                         (nconcf secondary principal)
+                                         (setf principal (list info)))
                                         (t (push info secondary)))))
                  (finally
-                  (when-let ((info (first primary)))
+                  (when-let ((info (first principal)))
                     (when (and (null secondary)
-                               (null (rest primary))
+                               (null (rest principal))
                                (zerop (hunt-path-info-bell info))
                                (eql (hunt-path-info-apex info) 0))
                       (setf (method-traits-lead-head-code traits)
                             (lead-head-code (method-traits-lead-head traits)
                                             (first (last (method-traits-changes traits)))))))
-                  (setf (method-traits-primary-hunt-bells traits)
-                        (sort (mapcar #'hunt-path-info-bell primary) #'<))
+                  (setf (method-traits-principal-hunt-bells traits)
+                        (sort (mapcar #'hunt-path-info-bell principal) #'<))
                   (setf (method-traits-secondary-hunt-bells traits)
                         (sort (mapcar #'hunt-path-info-bell secondary) #'<))
-                  (let ((classification (and primary
-                                             (hunt-path-info-little-p (first primary))
+                  (let ((classification (and principal
+                                             (hunt-path-info-little-p (first principal))
                                              '(:little))))
                     (when (> (length (%get-working-bells method traits)) 1)
                       (push :differential classification))
                     (setf (method-traits-classification traits)
-                          (cons (if (null primary)
+                          (cons (if (null principal)
                                     :principle
-                                    (let ((k (hunt-path-info-kind (first primary))))
+                                    (let ((k (hunt-path-info-kind (first principal))))
                                       (cond ((eql k +plain+)
-                                             (%plain-classification method traits primary secondary))
+                                             (%plain-classification method traits principal secondary))
                                             ((eql k +treble-dodging+)
-                                             (%treble-dodging-classification method traits primary))
+                                             (%treble-dodging-classification method traits principal))
                                             (t (svref +hunt-path-keywords+ k)))))
                                 classification))))))))
 
-(defun %plain-classification (method traits primary-hunts secondary-hunts)
-  ;; Note that on entry method is known not to contain jump changes, primary-hunts is
+(defun %plain-classification (method traits principal-hunts secondary-hunts)
+  ;; Note that on entry method is known not to contain jump changes, principal-hunts is
   ;; known to be non-null, and to be all plain (though possibily all little as well).
   (block test-slow-course
-    (when (and (null (rest primary-hunts)) secondary-hunts)
-      (let* ((hunt (first primary-hunts)) (apex (hunt-path-info-apex hunt)))
+    (when (and (null (rest principal-hunts)) secondary-hunts)
+      (let* ((hunt (first principal-hunts)) (apex (hunt-path-info-apex hunt)))
         (labels ((bell-at-location (index pos)
                    (aref (row-bells (nth index (%get-plain-lead method traits))) pos)))
           (unless (eql (bell-at-location apex 0) (hunt-path-info-bell hunt))
@@ -835,7 +835,7 @@ See also @ref{set-method-classified-name} and @ref{method-hunt-bells}.
                                                (%get-changes method traits)))
                                1)
                          1)
-              ;; second place isn't being made as the primary hunt is leading so not
+              ;; second place isn't being made as the principal hunt is leading so not
               ;; slow course
               (return-from test-slow-course))
             (iter (with bell := (bell-at-location apex 1))
@@ -863,13 +863,13 @@ See also @ref{set-method-classified-name} and @ref{method-hunt-bells}.
           (test-bob (hunt-path-info-bell sh)))
     :place))
 
-(defun %treble-dodging-classification (method traits primary-hunts)
+(defun %treble-dodging-classification (method traits principal-hunts)
   (iter (with all := t)
         (with none := t)
         (with len := (method-lead-length method))
         (with half := (- (/ len 2) 1))
         (with stage := (method-stage method))
-        (for h :in primary-hunts)
+        (for h :in principal-hunts)
         (for hl := (mod (+ (hunt-path-info-apex h) half) len))
         (for sec := (hunt-path-info-section-length h))
         (for i := (mod (+ (hunt-path-info-apex h) sec -1) len))
@@ -1322,7 +1322,7 @@ this key can be counted on to be the same in different sessions and on different
 it may change between versions of Roan. If @var{method} does not have both its stage and
 place notation set @code{method-canonical-rotation-key} returns @code{nil}.
 
-Signals a @code{type-error} of @var{method} is not a @code{method}. Signals a
+Signals a @code{type-error} if @var{method} is not a @code{method}. Signals a
 @code{parse-error} if @var{method}'s place notation cannot be properly parsed at its
 stage.
 @example
@@ -1512,7 +1512,7 @@ each of which should be a sequence or @code{hash-set}, all of whose elements are
 returned.
 
 For higher stages there are two sequences of group names in the string, separated by a
-solidus (@samp{/}); those before the solidus are in course and those afterit out of
+solidus (@samp{/}); those before the solidus are in course and those after it out of
 course. For example, @code{\"B/Da1\"} represents the higher course in course elements of
 group B and out of course elements of groups D and a1.
 
@@ -1796,7 +1796,7 @@ useful slots accessible with @code{inappropriate-method-error-details} and
 methods: those at even stages major or higher with a single hunt bell, the treble, and all
 the working bells forming one cycle, that is, not differential. Falseness is only
 considered with the treble fixed, as whole leads, and, for stages royal and above, with
-seventh (that is, the bells roan denotes by @code{6}) and above fixed. Returns three
+the seventh (that is, the bell roan denotes by @code{6}) and above fixed. Returns three
 values: a summary of the courses that are false; for methods that have Plain Bob lead ends
 and lead heads and the usual palindromic symmetry, the false course head groups that are
 present; and a description of the incidence of falseness.
@@ -1804,16 +1804,16 @@ present; and a description of the incidence of falseness.
 The first value is a list of course heads, @code{row}s that have the treble and tenors
 fixed, such that the plain course is false against the courses starting with any of these
 course heads. Rounds is included only if the falseness occurs between rows at two
-different positions within the course. Course heads for major have just the tenor (that
-is, the bell represented in Roan by the integer @code{7}) fixed, while course heads for
-higher stages have all of the seventh and above (that is, bells represented in Roan by the
-integers @code{6} and larger) fixed in their rounds positions.
+different positions within the plain course. Course heads for major have just the
+tenor (that is, the bell represented in Roan by the integer @code{7}) fixed, while course
+heads for higher stages have all of the seventh and above (that is, bells represented in
+Roan by the integers @code{6} and larger) fixed in their rounds positions.
 
 If @var{method} has Plain Bob lead ends and lead heads, and the usual palindromic
-symmetry, the second value returned is a list of @code{fch-group} objects, and is
-otherwise the second value is @code{nil}. Note also that for methods that are completely
-clean in the context used by this function, for example plain royal methods, an empty list
-also will be returned. These two cases can be disambiguated by examining the first value
+symmetry, the second value returned is a list of @code{fch-group} objects, and otherwise
+the second value is @code{nil}. Note also that for methods that are completely clean in
+the context used by this function, for example plain royal methods, an empty list also
+will be returned. These two cases can be disambiguated by examining the first value
 returned.
 
 There is some ambiguity in the interpretation of ``A'' falseness. In Roan a method is
@@ -1821,7 +1821,7 @@ only said to have ``A'' falseness if its plain course is false. That is, the tri
 falseness implied by a course being false against itself and against its reverse by
 virtue of containing exactly the same rows is not reported as ``A'' falseness. ``A''
 falseness is only reported if there is some further, not-trivial falseness between rows
-at two different positions within the course.
+at two different positions within the plain course.
 
 The third value returned is a two dimensional, square array, each of the elements of that
 array being a possibly empty list of course heads. For element @var{e}, the list at
@@ -1872,29 +1872,31 @@ stage major or above, does not have one hunt bell, the treble, or is differentia
          (table (make-hash-table :size (* (method-lead-length method) limit)))
          (incidence (make-array `(,limit ,limit) :initial-element nil))
          (summary (make-hash-set :size +summary-initial-hash-set-size+)))
-    (iter (with start := (if (eql stage 8) 7 6))
-          (with lead-len := (method-lead-length method))
-          (for row :in (method-plain-course method))
-          (for i :from 0)
-          (pushnew (cons (floor i lead-len) row)
-                   (gethash (iter (with bells := (row-bells row))
-                                  (with result := (position 0 bells))
-                                  (for i :from start :to limit)
-                                  (setf result (logior (ash result +row-signature-shift+)
-                                                       (position i bells)))
-                                  (finally (return result)))
-                            table)
-                   :test #'equalp))
-    (iter (for (nil list) :in-hashtable table)
-          (iter (for ((lead . row) . rest) :on list)
-                (when rest
-                  (iter (for (other-lead . other-row) :in rest)
-                        (for fch := (permute-by-inverse row other-row))
-                        (unless (aref incidence lead other-lead)
-                          (setf (aref incidence lead other-lead)
-                                (make-hash-set :size +incidence-initial-hash-set-size+)))
-                        (hash-set-nadjoinf (aref incidence lead other-lead) fch)
-                        (hash-set-nadjoinf summary fch)))))
+    (labels ((add-fch (lead row other-lead other-row)
+               (unless (aref incidence lead other-lead)
+                 (setf (aref incidence lead other-lead)
+                       (make-hash-set :size +incidence-initial-hash-set-size+)))
+               (let ((fch (permute-by-inverse row other-row)))
+                 (hash-set-nadjoinf (aref incidence lead other-lead) fch)
+                 (hash-set-nadjoinf summary fch))))
+      (iter (with start := (if (eql stage 8) 7 6))
+            (with lead-len := (method-lead-length method))
+            (for row :in (method-plain-course method))
+            (for i :from 0)
+            (push (cons (floor i lead-len) row)
+                  (gethash (iter (with bells := (row-bells row))
+                                 (with result := (position 0 bells))
+                                 (for i :from start :to limit)
+                                 (setf result (logior (ash result +row-signature-shift+)
+                                                      (position i bells)))
+                                 (finally (return result)))
+                           table)))
+      (iter (for (nil list) :in-hashtable table)
+            (iter (for ((lead . row) . rest) :on list)
+                  (when rest
+                    (iter (for (other-lead . other-row) :in rest)
+                          (add-fch lead row other-lead other-row)
+                          (add-fch other-lead other-row lead row))))))
     (dotimes (i limit)
       (dotimes (j limit)
         (fch-list-f (aref incidence i j))))
