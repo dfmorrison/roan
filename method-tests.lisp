@@ -1279,8 +1279,8 @@
 
 #-(or clisp lispworks6 lispworks7)
 (define-constant +test-database-urls+
-    '("http://www.ringing.org/static/test-roan-methods-1.zip"
-      "http://www.ringing.org/static/test-roan-methods-2.zip")
+    '("http://test.ringing.org/html/test-roan-methods-1.zip"
+      "http://test.ringing.org/html/test-roan-methods-2.zip")
   :test #'equal)
 
 #-(or clisp lispworks6 lispworks7)
