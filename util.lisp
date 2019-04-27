@@ -25,7 +25,7 @@
 
 (defmacro check-type* (object type)
   ;; Similar to check-type, but object need not be a place, and if object is not of type
-  ;; the error it signals is non-continuable error; returns object if no error.
+  ;; the error it signals is a non-continuable error; returns object if no error.
   (once-only (object)
     `(if (typep ,object ',type)
          ,object

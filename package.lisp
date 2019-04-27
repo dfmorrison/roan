@@ -190,7 +190,7 @@ the slight complication, however, that the @code{roan} package shadows the symbo
 @code{method} and @code{method-name} from the @code{common-lisp} package. This is done
 because methods are an important concept in change ringing, albeit one unrelated to CLOS
 methods. Typically @code{method} and @code{method-name} should be shadowed in other packages
-that use the @code{roan} package. This can be done with @code{shadowing-import}, or the
+that use the @code{roan} package. This can be done with @code{shadowing-import-from}, or the
 @code{:shadowing-import} option to @code{defpackage}.
 @example
 @group
