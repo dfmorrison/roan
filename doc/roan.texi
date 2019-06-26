@@ -14,7 +14,7 @@
 @copying
 This is documentation of Roan, version @value{VERSION}.
 
-This documentation is copyright @copyright{} 2015-2017 Donald F Morrison.
+This documentation is copyright @copyright{} 2015-2019 Donald F Morrison.
 
 Copying and distribution of this documentation, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -556,20 +556,20 @@ All three functions signal a @code{type-error} if @var{group} is not a @code{fch
 @include inc/methods-database-attributes-function.texi
 @include inc/with-methods-database-macro.texi
 
-@cindex calls
-@cindex immutable
-@cindex bob
-@cindex single
-@cindex variations, doubles
-@cindex doubles variations
-@node Calls
-@section Calls
+@c @cindex calls
+@c @cindex immutable
+@c @cindex bob
+@c @cindex single
+@c @cindex variations, doubles
+@c @cindex doubles variations
+@c @node Calls
+@c @section Calls
 @c
-@include inc/call-summary.texi
-@include inc/call-structure.texi
-@include inc/call-function.texi
-@include inc/call-apply-function.texi
-@include inc/call-application-error-class.texi
+@c @include inc/call-summary.texi
+@c @include inc/call-structure.texi
+@c @include inc/call-function.texi
+@c @include inc/call-apply-function.texi
+@c @include inc/call-application-error-class.texi
 
 
 @node License

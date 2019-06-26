@@ -1,4 +1,4 @@
-;;; Copyright (c) 1975-2017 Donald F Morrison
+;;; Copyright (c) 1975-2019 Donald F Morrison
 ;;;
 ;;; Permission is hereby granted, free of charge, to any person obtaining a copy of this
 ;;; software and associated documentation files (the "Software"), to deal in the Software
@@ -2364,292 +2364,292 @@ cannot be opened or is not in the correct format.")
 
 ;;; Calls
 
-(defstruct (call (:copier nil) (:predicate nil))
-  "===summary===
-Roan provides an immutable @code{call} object that describes a change ringing call, such
-as a bob or single, that modifies a lead of a @code{method}. A @code{call} usually has a
-fragment of place notation representing changes that are added to the the sequence of
-changes constituting the lead, typically replacing some existing changes in the lead.
-
-A @code{call} has an offset, which specifies where in the lead the changes are added,
-replaced or deleted; this offset can be indexed from the beginning or the end of a lead,
-which frequently allows the same call to be used for similar methods with possibly
-different lead lengths. It is also possible to index from a postion within the lead rather
-than the beginning or end by supplying a fraction; again, this allows using, for example,
-half-lead calls with similar methods with different lead lengths.
-
-Typically a @code{call} replaces exactly as many changes as it supplies. However it is
-possible to replace none, in which case the @code{call} adds to the lead length; to only
-replace changes with a zero length set of changes, in which case the @code{call} shortens
-the lead by deleting changes; or even to add more or fewer changes than it replaces.
-
-Typically a call only affects the lead of a method to which is is applied. In exceptional
-cases, most notably doubles variations, it may also affect the subsequent lead. To support
-such use a @code{call} may have a following place notation fragment and a following
-replacement length. Such use is always restricted to being positioned at the beginning of
-the subsequent lead, and in the main lead the call must replace changes all the way to the
-end of the lead. Note that by starting the call at the end of the lead this could be
-simply adding changes, or even doing nothing.
-
-A @code{call} is applied to a lead with the function @code{call-apply}. This can take
-multiple @code{call}s, all of which are applied to the same lead. They must not, however,
-overlap. The @code{call-apply} function returns two values. The first is a list of the
-changes of the lead, modified by the @code{call}(s). The second, if not @code{nil}, is
-another @code{call} to be applied to the following lead, and is only non-nil when a
-@code{call} does apply also to the subsequent lead.
-
-Two @code{call}s may be compared with @code{equalp}.
-
-Examples of @code{call}s:
-@itemize
-@item
-The usual bob for Cambridge Surprise is @code{(call \"4\")}.
-@item
-The usual single for Grandsire is @code{(call \"3.123\" :offset 2)}.
-@item
-The usual bob for Erin Triples is @code{(call \"7\" :from-end nil)}.
-@item
-A 58 half-lead bob for Bristol Major is @code{(call \"5\" :fraction 1/2)}.
-@item
-A bob in April Day Doubles is @code{(call \"3.123\" :following \"3\")}.
-@item
-A call for surprise that shortens the lead by omitting the first two
-blows, so that ringing of the lead commences at the backstroke snap is
-@code{(call nil :from-end nil :replace 2)}.
-@end itemize
-===endsummary===
-An immutable object describing a change ringing call, such as a bob or single."
-  (place-notation nil :read-only t :type (or null string))
-  (offset 0 :read-only t :type (integer 0))
-  (from-end t :read-only t)
-  (fraction nil :read-only t :type (or null (rational (0) (1))))
-  (replace 0 :read-only t :type (integer 0))
-  (following nil :read-only t)
-  (changes #() :read-only t :type simple-vector))
-
-(defmethod print-object ((call call) stream)
-  (cond (*print-readably*
-         (prin1 `(call ,(call-place-notation call)
-                       ,@(unless (call-from-end call) '(:from-end nil))
-                       ,@(when-let ((offset (call-offset call))) `(:offset ,offset))
-                       ,@(when-let ((fraction (call-fraction call))) `(:fraction ,fraction))
-                       ,@(when-let ((replace (call-replace call))) `(:replace ,replace))
-                       ,@(when-let ((following (call-following call)))
-                                   `(:following ,(call-place-notation following)
-                                     :following-replace ,(call-replace following))))
-                stream))
-        (*print-escape*
-         (print-unreadable-object (call stream :type t :identity t)
-           (format stream "~A ~@{~A~^ ~}"
-                   (call-place-notation call)
-                   (call-offset call)
-                   (not (not (call-from-end call)))
-                   (call-fraction call)
-                   (call-replace call))
-           (when-let ((f (call-following call)))
-             (format stream " ~@{~A~^ ~}" (call-place-notation f) (call-replace f)))))
-        (t (format stream "Call~@[-~A~]~:[~;*~]"
-                   (call-place-notation call) (call-following call))))
-  call)
-
-(defconstant +call-changes-vector-length+ (+ (- +maximum-stage+ +minimum-stage+) 1))
-
-(defmacro %get-call-changes (vector stage)
-  `(svref ,vector (- ,stage +minimum-stage+)))
-
-(defmacro get-call-changes (call stage)
-  `(%get-call-changes (call-changes ,call) ,stage))
-
-(defun call (place-notation &key (from-end t) offset fraction replace
-                              (following nil following-supplied-p)
-                              (following-replace nil following-replace-supplied-p))
-  "Creates and returns a @code{call}, which modifies the changes of a lead of a
-@code{method}. The @var{place-notation} argument is a string of place, the changes
-corresponding to which will add or replace changes in a a lead of the @code{method} when
-applying the @code{code}. The @var{place-notation} may be @code{nil}, in which case no
-changes are add or replace existing ones. The @var{offset}, a non-negative integer, is the
-position at which to begin modifying the lead, and is measured from the beginning of the
-lead if the generalized boolean @var{from-end} is false, and from the end, otherwise. This
-can be further modifed by @var{fraction} which is multiplied by the lead length; the
-offset is counted forward or backward from that product. The @code{fraction}, if non-nill,
-must be a ratio greater than @code{0} and less than @code{1}, whose denominator evenly
-divides the lead length. The non-negative integer @var{replace} is the number of changes
-in the lead to be deleted or replaced. It is typically equal to the length of
-@var{changes}, which results in exact replacement of changes in the lead, but may be
-greater or less than that length, in which case the resulting lead is of a different
-length than a plain lead.
-
-If either or both of @var{following} or @var{following-replace} are supplied the call is
-intended to also apply to the subsequent lead. These operate just like
-@var{place-notation} and @var{replace}, but on the subsequent lead, and always at the
-begining of that lead. This use also depends upon the caller of @code{call-apply} making
-correct use of its second return value.
-
-If @var{replace} is not supplied or is @code{nil} it defaults to the number of changes
-represented by the @var{place-notation}. If @var{offset} is not supplied or is @code{nil},
-it defaults to @code{0} if @var{from-end} is false, and otherwise to the value of
-@var{replace}, which may itself have been defaulted from the value of
-@var{place-notation}. The default value of @var{from-end} is @code{t}. The default value
-of @var{fraction} is @code{nil}. If @var{following} is supplied but
-@var{following-replace} is not, @var{following-replace} defaults to the number of changes
-represetned by @var{following}. If @var{following-replace} is supplied but @var{following}
-is not, @var{following} defaults to @code{nil}.
-
-A @code{parse-error} is signaled if either @var{place-notation} or @var{following} is
-non-@code{nil} but not interpretable as place notation at the stage of @var{method}. A
-@code{type-error} is signaled if @var{offset} is supplied and is neither @code{nil} nor a
-non-negative integer; if @var{replace} is supplied and is neither @code{nil} nor a
-non-negative integer; @var{fraction} is supplied and is neither @code{nil} nor a ratio
-between @code{0} and @code{1}, exclusive; or if @var{following-replace} is supplied and is
-neither @code{nil} nor a non-negative integer."
-  (check-type* place-notation (or null string))
-  (check-type* offset (or null (integer 0)))
-  (check-type* fraction (or null (rational (0) (1))))
-  (check-type* replace (or null (integer 0)))
-  (check-type* following (or null string))
-  (check-type* following-replace (or null (integer 0)))
-  (when (equal place-notation "")
-    (setf place-notation nil))
-  (when (equal following "")
-    (setf following nil))
-  (iter (with primary-instance)
-        (with following-instance)
-        (with primary-vector := (make-array +call-changes-vector-length+ :initial-element nil))
-        (with following-vector := (make-array +call-changes-vector-length+ :initial-element nil))
-        (for stage :from +minimum-stage+ :to +maximum-stage+)
-        (handler-case
-            (let ((primary-changes (and place-notation (parse-place-notation place-notation
-                                                                             :stage stage)))
-                  (following-changes (and following (parse-place-notation following
-                                                                          :stage stage))))
-              (unless (or primary-instance following-instance)
-                (setf primary-instance primary-changes)
-                (setf following-instance following-changes))
-              (setf (%get-call-changes primary-vector stage) primary-changes)
-              (setf (%get-call-changes following-vector stage) following-changes))
-          (parse-error ()))
-        (finally
-         (when (and place-notation (null primary-instance))
-           (simple-parse-error "Call's place notation, ~A, cannot be interpreted at any stage."
-                               place-notation))
-         (when (and following (null following-instance))
-           (simple-parse-error "Call's :FOLLOWING, ~A, cannot be interepted as place notation at any stage."
-                               following))
-         (unless replace
-           (setf replace (length primary-instance)))
-         (unless following-replace
-           (setf following-replace (length following-instance)))
-         (let ((result (make-call :place-notation place-notation
-                                  :offset (or offset (if from-end replace 0))
-                                  :from-end from-end
-                                  :fraction fraction
-                                  :replace replace
-                                  :changes primary-vector
-                                  :following (and (or following-supplied-p
-                                                      following-replace-supplied-p)
-                                                  (make-call :place-notation following
-                                                             :offset 0
-                                                             :from-end nil
-                                                             :replace following-replace
-                                                             :changes following-vector)))))
-           (when (and (null primary-instance) (zerop replace)
-                      (null following-instance) (zerop following-replace))
-             (warn "Vacuous call contains no changes and zero length replacement: ~S." result))
-           (return result)))))
-
-(define-condition call-application-error (simple-error)
-  ((call :initarg :call :reader call-application-error-call)
-   (method :initarg :method :reader call-application-error-method)
-   (details :initarg :details :reader call-application-error-details))
-  (:documentation "Signaled when an anaomalous condition is detected while trying to
-apply a @code{call} to a @code{method}. Contains three potentially useful slots
-accessible with @code{call-application-error-call}, @code{call-application-error-method}
-and @code{call-application-error-details}."))
-
-(defun call-application-error (call method message &rest args)
-  (let ((details (apply #'format nil message args)))
-    (error 'call-application-error
-           :format-control "Error when applying ~S to ~S: ~A."
-           :format-arguments (list call method details)
-           :details details
-           :call call
-           :method method)))
-
-(defun call-apply (method &rest calls)
-  "Applies zero or more @var{calls} to a lead of @var{method}. Returns two values, the
-first a list of @code{row}s constituting the changes of the modified lead and the second
-@code{nil} or a @code{call}, such that the call should be applied to the succeeding lead.
-This second value is only non-nil for complex calls that affect two consecutive leads, as
-are encountered in doubles variations. One or more of the @var{calls} may be @code{nil},
-in which case they are ignored, just as if they had not been supplied. If no non-nil
-@var{calls} are supplied returns a list of the changes constituting a plain lead of
-@var{method}.
-
-When multiple @var{calls} are supplied the indices of all are computed relative to the
-length and position within the plain lead, before the application of any others of the
-calls. For example, a half-lead call that replaces the 7th's in Cambridge Major continues
-to replace that change even if an earlier call removes or adds several changes.
-
-Signals a @code{type-error} if @var{method} is not a @code{method} or if any of the
-@var{calls} are neither a @code{call} nor @code{nil}. Signals a @code{parse-error} if
-@var{method} does not have its stage or place-notation defined. Signals a
-@code{call-application-error} in any of the following circumstances: if the stage of
-@var{method} is such that the place notation or following place notation of one or more of
-the @var{calls} is inapplicable; if an attempt is made to apply a fractional lead
-@code{call} where the denominator of the fraction does not evenly divide the lead length;
-if the @code{call} would be positioned, or replace changes, that lie outside the lead; if
-a @code{call} with following changes does not replace changes up to the end of the first
-lead, or an attempt is made to applly two or more @code{call}s with following place
-notation to the same lead."
-  (let* ((stage (method-stage method))
-         (result (cons nil (method-changes method)))
-         (p result)
-         (i 0)
-         (end (method-lead-length method)))
-    (labels ((err (call message &rest args)
-               (apply #'call-application-error call method message args))
-             (start (call)
-               (+ (cond ((call-fraction call)
-                         (let ((result (* (method-lead-length method) (call-fraction call))))
-                           (if (integerp result)
-                               result
-                               (err call "can't have a call at ~A of a lead length of ~A"
-                                    (call-fraction call) (method-lead-length method)))))
-                        ((call-from-end call) (method-lead-length method))
-                        (t 0))
-                  (funcall (if (call-from-end call) #'- #'identity) (call-offset call))))
-             (capply (start call)
-               (cond ((< start i) (err call "overlapping calls"))
-                     ((> start end) (err call "call does not start within lead")))
-               (setf p (nthcdr (- start i) p))
-               (setf i start)
-               (let* ((e (+ i (call-replace call)))
-                      (changes (copy-list (get-call-changes call stage)))
-                      (q (last changes)))
-                 (when (> e end)
-                   (err call "can't replace changes past the end of the lead"))
-                 (setf (rest p) (nconc changes (rest (nthcdr (call-replace call) p))))
-                 (setf p q)
-                 (setf i e)
-                 (= e end))))
-      (unless result
-        (err nil "method is insufficiently defined to apply calls to"))
-      (iter (for c :in calls)
-            (when c
-              (when (or (and (call-place-notation c)
-                             (null (get-call-changes c stage)))
-                        (when-let ((sub-call (call-following c)))
-                          (and (call-place-notation sub-call)
-                               (null (get-call-changes sub-call stage)))))
-                (err c "call is not applicable to ~A methods" (stage-name stage)))
-              (collect (cons (start c) c) :into alist))
-            (finally (iter (with following := nil)
-                           (for (s . c) :in (sort alist #'< :key #'car))
-                           (for e := (capply s c))
-                           (when following
-                             (err c "can't have multiple calls with following changes"))
-                           (setf following (call-following c))
-                           (when (and following (not e))
-                             (err c "following changes found where call does not replace to end of lead"))
-                           (finally (return-from call-apply (values (rest result)
-                                                                    following)))))))))
+;; (defstruct (call (:copier nil) (:predicate nil))
+;;   "===summary===
+;; Roan provides an immutable @code{call} object that describes a change ringing call, such
+;; as a bob or single, that modifies a lead of a @code{method}. A @code{call} usually has a
+;; fragment of place notation representing changes that are added to the the sequence of
+;; changes constituting the lead, typically replacing some existing changes in the lead.
+;;
+;; A @code{call} has an offset, which specifies where in the lead the changes are added,
+;; replaced or deleted; this offset can be indexed from the beginning or the end of a lead,
+;; which frequently allows the same call to be used for similar methods with possibly
+;; different lead lengths. It is also possible to index from a postion within the lead rather
+;; than the beginning or end by supplying a fraction; again, this allows using, for example,
+;; half-lead calls with similar methods with different lead lengths.
+;;
+;; Typically a @code{call} replaces exactly as many changes as it supplies. However it is
+;; possible to replace none, in which case the @code{call} adds to the lead length; to only
+;; replace changes with a zero length set of changes, in which case the @code{call} shortens
+;; the lead by deleting changes; or even to add more or fewer changes than it replaces.
+;;
+;; Typically a call only affects the lead of a method to which is is applied. In exceptional
+;; cases, most notably doubles variations, it may also affect the subsequent lead. To support
+;; such use a @code{call} may have a following place notation fragment and a following
+;; replacement length. Such use is always restricted to being positioned at the beginning of
+;; the subsequent lead, and in the main lead the call must replace changes all the way to the
+;; end of the lead. Note that by starting the call at the end of the lead this could be
+;; simply adding changes, or even doing nothing.
+;;
+;; A @code{call} is applied to a lead with the function @code{call-apply}. This can take
+;; multiple @code{call}s, all of which are applied to the same lead. They must not, however,
+;; overlap. The @code{call-apply} function returns two values. The first is a list of the
+;; changes of the lead, modified by the @code{call}(s). The second, if not @code{nil}, is
+;; another @code{call} to be applied to the following lead, and is only non-nil when a
+;; @code{call} does apply also to the subsequent lead.
+;;
+;; Two @code{call}s may be compared with @code{equalp}.
+;;
+;; Examples of @code{call}s:
+;; @itemize
+;; @item
+;; The usual bob for Cambridge Surprise is @code{(call \"4\")}.
+;; @item
+;; The usual single for Grandsire is @code{(call \"3.123\" :offset 2)}.
+;; @item
+;; The usual bob for Erin Triples is @code{(call \"7\" :from-end nil)}.
+;; @item
+;; A 58 half-lead bob for Bristol Major is @code{(call \"5\" :fraction 1/2)}.
+;; @item
+;; A bob in April Day Doubles is @code{(call \"3.123\" :following \"3\")}.
+;; @item
+;; A call for surprise that shortens the lead by omitting the first two
+;; blows, so that ringing of the lead commences at the backstroke snap is
+;; @code{(call nil :from-end nil :replace 2)}.
+;; @end itemize
+;; ===endsummary===
+;; An immutable object describing a change ringing call, such as a bob or single."
+;;   (place-notation nil :read-only t :type (or null string))
+;;   (offset 0 :read-only t :type (integer 0))
+;;   (from-end t :read-only t)
+;;   (fraction nil :read-only t :type (or null (rational (0) (1))))
+;;   (replace 0 :read-only t :type (integer 0))
+;;   (following nil :read-only t)
+;;   (changes #() :read-only t :type simple-vector))
+;;
+;; (defmethod print-object ((call call) stream)
+;;   (cond (*print-readably*
+;;          (prin1 `(call ,(call-place-notation call)
+;;                        ,@(unless (call-from-end call) '(:from-end nil))
+;;                        ,@(when-let ((offset (call-offset call))) `(:offset ,offset))
+;;                        ,@(when-let ((fraction (call-fraction call))) `(:fraction ,fraction))
+;;                        ,@(when-let ((replace (call-replace call))) `(:replace ,replace))
+;;                        ,@(when-let ((following (call-following call)))
+;;                                    `(:following ,(call-place-notation following)
+;;                                      :following-replace ,(call-replace following))))
+;;                 stream))
+;;         (*print-escape*
+;;          (print-unreadable-object (call stream :type t :identity t)
+;;            (format stream "~A ~@{~A~^ ~}"
+;;                    (call-place-notation call)
+;;                    (call-offset call)
+;;                    (not (not (call-from-end call)))
+;;                    (call-fraction call)
+;;                    (call-replace call))
+;;            (when-let ((f (call-following call)))
+;;              (format stream " ~@{~A~^ ~}" (call-place-notation f) (call-replace f)))))
+;;         (t (format stream "Call~@[-~A~]~:[~;*~]"
+;;                    (call-place-notation call) (call-following call))))
+;;   call)
+;;
+;; (defconstant +call-changes-vector-length+ (+ (- +maximum-stage+ +minimum-stage+) 1))
+;;
+;; (defmacro %get-call-changes (vector stage)
+;;   `(svref ,vector (- ,stage +minimum-stage+)))
+;;
+;; (defmacro get-call-changes (call stage)
+;;   `(%get-call-changes (call-changes ,call) ,stage))
+;;
+;; (defun call (place-notation &key (from-end t) offset fraction replace
+;;                               (following nil following-supplied-p)
+;;                               (following-replace nil following-replace-supplied-p))
+;;   "Creates and returns a @code{call}, which modifies the changes of a lead of a
+;; @code{method}. The @var{place-notation} argument is a string of place, the changes
+;; corresponding to which will add or replace changes in a a lead of the @code{method} when
+;; applying the @code{code}. The @var{place-notation} may be @code{nil}, in which case no
+;; changes are add or replace existing ones. The @var{offset}, a non-negative integer, is the
+;; position at which to begin modifying the lead, and is measured from the beginning of the
+;; lead if the generalized boolean @var{from-end} is false, and from the end, otherwise. This
+;; can be further modifed by @var{fraction} which is multiplied by the lead length; the
+;; offset is counted forward or backward from that product. The @code{fraction}, if non-nill,
+;; must be a ratio greater than @code{0} and less than @code{1}, whose denominator evenly
+;; divides the lead length. The non-negative integer @var{replace} is the number of changes
+;; in the lead to be deleted or replaced. It is typically equal to the length of
+;; @var{changes}, which results in exact replacement of changes in the lead, but may be
+;; greater or less than that length, in which case the resulting lead is of a different
+;; length than a plain lead.
+;;
+;; If either or both of @var{following} or @var{following-replace} are supplied the call is
+;; intended to also apply to the subsequent lead. These operate just like
+;; @var{place-notation} and @var{replace}, but on the subsequent lead, and always at the
+;; begining of that lead. This use also depends upon the caller of @code{call-apply} making
+;; correct use of its second return value.
+;;
+;; If @var{replace} is not supplied or is @code{nil} it defaults to the number of changes
+;; represented by the @var{place-notation}. If @var{offset} is not supplied or is @code{nil},
+;; it defaults to @code{0} if @var{from-end} is false, and otherwise to the value of
+;; @var{replace}, which may itself have been defaulted from the value of
+;; @var{place-notation}. The default value of @var{from-end} is @code{t}. The default value
+;; of @var{fraction} is @code{nil}. If @var{following} is supplied but
+;; @var{following-replace} is not, @var{following-replace} defaults to the number of changes
+;; represetned by @var{following}. If @var{following-replace} is supplied but @var{following}
+;; is not, @var{following} defaults to @code{nil}.
+;;
+;; A @code{parse-error} is signaled if either @var{place-notation} or @var{following} is
+;; non-@code{nil} but not interpretable as place notation at the stage of @var{method}. A
+;; @code{type-error} is signaled if @var{offset} is supplied and is neither @code{nil} nor a
+;; non-negative integer; if @var{replace} is supplied and is neither @code{nil} nor a
+;; non-negative integer; @var{fraction} is supplied and is neither @code{nil} nor a ratio
+;; between @code{0} and @code{1}, exclusive; or if @var{following-replace} is supplied and is
+;; neither @code{nil} nor a non-negative integer."
+;;   (check-type* place-notation (or null string))
+;;   (check-type* offset (or null (integer 0)))
+;;   (check-type* fraction (or null (rational (0) (1))))
+;;   (check-type* replace (or null (integer 0)))
+;;   (check-type* following (or null string))
+;;   (check-type* following-replace (or null (integer 0)))
+;;   (when (equal place-notation "")
+;;     (setf place-notation nil))
+;;   (when (equal following "")
+;;     (setf following nil))
+;;   (iter (with primary-instance)
+;;         (with following-instance)
+;;         (with primary-vector := (make-array +call-changes-vector-length+ :initial-element nil))
+;;         (with following-vector := (make-array +call-changes-vector-length+ :initial-element nil))
+;;         (for stage :from +minimum-stage+ :to +maximum-stage+)
+;;         (handler-case
+;;             (let ((primary-changes (and place-notation (parse-place-notation place-notation
+;;                                                                              :stage stage)))
+;;                   (following-changes (and following (parse-place-notation following
+;;                                                                           :stage stage))))
+;;               (unless (or primary-instance following-instance)
+;;                 (setf primary-instance primary-changes)
+;;                 (setf following-instance following-changes))
+;;               (setf (%get-call-changes primary-vector stage) primary-changes)
+;;               (setf (%get-call-changes following-vector stage) following-changes))
+;;           (parse-error ()))
+;;         (finally
+;;          (when (and place-notation (null primary-instance))
+;;            (simple-parse-error "Call's place notation, ~A, cannot be interpreted at any stage."
+;;                                place-notation))
+;;          (when (and following (null following-instance))
+;;            (simple-parse-error "Call's :FOLLOWING, ~A, cannot be interepted as place notation at any stage."
+;;                                following))
+;;          (unless replace
+;;            (setf replace (length primary-instance)))
+;;          (unless following-replace
+;;            (setf following-replace (length following-instance)))
+;;          (let ((result (make-call :place-notation place-notation
+;;                                   :offset (or offset (if from-end replace 0))
+;;                                   :from-end from-end
+;;                                   :fraction fraction
+;;                                   :replace replace
+;;                                   :changes primary-vector
+;;                                   :following (and (or following-supplied-p
+;;                                                       following-replace-supplied-p)
+;;                                                   (make-call :place-notation following
+;;                                                              :offset 0
+;;                                                              :from-end nil
+;;                                                              :replace following-replace
+;;                                                              :changes following-vector)))))
+;;            (when (and (null primary-instance) (zerop replace)
+;;                       (null following-instance) (zerop following-replace))
+;;              (warn "Vacuous call contains no changes and zero length replacement: ~S." result))
+;;            (return result)))))
+;;
+;; (define-condition call-application-error (simple-error)
+;;   ((call :initarg :call :reader call-application-error-call)
+;;    (method :initarg :method :reader call-application-error-method)
+;;    (details :initarg :details :reader call-application-error-details))
+;;   (:documentation "Signaled when an anaomalous condition is detected while trying to
+;; apply a @code{call} to a @code{method}. Contains three potentially useful slots
+;; accessible with @code{call-application-error-call}, @code{call-application-error-method}
+;; and @code{call-application-error-details}."))
+;;
+;; (defun call-application-error (call method message &rest args)
+;;   (let ((details (apply #'format nil message args)))
+;;     (error 'call-application-error
+;;            :format-control "Error when applying ~S to ~S: ~A."
+;;            :format-arguments (list call method details)
+;;            :details details
+;;            :call call
+;;            :method method)))
+;;
+;; (defun call-apply (method &rest calls)
+;;   "Applies zero or more @var{calls} to a lead of @var{method}. Returns two values, the
+;; first a list of @code{row}s constituting the changes of the modified lead and the second
+;; @code{nil} or a @code{call}, such that the call should be applied to the succeeding lead.
+;; This second value is only non-nil for complex calls that affect two consecutive leads, as
+;; are encountered in doubles variations. One or more of the @var{calls} may be @code{nil},
+;; in which case they are ignored, just as if they had not been supplied. If no non-nil
+;; @var{calls} are supplied returns a list of the changes constituting a plain lead of
+;; @var{method}.
+;;
+;; When multiple @var{calls} are supplied the indices of all are computed relative to the
+;; length and position within the plain lead, before the application of any others of the
+;; calls. For example, a half-lead call that replaces the 7th's in Cambridge Major continues
+;; to replace that change even if an earlier call removes or adds several changes.
+;;
+;; Signals a @code{type-error} if @var{method} is not a @code{method} or if any of the
+;; @var{calls} are neither a @code{call} nor @code{nil}. Signals a @code{parse-error} if
+;; @var{method} does not have its stage or place-notation defined. Signals a
+;; @code{call-application-error} in any of the following circumstances: if the stage of
+;; @var{method} is such that the place notation or following place notation of one or more of
+;; the @var{calls} is inapplicable; if an attempt is made to apply a fractional lead
+;; @code{call} where the denominator of the fraction does not evenly divide the lead length;
+;; if the @code{call} would be positioned, or replace changes, that lie outside the lead; if
+;; a @code{call} with following changes does not replace changes up to the end of the first
+;; lead, or an attempt is made to applly two or more @code{call}s with following place
+;; notation to the same lead."
+;;   (let* ((stage (method-stage method))
+;;          (result (cons nil (method-changes method)))
+;;          (p result)
+;;          (i 0)
+;;          (end (method-lead-length method)))
+;;     (labels ((err (call message &rest args)
+;;                (apply #'call-application-error call method message args))
+;;              (start (call)
+;;                (+ (cond ((call-fraction call)
+;;                          (let ((result (* (method-lead-length method) (call-fraction call))))
+;;                            (if (integerp result)
+;;                                result
+;;                                (err call "can't have a call at ~A of a lead length of ~A"
+;;                                     (call-fraction call) (method-lead-length method)))))
+;;                         ((call-from-end call) (method-lead-length method))
+;;                         (t 0))
+;;                   (funcall (if (call-from-end call) #'- #'identity) (call-offset call))))
+;;              (capply (start call)
+;;                (cond ((< start i) (err call "overlapping calls"))
+;;                      ((> start end) (err call "call does not start within lead")))
+;;                (setf p (nthcdr (- start i) p))
+;;                (setf i start)
+;;                (let* ((e (+ i (call-replace call)))
+;;                       (changes (copy-list (get-call-changes call stage)))
+;;                       (q (last changes)))
+;;                  (when (> e end)
+;;                    (err call "can't replace changes past the end of the lead"))
+;;                  (setf (rest p) (nconc changes (rest (nthcdr (call-replace call) p))))
+;;                  (setf p q)
+;;                  (setf i e)
+;;                  (= e end))))
+;;       (unless result
+;;         (err nil "method is insufficiently defined to apply calls to"))
+;;       (iter (for c :in calls)
+;;             (when c
+;;               (when (or (and (call-place-notation c)
+;;                              (null (get-call-changes c stage)))
+;;                         (when-let ((sub-call (call-following c)))
+;;                           (and (call-place-notation sub-call)
+;;                                (null (get-call-changes sub-call stage)))))
+;;                 (err c "call is not applicable to ~A methods" (stage-name stage)))
+;;               (collect (cons (start c) c) :into alist))
+;;             (finally (iter (with following := nil)
+;;                            (for (s . c) :in (sort alist #'< :key #'car))
+;;                            (for e := (capply s c))
+;;                            (when following
+;;                              (err c "can't have multiple calls with following changes"))
+;;                            (setf following (call-following c))
+;;                            (when (and following (not e))
+;;                              (err c "following changes found where call does not replace to end of lead"))
+;;                            (finally (return-from call-apply (values (rest result)
+;;                                                                     following)))))))))
