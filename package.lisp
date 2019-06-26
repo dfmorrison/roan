@@ -148,6 +148,7 @@
            #:remove-all-patterns
            #:remove-pattern
            #:reset-match-counter
+           #:reversed-row
            #:rounds
            #:roundsp
            #:row

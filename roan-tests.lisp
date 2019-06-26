@@ -178,6 +178,8 @@
   (assert-false (rowp "13572468"))
   (assert-false (rowp '(13572468)))
   (assert-false (rowp nil))
+  (assert-equalp !56782143 (reversed-row !34128765))
+  (assert-error 'type-error (reversed-row 43128765))
   (with-sink-stream
     (let ((row (row 1 2 4 3 5 6 7 0)))
       (assert-prints "23546781" (princ row))

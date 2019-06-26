@@ -300,6 +300,7 @@ Non-nil if and only if @var{object} is a @code{row}.
 @include inc/rounds-function.texi
 @include inc/bell-at-position-function.texi
 @include inc/bells-list-function.texi
+@include inc/reversed-row-function.texi
 
 @node Properties of rows
 @subsection Properties of rows

@@ -422,7 +422,7 @@ being signaled.
   :test #'equalp)
 
 (defun rounds (&optional (stage *default-stage*))
-  "Returns a row representing rounds at the given @var{stage}, which defaults to
+  "Returns a @code{row} representing rounds at the given @var{stage}, which defaults to
 @code{*default-stage*} Signals a @code{type-error} if @var{stage} is not a @code{stage},
 that is an integer between @code{+minimum-stage+} and @code{+maximum-stage+}, inclusive."
   (check-type* stage stage)
@@ -502,6 +502,14 @@ supertype of @code{bell}, and of sufficient length or adjustable."
           (for i :from 0)
           (setf (aref vector i) b)))
   vector)
+
+(defun reversed-row (row)
+  "Returns a @code{row} of the same stage as @var{row} with its bells in the reverse
+order. A @code{type-error} is signaled if @var{row} is not a @code{row}.
+@example
+ (reversed-row !32148765) @result{} !56784123
+@end example"
+  (%make-row (reverse (row-bells row))))
 
 
 ;;; Permuting rows
