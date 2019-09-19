@@ -18,8 +18,9 @@
 ;;; OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (defpackage :roan
-  (:shadow #:method #:method-name)    ; Use method to refer to ringing concept instead.
-  (:use :common-lisp :alexandria :iterate :trivial-garbage)
+  ;; Use method and class to refer to the ringing concepts, not the CLOS ones.
+  (:shadow #:method #:method-name #:class #:class-name) 
+  (:use :common-lisp :alexandria :iterate)
   (:export #:*cross-character*
            #:*default-stage*
            #:*print-bells-upper-case*
@@ -39,8 +40,9 @@
            #:call-apply
            #:canonicalize-method-place-notation
            #:canonicalize-place-notation
-           #:cccbr-name
            #:changep
+           #:class-name
+           #:comparable-method-name
            #:copy-row
            #:cycles
            #:do-hash-set
@@ -79,10 +81,10 @@
            #:inappropriate-method-error-method
            #:inverse
            #:involutionp
-           #:lookup-method
-           #:lookup-methods-by-name
+           #:lookup-method-by-title
+           #:lookup-method-info
+           #:lookup-methods
            #:lookup-methods-by-notation
-           #:lookup-methods-from-changes
            #:make-hash-set
            #:make-match-counter
            #:map-hash-set
@@ -95,23 +97,26 @@
            #:method
            #:method-canonical-rotation-key
            #:method-changes
-           #:method-classification
-           #:method-contains-jump-changes
+           #:method-class
+           #:method-contains-jump-changes-p
            #:method-course-length
            #:method-default-calls
+           #:method-differential-p
            #:method-falseness
+           #:method-from-title
            #:method-hunt-bells
+           #:method-jump-p
            #:method-lead-count
            #:method-lead-head
            #:method-lead-head-code
            #:method-lead-length
+           #:method-library-details
+           #:method-little-p
            #:method-name
            #:method-place-notation
            #:method-plain-course
            #:method-plain-lead
            #:method-principal-hunt-bells
-           #:method-properties
-           #:method-property
            #:method-rotations-p
            #:method-secondary-hunt-bells
            #:method-stage
@@ -163,7 +168,7 @@
            #:tenors-fixed-p
            #:too-many-methods-error
            #:too-many-methods-error-count
-           #:update-methods-database
+           #:update-method-library
            #:use-roan-package
            #:which-grandsire-lead-head
            #:which-plain-bob-lead-head

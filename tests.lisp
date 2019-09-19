@@ -18,11 +18,12 @@
 ;;;; OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (defpackage :roan/test
-  (:shadowing-import-from :roan #:method #:method-name)
+  (:shadowing-import-from :roan #:method #:method-name #:class #:class-name)
   (:shadowing-import-from :alexandria #:set-equal)
   (:use :common-lisp :alexandria :iterate :roan :lisp-unit2 :asdf)
   (:export #:test-roan #:rerun-roan-failures #:test-quickly #:test-one)
   (:import-from #:roan
+                #:%method-classification
                 #:%extreme-hash-set
                 #:*fch-groups-by-course-head*
                 #:*fch-groups-by-name*
@@ -33,8 +34,8 @@
                 #:call-from-end
                 #:call-offset
                 #:call-replace
-                #:canonical-rotation
-                #:changes
+                ;; #:canonical-rotation
+                ;; #:changes
                 #:clear-method-traits
                 #:clrcache
                 #:collapse-whitespace
@@ -44,12 +45,13 @@
                 #:getcache
                 #:lru-cache
                 #:make-lru-cache
-                #:parse-timestamp
-                #:prepare-database
+                #:parse-method-title
+                ;; #:parse-timestamp
+                ;; #:prepare-database
                 #:remcache
                 #:replace
                 #:same-type-p
-                #:symbol
+                ;; #:symbol
                 #:with-initial-format-characters
                 #:with-warnings-muffled))
 
@@ -80,9 +82,10 @@ speeds things up (in terms of clock time, not CPU time) by over an order of magn
 
 (defun test-quickly ()
   (let ((*skip-network* t))
-    (asdf:test-system :roan)))
+    (test-system :roan)))
 
 (defun test-one (name &optional (*skip-network* *skip-network*))
+  (load-system "roan/test")
   (with-summary ()
     (run-tests :tests (list (intern (string name) :roan/test)))))
 
@@ -92,4 +95,4 @@ speeds things up (in terms of clock time, not CPU time) by over an order of magn
 (defun data-file (name &optional type)
   (merge-pathnames (make-pathname :name name :type type
                                   :directory '(:relative "test-data"))
-                   (asdf:system-source-directory :roan)))
+                   (system-source-directory :roan)))

@@ -32,6 +32,16 @@
          (error 'type-error :expected-type ',type :datum ,object))))
 
 
+;;; Byte utilities
+
+(defun equal-byte-specifiers (bs1 bs2)
+  (and (eql (byte-size bs1) (byte-size bs2))
+       (eql (byte-position bs1) (byte-position bs2))))
+
+(defun byte-left (bs)
+  (+ (byte-position bs) (byte-size bs)))
+
+
 ;;; Threading support
 
 (defparameter *threading-p* (member :bordeaux-threads *features*))

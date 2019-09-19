@@ -134,7 +134,7 @@ you will typically be thrown into your Lisp's debugger when Quicklisp is loading
 there is a version of Roan with slightly reduced functionality, @code{roan-base}, that
 does not contain the method lookup functions and does not load @code{cl-sqlite}. To use
 it instead simply evaluate @code{(ql:quickload :roan-base)}.
-@xref{Methods database}.
+@c @xref{Methods database}.
 
 @cindex Lisp implementations
 Roan has been tested with
@@ -157,8 +157,8 @@ support the libraries on which Roan depends. @xref{dependencies}.
 @cindex LispWorks
 One function, @code{update-methods-database}, does not work in CLISP or
 @url{http://www.lispworks.com,LispWorks} because the libraries used to download and unzip the updated database
-currently (as of June 2017) do not work or cannot be loaded in those Lisp implementations.
-@xref{update-methods-database} for further details and workarounds.
+currently (as of July 2019) do not work or cannot be loaded in those Lisp implementations.
+@c @xref{update-methods-database} for further details and workarounds.
 
 
 @node Reporting bugs
@@ -315,7 +315,6 @@ Non-nil if and only if @var{object} is a @code{row}.
 @include inc/tenors-fixed-p-function.texi
 @include inc/which-plain-bob-lead-head-function.texi
 @include inc/which-grandsire-lead-head-function.texi
-@include inc/plain-bob-lead-end-p-function.texi
 
 @node Permuting rows
 @subsection Permuting rows
@@ -437,60 +436,91 @@ by using the @code{for...:in-hash-set...} construct.
 @anchor{method-stage-function}
 @anchor{method-name-function}
 @anchor{method-place-notation-function}
-@deffn Function method-stage method
-@deffnx Function method-name method
+@deffn Function method-name method
+@deffnx Function method-jump-p method
+@deffnx Function method-differential-p method
+@deffnx Function method-little-p method
+@deffnx Function method-class method
+@deffnx Function method-stage method
 @deffnx Function method-place-notation method
-@deffnx Function method-properties method
-Returns the stage, name, place notation or property list of @var{method}, or @code{nil}.
-A non-nil value returned by @code{method-stage} is a @code{stage}, and by
-@code{method-name} or @code{method-place-notation} a string; @code{nil} for these
-indicates the corresponding attribute of @var{method} is unknown. The value returned by
-@code{method-properties} is a list, possibly empty.
-Note that the name is not
-just the portion that the Central Council considers its name: it also includes any
-explicitly named class, such as @samp{Surprise}, as well as modifiers such as @samp{Little}
-or @samp{Differential}. For example, the name of Littleport Little Surprise Royal is
-@samp{Littleport Little Surprise}.
-All these functions may be used with @code{setf} to set the relevant attributes of @var{method}.
-No checking is done that the string supplied as the @code{method-place-notation} is, in
-fact valid place notation; however, a subsequent attempt to use invalid place notation, for example by
-@code{method-changes} or @code{method-lead-head}, will signal an error.
-These functions all signal a @code{type-error} if @var{method} is not a @code{method},
-as does attempting to set the stage to a non-@code{stage}, the name or place notation to a
-non-string, or the property list to a non-list.
+Return the name, classification details, stage and place notation of @var{method}, or
+@code{nil}. A non-nil value returned by @code{method-name} or @code{method-place-notation}
+is a string; by @code{method-stage} a @code{stage} (that is, an integer); and by
+@code{method-class} one of the keywords @code{:bob}, @code{:place}, @code{:surprise},
+@code{:delight}, @code{:treble-bob}, @code{:alliance}, @code{:treble-place}, or
+@code{:hybrid}. The predicates @code{method-jump-p}, @code{method-differential-p} and
+@code{method-little-p} return generalized booleans.
+These functions all signal a @code{type-error} if @var{method} is not a @code{method}.
+
+Note that @code{method-jump-p} reflects the classification stored in @var{method}, while
+@code{method-contains-jump-changes-p} reflects the place notation of @var{method}, and
+they may not agree.
+
+All these functions may be used with @code{setf} to set the relevant attributes of
+@var{method}. No checking is done that the string supplied as the
+@code{method-place-notation} is, in fact, valid place notation; however, a subsequent
+attempt to use invalid place notation, for example by @code{method-changes} or
+@code{method-lead-head}, will signal an error. Attempting to set the name or place
+notation to anything but a string or @code{nil}, the class to anything but @code{nil} or
+one of the appropriate keywords, or the stage to anything but a @code{stage} or @code{nil}
+signals a @code{type-error}.
+@xref{method-contains-jump-changes-p}
 @end deffn
 
-@include inc/method-property-function.texi
 @include inc/method-title-function.texi
-@include inc/parse-method-title-function.texi
+@include inc/method-from-title-function.texi
+@include inc/comparable-method-name-function.texi
+
+@cindex Central Council
+@cindex CCCBR
+@cindex FMR
+@cindex Framework
+@cindex methods
+@cindex place notation
+@cindex library
+@cindex lookup
+@cindex query
+@cindex library
+@node Methods library
+@section Methods library
+
+@include inc/lookup-methods-summary.texi
+@include inc/lookup-methods-function.texi
+@include inc/lookup-method-info-function.texi
+@include inc/update-method-library-function.texi
+@include inc/method-library-details-function.texi
+
+@section Functions of the place notation of methods
+
 @include inc/canonicalize-method-place-notation-function.texi
 @include inc/method-changes-function.texi
-@include inc/method-contains-jump-changes-function.texi
+@include inc/method-contains-jump-changes-p-function.texi
 @include inc/method-lead-head-function.texi
-@include inc/method-lead-head-code-function.texi
+@c @include inc/method-lead-head-code-function.texi
 @include inc/method-lead-count-function.texi
 @include inc/method-plain-lead-function.texi
 @include inc/method-lead-length-function.texi
 @include inc/method-course-length-function.texi
 @include inc/method-plain-course-function.texi
 @include inc/method-true-plain-course-p-function.texi
-@cindex classification
-@cindex Central Council
-@cindex CCCBR
-@cindex Methods Committee
-@cindex methods
+@c @cindex classification
+@c @cindex Central Council
+@c @cindex CCCBR
+@c @cindex Methods Committee
+@c @cindex methods
 @include inc/method-hunt-bells-function.texi
 @include inc/method-working-bells-function.texi
+@include inc/method-lead-head-code-function.texi
 @include inc/method-rotations-p-function.texi
 @include inc/method-canonical-rotation-key-function.texi
 
-@cindex classification
-@cindex Central Council
-@cindex CCCBR
-@cindex Methods Committee
-@include inc/method-classification-function.texi
-@include inc/set-method-classified-name-function.texi
-@include inc/cccbr-name-function.texi
+@c @cindex classification
+@c @cindex Central Council
+@c @cindex CCCBR
+@c @cindex Methods Committee
+@c @include inc/method-classification-function.texi
+@c @include inc/set-method-classified-name-function.texi
+@c @include inc/cccbr-name-function.texi
 @include inc/no-place-notation-error-class.texi
 
 @cindex falseness
@@ -502,7 +532,7 @@ non-string, or the property list to a non-list.
 @cindex Shuttleworth, Edmund
 @cindex Leary, John
 @node Falseness
-@section Falseness
+@chapter Internal Falseness
 
 @include inc/fch-group-summary.texi
 @include inc/fch-group-structure.texi
@@ -537,40 +567,21 @@ All three functions signal a @code{type-error} if @var{group} is not a @code{fch
 @include inc/method-falseness-function.texi
 
 
-@cindex Central Council
-@cindex CCCBR
-@cindex Methods Committee
-@cindex methods
-@cindex place notation
-@cindex library
-@cindex lookup
-@cindex query
-@cindex ringing.org
-@cindex SQLite
-@cindex database
-@node Methods database
-@section Methods database
 
-@include inc/lookup-methods-by-name-summary.texi
-@include inc/lookup-methods-by-name-function.texi
-@include inc/update-methods-database-function.texi
-@include inc/methods-database-attributes-function.texi
-@include inc/with-methods-database-macro.texi
-
-@c @cindex calls
-@c @cindex immutable
-@c @cindex bob
-@c @cindex single
-@c @cindex variations, doubles
-@c @cindex doubles variations
-@c @node Calls
-@c @section Calls
+@cindex calls
+@cindex immutable
+@cindex bob
+@cindex single
+@cindex variations, doubles
+@cindex doubles variations
+@node Calls
+@chapter Calls
 @c
-@c @include inc/call-summary.texi
-@c @include inc/call-structure.texi
-@c @include inc/call-function.texi
-@c @include inc/call-apply-function.texi
-@c @include inc/call-application-error-class.texi
+@include inc/call-summary.texi
+@include inc/call-structure.texi
+@include inc/call-function.texi
+@include inc/call-apply-function.texi
+@include inc/call-application-error-class.texi
 
 
 @node License
@@ -589,7 +600,7 @@ read their actual licenses to be sure. @xref{dependencies}.
 
 Roan's license is:
 @quotation
-Copyright (c) 1975-2017 Donald F Morrison
+Copyright (c) 1975-2019 Donald F Morrison
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software

@@ -39,7 +39,7 @@ Signals a @code{type-error} if @var{package} is not a package designator. Signal
  @end example"
   (when (eq (find-package package) (find-package :keyword))
     (error 'simple-package-error
-           :format-control "Can't shadowing-import Roan symbols into the keyword package."
+           :format-control "Can't import Roan symbols into the keyword package."
            :package package))
   (unless (member (find-package :roan) (package-use-list package))
     (shadowing-import '(roan:method roan:method-name) package)
@@ -933,7 +933,8 @@ bell moving more than one place.
              (always (<= i b k)))))
 
 (defun %placesp (bells &rest places)
-  ;; assumes places are all integers, in strcitly increasing order, all less than stage
+  ;; Assumes places are all integers, in strictly increasing order, and ignores places
+  ;; greater than or equal to the stage. Don't use with jump changes.
   (iter (with stage-1 := (- (length bells) 1))
         (for i :from 0 :to stage-1)
         (cond ((eql i (first places))
@@ -1083,13 +1084,12 @@ not a @code{row}.
 (defun cycles (row)
   "Returns a list of lists of bells. Each of the sublists is the orbit of all of its
 elements in @var{row}. One cycles are included. Thus, if @var{row} is a lead head, all the
-sublists of length one are hunt bells, all the rest being working bells. If there are two
-or more sublists of length greater than one the corresponding method is, in Central
-Council nomenclature, a differential or differential hunter, depending upon the absence or
-presence of hunt bells. The resulting sublists are each ordered such that the first bell
-is the lowest numbered bell in that cycle, and the remaining bells occur in the order in
-which a bell traverses the cycle. Within the top level list, the sublists are ordered such
-that the first bell of each sublist appear in ascending numerical order.
+sublists of length one are hunt bells, all the rest being working bells; if there are two
+or more sublists of length greater than one the corresponding method is differential. The
+resulting sublists are each ordered such that the first bell is the lowest numbered bell
+in that cycle, and the remaining bells occur in the order in which a bell traverses the
+cycle. Within the top level list, the sublists are ordered such that the first bell of
+each sublist appear in ascending numerical order.
 @example
 @group
  (cycles !13572468) @result{} ((0) (1 4 2) (3 5 6) (7))
@@ -1217,21 +1217,21 @@ rounds is not a Plain Bob lead head, nor is any row below minimus. Signals a
 positive integer identifying which lead head it is; returns @code{nil} if @var{row} is not
 a Grandsire lead head. If @var{row} is the first lead head of a plain course of Grandsire
 @code{1} is returned, if the second @code{2}, etc. For the purposes of this function
-rounds is not a Grandsire lead head, nor is any row below doubles. Signals a
+rounds is not a Grandsire lead head, nor is any row below minimus. Signals a
 @code{type-error} if @var{row} is not a @code{row}.
 @example
 @group
  (which-plain-bob-lead-head !1253746) @result{} 1
  (which-plain-bob-lead-head !28967453) @result{} 4
  (which-plain-bob-lead-head !135264) @result{} nil
+ (which-plain-bob-lead-head !1243) @result{} 1
  (which-plain-bob-lead-head !12345) @result{} nil
- (which-plain-bob-lead-head !1243) @result{} nil
 @end group
 @end example"
   (let* ((bells (row-bells row)) (stage (length bells)))
     (and (zerop (aref bells 0))
          (eql (aref bells 1) 1)
-         (> stage 4)
+         (> stage 3)
          (which-lead-head bells #'(lambda (n)
                                     (if (oddp n)
                                         (let ((result (+ n 2)))
@@ -1240,38 +1240,6 @@ rounds is not a Grandsire lead head, nor is any row below doubles. Signals a
                                                 (t (- n 1))))
                                         (let ((result (- n 2)))
                                           (if (>= result 2) result 3))))))))
-
-(defun plain-bob-lead-end-p (row)
-  "Returns true if @var{row} is a lead end (that is, the handstroke of the treble's full
-lead) of a lead of a plain course of Plain Bob at its stage, and otherwise @code{nil}.
-For the purposes of this function no @code{row} below minimus can be a Plain Bob lead end.
-Signals a @code{type-error} if @var{row} is not a @code{row}.
-@example
-@group
- (plain-bob-lead-end-p !124365) @result{} t
- (plain-bob-lead-end-p !674523) @result{} t
- (plain-bob-lead-end-p !13527486) @result{} nil
-@end group
-@end example"
-  (let* ((bells (row-bells row)) (stage (length bells)))
-    (and (zerop (aref bells 0))
-         (> stage 3)
-         (labels ((next-coursing (n)
-                    (if (oddp n)
-                        (let ((result (+ n 2)))
-                          (cond ((< result stage) result)
-                                ((eql result stage) (+ n 1))
-                                (t (- n 1))))
-                        (let ((result (- n 2)))
-                          (if (>= result 2) result 1)))))
-           (iter (for p :first 1 :then (next-coursing p))
-                 (for b := (aref bells p))
-                 (for prev :previous b)
-                 (if-first-time nil (progn
-                                      (until (eql p 1))
-                                      (when (not (eql prev (next-coursing b)))
-                                        (return nil))))
-                 (finally (return t)))))))
 
 
 ;;; Place notation
@@ -1868,9 +1836,9 @@ Returns a string representing the place notation in a canonical form. If
 @var{stage}, which defaults to the current value of @code{*default-stage*}, and otherwise
 it should be a list of @code{row}s, all of the same stage. Unless overridden by the other
 keyword arguments, which have the same effects as for @code{write-place-notation}, the
-canonical form is a compact one usin lower case @samp{x} for cross, upper case letters for
-place high place names, @code{lead-end} style elision of external places, a comma for
-unfolding if possible, and notating jump changes as jumps within parentheses.
+canonical form is a compact one using lower case @samp{x} for cross, upper case letters for
+high place names, @code{lead-end} style elision of external places, a comma for unfolding
+if possible, and notating jump changes as jumps within parentheses.
 
 Signals a @code{type-error} if @var{string-or-changes} is neither a string nor a list, or
 if it is a list containing anything other than @code{row}s. Signals a @code{parse-error} if

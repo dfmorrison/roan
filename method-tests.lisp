@@ -24,131 +24,206 @@
 
 (defparameter *no-such-keyword* '(:no-such-keyword t))
 
+(define-test test-comparable-names ()
+  (labels ((test-name (expected &rest names)
+             (dolist (n names)
+               (assert-equal expected (comparable-method-name n)))))
+    (test-name "advent" "Advent" "ADVENT" "aDvEnT" "advent")
+    (test-name "new cambridge" "New Cambridge" "new Cambridge" "New cambridge" "New Cambridge")
+    (test-name "e mc2" "E=mc²" "e & MC₂")
+    (test-name "makcentm" "mäkčeň™")
+    (test-name nil "ελληνικά" "Too  Many Spaces" " Leading Space" "Trailing " "")
+    (test-name "x tm01234567890123456789" "X !\"&'(),-./=%?£$€™⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
+    (let ((s (format nil "~120{x~}" '(ignore))))
+      (test-name s s (string-upcase s) (string-capitalize s)))
+    (test-name nil (format nil "~121{x~}" '(ignore))))
+  (assert-error 'type-error (comparable-method-name 'Cambridge))
+  (assert-error 'type-error (comparable-method-name #\C))
+  (assert-error 'type-error (comparable-method-name nil))
+  (assert-error 'type-error (comparable-method-name 40))
+  (assert-error 'type-error (comparable-method-name '("Cambridge"))))
+
+(defun equal-methods-p (m1 m2)
+  (and (equal (method-name m1) (method-name m2))
+       (eql (%method-classification m1) (%method-classification m2))
+       (equal (method-place-notation m1) (method-place-notation m2))))
+
 (define-test test-method ()
-  (labels ((test-m (m s n p)
+  (labels ((test-m (m s n c p &optional lt d j)
              (assert-eql s (method-stage m))
              (assert-equal n (method-name m))
-             (assert-equal p (method-place-notation m))))
+             (assert-eq c (method-class m))
+             (assert-equal p (method-place-notation m))
+             (assert-eq lt (method-little-p m))
+             (assert-eq d (method-differential-p m))
+             (assert-eq j (method-jump-p m))))
     (let ((*default-stage* 17))
-      (test-m (method) 17 nil nil)
-      (test-m (method :name "foo") 17 "foo" nil)
-      (test-m (method :stage 9) 9 nil nil)
-      (test-m (method :stage nil) nil nil nil)
-      (test-m (method :place-notation "x3") 17 nil "x3")
-      (test-m (method :name "Cambridge Surprise"
+      (test-m (method) 17 nil nil nil)
+      (test-m (method :name "foo") 17 "foo" nil nil)
+      (test-m (method :stage 9) 9 nil nil nil)
+      (test-m (method :stage nil) nil nil nil nil)
+      (test-m (method :class nil) 17 nil nil nil)
+      (test-m (method :class :hybrid) 17 nil :hybrid nil)
+      (test-m (method :place-notation "x3") 17 nil nil "x3")
+      (test-m (method :little t) 17 nil nil nil t)
+      (test-m (method :differential t) 17 nil nil nil nil t)
+      (test-m (method :jump t) 17 nil nil nil nil nil t)
+      (test-m (method :name "fooX"
+                      :class :treble-place
+                      :stage 7
+                      :jump t
+                      :differential t
+                      :little t)
+              7 "fooX" :treble-place nil t t t)
+      (test-m (method :name "Cambridge"
+                      :class :surprise
                       :stage 6
                       :place-notation "x3x4x2x3x4x5,2")
-              6 "Cambridge Surprise" "x3x4x2x3x4x5,2")
-      (test-m (method :title "Bristol Surprise Royal") 10 "Bristol Surprise" nil)
-      (test-m (method :title (format nil " Littleport  Little~CSurprise Maximus " #\Tab)
-                      :stage 5)
-              5 "Littleport Little Surprise" nil)
-      (test-m (method :title "Littleport Little Surprise" :stage 11 :name "Glasgow")
-              11 "Glasgow" nil)
-      (test-m (method :title "Minor") 6 nil nil)
-      (test-m (method :title nil :stage 9 :name "Grandsire") 9 "Grandsire" nil)
-      (test-m (method :title (format nil " ~C~C ~C   ~C " #\Tab #\Tab #\Tab #\Tab))
-              17 nil nil))
-    (assert-error 'type-error (method :title t :name "Plain Bob" :stage 8))
+              6 "Cambridge" :surprise "x3x4x2x3x4x5,2"))
+    (assert-error 'type-error (method :name t :stage 8))
+    (assert-error 'type-error (method :class 17 :stage 8))
+    (assert-error 'type-error (method :stage :foo))
+    (assert-error 'type-error (method :place-notation 0 :stage 8))
     (let ((method (method :stage 8)))
-      (test-m method 8 nil nil)
-      (setf (method-name method) "Pudsey Surprise")
-      (test-m method 8 "Pudsey Surprise" nil)
-      (setf (method-stage method) 10)
-      (test-m method 10 "Pudsey Surprise" nil)
+      (test-m method 8 nil nil nil)
+      (assert-equal "Pudsey" (setf (method-name method) "Pudsey"))
+      (test-m method 8 "Pudsey" nil nil)
+      (assert-eql 10 (setf (method-stage method) 10))
+      (test-m method 10 "Pudsey" nil nil)
       (setf (method-stage method) 8 (method-place-notation method) "x5x6x3x4x5x6x7,2")
-      (test-m method 8 "Pudsey Surprise" "x5x6x3x4x5x6x7,2")
-      (setf (method-name method) nil)
-      (test-m method 8 nil "x5x6x3x4x5x6x7,2")
-      (setf (method-stage method) nil (method-place-notation method) nil)
-      (test-m method nil nil nil)
-      (setf (method-title  method) "Glazgow Little Surprise Royal")
-      (test-m method 10 "Glazgow Little Surprise" nil))
-    (let ((*print-readably* t))
-      (assert-equal "Little Bob Fourteen;(ROAN:METHOD :NAME \"Little Bob\" :STAGE 14 :PLACE-NOTATION \"x1x4,2\")"
-                     (let ((*package* (make-package (format nil "TEST-METHOD-TEST-PACKAGE-~A" (random 1.0))
-                                                    :use '(:cl))))
-                       (format nil "~A;~:*~S" (method :title "Little Bob Fourteen" :place-notation "x1x4,2"))))
-      (assert-equal "Cambridge Surprise;(METHOD :NAME \"Cambridge Surprise\" :STAGE NIL)"
-                     (let ((*package* (find-package :roan)))
-                       (format nil "~A;~:*~S" (method :name "Cambridge Surprise" :stage nil))))
-      (assert-equal "Cambridge Surprise Royal;(METHOD :NAME \"Cambridge Surprise\" :STAGE 10)"
-                     (let ((*package* (find-package :roan)) (*default-stage* 10))
-                     (format nil "~A;~:*~S" (method :name "Cambridge Surprise"))))
-      (dolist (keys '((:title "Yorkshire Surprise Maximus")
-                      (:title "Yorkshire Surprise Maximus" :stage 8)
-                      (:title "Yorkshire Surprise")
-                      (:name "Yorkshire Surprise" :stage 12)
-                      ()
-                      (:title "Little Bob Minor" :place-notation "x1x4,2")))
-        (let* ((m1 (apply #'method keys))
-               (m2 (eval (read-from-string (format nil "~S" m1)))))
-          (assert-true (equal (method-name m1) (method-name m2)))
-          (assert-true (eql (method-stage m1) (method-stage m2)))
-          (assert-true (equal (method-place-notation m1) (method-place-notation m2)))
-          (assert-true (equal (format nil "~A;~:*~S" m1) (format nil "~A;~:*~S" m2))))))
-    ;; The malarky with with dynamic variable below is so Lisp doesn't get smart and warn
-    ;; us about the problem at compile time.
+      (test-m method 8 "Pudsey" nil "x5x6x3x4x5x6x7,2")
+      (assert-eq :surprise (setf (method-class method) :surprise))
+      (test-m method 8 "Pudsey" :surprise "x5x6x3x4x5x6x7,2")
+      (assert-eq nil (setf (method-name method) nil))
+      (test-m method 8 nil :surprise "x5x6x3x4x5x6x7,2")
+      (setf (method-stage method) nil
+            (method-place-notation method) nil
+            (method-class method) nil)
+      (test-m method nil nil nil nil)
+      (assert-eq t (setf (method-little-p method) :yes))
+      (test-m method nil nil nil nil t nil nil)
+      (assert-eq t (setf (method-differential-p method) 1))
+      (test-m method nil nil nil nil t t nil)
+      (assert-eq t (setf (method-jump-p method) t))
+      (test-m method nil nil nil nil t t t)
+      (assert-eql nil (setf (method-differential-p method) nil))
+      (test-m method nil nil nil nil t nil t)
+      (assert-eql nil (setf (method-jump-p method) nil))
+      (test-m method nil nil nil nil t nil nil)
+      (assert-eql nil (setf (method-little-p method) nil))
+      (test-m method nil nil nil nil nil nil nil)
+      (assert-error 'type-error (setf (method-name method) 18))
+      (assert-error 'type-error (setf (method-name method) :foo))
+      (assert-error 'type-error (setf (method-name method) t))
+      (assert-error 'type-error (setf (method-name method) '("Cambridge")))
+      (assert-error 'type-error (setf (method-class method) 1))
+      (assert-error 'type-error (setf (method-class method) :foo))
+      (assert-error 'type-error (setf (method-class method) t))
+      (assert-error 'type-error (setf (method-class method) "Surprise"))
+      (assert-error 'type-error (setf (method-class method) '(:surprise)))
+      (assert-error 'type-error (setf (method-stage method) (- +minimum-stage+ 1)))
+      (assert-error 'type-error (setf (method-stage method) (+ +maximum-stage+ 1)))
+      (assert-error 'type-error (setf (method-stage method) :minor))
+      (assert-error 'type-error (setf (method-stage method) t))
+      (assert-error 'type-error (setf (method-stage method) "Major"))
+      (assert-error 'type-error (setf (method-stage method) '(8))))
+    (labels ((test-print (s1 sc &rest args)
+               (let ((m (apply #'method args)))
+                 (assert-equalp s1 (subseq (format nil "~S" m) 0 (length s1)))
+                 (assert-equal sc (format nil "~A" m)))))
+      ;; (test-print "#<METHOD Advent Surprise Major 36x56.4.5x5.6x4x5x4x7,8 "
+      ;;             "Advent Surprise Major"
+      ;;             :name "Advent" :class :surprise :stage 8
+      ;;             :place-notation "36x56.4.5x5.6x4x5x4x7,8")
+      ;; (test-print "#<METHOD Flopsis Caters " "Flopsis Caters"
+      ;;             :name "Flopsis" :stage 9)
+      ;; (test-print "#<METHOD Jump Differential Little " "Unnamed Jump Differential Little"
+      ;;             :differential t :little t :stage nil :jump t)
+      ;; (test-print "#<METHOD Grandsire Cinques" "Grandsire Cinques"
+      ;;             :name "Grandsire" :class :bob :stage 11)
+      ;; (test-print "#<METHOD Little Grandsire Triples" "Little Grandsire Triples"
+      ;;             :name "Little Grandsire" :little t :class :bob :stage 7
+      ;;             :place-notation "3,1.7.1.5.1"))
+      )
+    (labels ((test-print-readably (&rest args)
+               (let* ((m (apply #'method args))
+                      (*print-readably* t)
+                      (*read-eval* t)
+                      (r (read-from-string (format nil "~S" m))))
+                 (assert-true (equal-methods-p m r))
+                 (let ((*read-eval* nil))
+                   (assert-error 'print-not-readable (format nil "~S" m))))))
+      (test-print-readably
+       :name "Lincolnshire" :class :surprise :stage 12
+       :place-notation "x3x4x5x6x7x8x9x0x8x9x70xE,2")
+      (test-print-readably
+       :name "!ü8" :class :alliance :stage 20 :little t :jump t :differential t
+       :place-notation "this is a string, even if not really place notation")
+      (let ((*default-stage* 5))
+        (test-print-readably))
+      (test-print-readably :stage nil))
+    ;; The malarky with with a dynamic variable below is so Lisp doesn't get smart and
+    ;; warn us about the problem at compile time.
     (assert-error 'error (apply #'method *no-such-keyword*))))
 
 (define-test test-title ()
-  (labels ((test-t (name stage supply-name supply-stage title)
-             (let ((args nil))
-               (when supply-name
-                 (push name args)
-                 (push :name args))
-               (when supply-stage
-                 (push stage args)
-                 (push :stage args))
-               (let ((method (apply #'method args)))
-                 (assert-equal title (method-title  method))
-                 (let ((name-and-stage (multiple-value-list
-                                        (parse-method-title (method-title  method)))))
-                   (assert-eql 2 (length name-and-stage))
-                   (assert-equal name (first name-and-stage))
-                   (assert-equal stage (second name-and-stage)))))))
-  (let ((*default-stage* 10))
-    (test-t nil 10 nil nil "Royal")
-    (test-t nil nil nil t nil)
-    (test-t "Cambridge Surprise" 10 t nil "Cambridge Surprise Royal")
-    (test-t "Yorkshire Surprise" nil t t "Yorkshire Surprise")))
-  (let ((method (method :stage 5)))
-    (setf (method-title  method) "New Cambridge Surprise Major")
-    (assert-equal "New Cambridge Surprise" (method-name method))
-    (assert-eql 8 (method-stage method))
-    (setf (method-title  method) "Unknown Triples")
-    (assert-equal "Unknown" (method-name method))
-    (assert-eql 7 (method-stage method))
-    (setf (method-title  method nil) "Unknown Twenty-two")
-    (assert-equal "Unknown" (method-name method))
-    (assert-eql 22 (method-stage method))
-    (setf (method-title  method t) "Unknown Cinques")
-    (assert-eq nil (method-name method))
-    (assert-eql 11 (method-stage method))
-    (assert-equal "Unknown Cinques" (method-title  method t))
-    (assert-equal "Cinques" (method-title  method nil))
-    (assert-equal "Cinques" (method-title  method))))
-
-(define-test test-method-properties ()
-  (let ((method (method :name "Advent Surprise" :stage 8
-                        :place-notation "36x56.4.5x5.6x4x5x4x7,8"
-                        :properties '(:first-tower "1988-07-31, Boston, Massachusetts (Advent)"))))
-    (assert-equal "1988-07-31, Boston, Massachusetts (Advent)"
-                  (method-property method :first-tower))
-    (assert-eq nil (method-property method :ringing-world-reference))
-    (assert-equal "1988/894"
-                   (setf (method-property method :ringing-world-reference) "1988/894"))
-    (assert-eql 4 (length (method-properties method)))
-    (setf (method-properties method) nil)
-    (assert-eq nil (method-properties method))
-    (assert-eq :foo (method-property method :first-tower :foo))
-    (push 7 (method-property method :foo '(1)))
-    (incf (car (method-property method :foo)) 3)
-    (assert-equal '(:foo (10 1)) (method-properties method)))
-  (assert-error 'type-error (method-property nil :foo))
-  (assert-error 'type-error (method-property '(1 2 3) :foo))
-  (assert-error 'type-error (method-properties nil))
-  (assert-error 'type-error (method-properties "Cambridgge")))
+  (labels ((test-title (s &rest args)
+             (let* ((m (apply #'method args))
+                    (m2 (method-from-title (method-title m)))
+                    (m3 (method :stage nil))
+                    (m4 (method :stage 14 :name "Mumble" :class :treble-place
+                                :little t :differential t :jump t)))
+               (assert-equal s (method-title m))
+               (assert-true (equal-methods-p m m2))
+               (assert-equal s (setf (method-title m3) s))
+               (assert-true (equal-methods-p m m3))
+               (assert-equal s (setf (method-title m4) s))
+               (assert-true (equal-methods-p m m4))
+               (assert-true (equal-methods-p m3 m4)))))
+    (test-title "Cambridge Surprise Major"
+                :name "Cambridge" :class :surprise :stage 8)
+    (test-title "Stedman Cinques" :name "Stedman" :class nil :stage 11)
+    (test-title "Snarl Jump Differential Little Treble Place Triples"
+                :name "Snarl" :class :treble-place :stage 7
+                :little t :differential t :jump t)
+    (test-title "!ü8 Jump Little Bob Royal"
+                :name "!ü8" :class :bob :stage 10 :little t :differential nil :jump t)
+    (test-title "Minimus" :stage 4)
+    (test-title "Caters" :stage 9)
+    (test-title "Delight Royal" :class :delight :stage 10)
+    (test-title "Superlative Minor Surprise Major"
+                :name "Superlative Minor" :class :surprise :stage 8)
+    ;; The special cases.
+    (test-title "Grandsire Maximus" :name "Grandsire" :class :bob :stage 12)
+    (test-title "Reverse Grandsire Triples" :name "Reverse Grandsire" :class :bob :stage 7)
+    (test-title "Double Grandsire Triples" :name "Double Grandsire" :class :bob :stage 7)
+    (test-title "Little Grandsire Caters" :name "Little Grandsire" :class :bob :stage 9 :little t)
+    (test-title "Grandsire Minimus" :name "Grandsire" :class :place :stage 4)
+    (test-title "Reverse Grandsire Minimus" :name "Reverse Grandsire" :class :place :stage 4)
+    (test-title "Union Triples" :name "Union" :class :bob :stage 7)
+    (test-title "Reverse Union Triples" :name "Reverse Union" :class :bob :stage 7)
+    (test-title "Double Union Triples" :name "Double Union" :class :bob :stage 7)
+    (test-title "Little Union Triples" :name "Little Union" :class :bob :stage 7 :little t)
+    (test-title "Union Bob Doubles" :name "Union" :class :bob :stage 5))
+  (assert-equal "StrangeCase Treble Bob Maximus"
+                (method-title (method-from-title"StrangeCase tReBlE bOb mAximUs")))
+  (assert-equal "Meson Maximus" (method-title (method :name "Meson" :stage 12
+                                                      :class :hybrid :little t)))
+  (assert-true (equal-methods-p (method :name "Meson" :stage 12)
+                                (method-from-title "Meson Maximus")))
+  (assert-false (equal-methods-p (method :name "Meson" :stage 12 :little t :class :hybrid)
+                                 (method-from-title "Meson Maximus")))
+  (let ((*default-stage* 8))
+    (assert-equal "Seething Surprise Major"
+                  (method-title (method-from-title "Seething Surprise"))))
+  (assert-error 'type-error (method-from-title nil))
+  (assert-error 'type-error (method-from-title 0))
+  (assert-error 'type-error (method-from-title :cambridge-surprise-major))
+  (assert-error 'type-error (method-from-title "Rutland Surprise Major" 0))
+  (assert-error 'type-error (method-from-title "Watford Surprise Major" :x3x4))
+  (let ((method (method-from-title "Lincolnshire Major")))
+    (assert-error 'type-error (setf (method-title method) nil))
+    (assert-error 'type-error (setf (method-title method) :plain-bob-minor))))
 
 (define-test test-method-changes ()
   (let ((method (method :name "Little Bob"
@@ -178,8 +253,8 @@
     (assert-eq nil (method-changes method))))
 
 (define-test test-canonicalize-method-place-notation ()
-  (let ((method (method :title "Avon Delight Maximus"
-                        :place-notation "-5.-14..5Tx5.30.4x.70.1t.36-9.30.8-18.9t-18-T,1")))
+  (let ((method (method-from-title "Avon Delight Maximus"
+                                   "-5.-14..5Tx5.30.4x.70.1t.36-9.30.8-18.9t-18-T,1")))
     (assert-equal "x5x4.5x5.30.4x70.1.36x9.30.8x8.9x8x1,T"
                   (canonicalize-method-place-notation method))
     (assert-equal "x5x4.5x5.30.4x70.1.36x9.30.8x8.9x8x1,T"
@@ -188,16 +263,16 @@
     (assert-equal "X5X4.5X5.30.4X70.1t.36X9.30.8X8.9X8X1t,1t"
                   (method-place-notation method))))
 
-(define-test test-contains-jump-changes ()
-  (assert-false (method-contains-jump-changes
+(define-test test-contains-jump-changes-p ()
+  (assert-false (method-contains-jump-changes-p
                  (method :place-notation "x3x4x2x3x4x5,2" :stage 6)))
-  (assert-true (method-contains-jump-changes
+  (assert-true (method-contains-jump-changes-p
                 (method :place-notation "x3x(24)x2x(35)x4x5,2" :stage 6)))
-  (assert-false (method-contains-jump-changes (method :stage 6)))
-  (assert-false (method-contains-jump-changes
+  (assert-false (method-contains-jump-changes-p (method :stage 6)))
+  (assert-false (method-contains-jump-changes-p
                  (method :place-notation "x3x(24)x2x(35)x4x5,2" :stage nil)))
-  (assert-error 'type-error (method-contains-jump-changes nil))
-  (assert-error 'type-error (method-contains-jump-changes "Cambridge Surprise Minor")))
+  (assert-error 'type-error (method-contains-jump-changes-p nil))
+  (assert-error 'type-error (method-contains-jump-changes-p "Cambridge Surprise Minor")))
 
 (define-test test-lead-head ()
   (assert-equalp !15738264 (method-lead-head (method :stage 8
@@ -222,8 +297,8 @@
     (assert-false (equal p1 p2))))
 
 (define-test test-method-lead-length ()
-  (assert-eql 24  (method-lead-length (method :title "Cambridge Surprise Minor"
-                                              :place-notation "x3x4x2x3x4x5,2")))
+  (assert-eql 24  (method-lead-length (method-from-title "Cambridge Surprise Minor"
+                                                         "x3x4x2x3x4x5,2")))
   (assert-eql 1 (method-lead-length (method :stage 4 :place-notation "x")))
   (iter (for stage :from 5 :to +maximum-stage+)
         (if (evenp stage)
@@ -231,36 +306,35 @@
             (assert-eql 6 (method-lead-length (method :stage stage
                                                       :place-notation (format nil "3.1.3,~A"
                                                                               (bell-name (1- stage))))))))
-  (assert-eq nil (method-lead-length (method :title "Cambridge Surprise Minor")))
+  (assert-eq nil (method-lead-length (method-from-title "Cambridge Surprise Minor")))
   (assert-eq nil (method-lead-length (method :stage nil :place-notation "x1x4,2")))
   (assert-error 'type-error (method-lead-length "Cambridge Surprise Minor")))
 
 (define-test test-method-lead-count()
-  (assert-eql 5 (method-lead-count (method :title "Cambridge Surprise Minor"
-                                           :place-notation "x3x4x2x3x4x5,2")))
-  (assert-eql 1 (method-lead-count (method :title "Cromwell Tower Block Minor"
-                                           :place-notation "3x3.4x2x3x4x3,6")))
-  (assert-eql 6 (method-lead-count (method :title "Bexx Differential Bob Minor"
-                                           :place-notation "x1x1x23,2")))
+  (assert-eql 5 (method-lead-count (method-from-title "Cambridge Surprise Minor"
+                                                      "x3x4x2x3x4x5,2")))
+  (assert-eql 1 (method-lead-count (method-from-title "Cromwell Tower Block Minor"
+                                                      "3x3.4x2x3x4x3,6")))
+  (assert-eql 6 (method-lead-count (method-from-title "Bexx Differential Bob Minor"
+                                                      "x1x1x23,2")))
   (assert-eql 3 (method-lead-count (method :stage 10
                                            :place-notation "x34x4x2x23x4x5x6x7x8x9,1")))
   (assert-eql 2 (method-lead-count (method :stage 12 :place-notation "x6x6x6")))
-  (assert-eq nil (method-lead-count (method :title "Cambridge Surprise Minor")))
+  (assert-eq nil (method-lead-count (method-from-title "Cambridge Surprise Minor")))
   (assert-eq nil (method-lead-count (method :stage nil :place-notation "x1x4,2")))
   (assert-error 'type-error (method-lead-count "Cambridge Surprise Minor")))
 
-
 (define-test test-method-course-length ()
-  (assert-eql 120 (method-course-length (method :title "Cambridge Surprise Minor"
-                                           :place-notation "x3x4x2x3x4x5,2")))
-  (assert-eql 24 (method-course-length (method :title "Cromwell Tower Block Minor"
-                                           :place-notation "3x3.4x2x3x4x3,6")))
-  (assert-eql 72 (method-course-length (method :title "Bexx Differential Bob Minor"
-                                           :place-notation "x1x1x23,2")))
+  (assert-eql 120 (method-course-length (method-from-title "Cambridge Surprise Minor"
+                                                           "x3x4x2x3x4x5,2")))
+  (assert-eql 24 (method-course-length (method-from-title "Cromwell Tower Block Minor"
+                                                          "3x3.4x2x3x4x3,6")))
+  (assert-eql 72 (method-course-length (method-from-title "Bexx Differential Bob Minor"
+                                                          "x1x1x23,2")))
   (assert-eql 120 (method-course-length (method :stage 10
                                            :place-notation "x34x4x2x23x4x5x6x7x8x9,1")))
   (assert-eql 12 (method-course-length (method :stage 12 :place-notation "x6x6x6")))
-  (assert-eq nil (method-course-length (method :title "Cambridge Surprise Minor")))
+  (assert-eq nil (method-course-length (method-from-title "Cambridge Surprise Minor")))
   (assert-eq nil (method-course-length (method :stage nil :place-notation "x1x4,2")))
   (assert-error 'type-error (method-course-length "Cambridge Surprise Minor")))
 
@@ -271,7 +345,7 @@
                    !156342 !516324 !513642 !153624
                    !135264 !315246 !312564 !132546)
                  (method-plain-course (method :stage 6 :place-notation "34.2,1")))
-  (assert-eq nil (method-plain-course (method :title "Cambridge Surprise Minor")))
+  (assert-eq nil (method-plain-course (method-from-title "Cambridge Surprise Minor")))
   (assert-eq nil (method-plain-course (method :stage nil :place-notation "x1x4,2")))
   (assert-error 'type-error (method-plain-course "Cambridge Surprise Minor")))
 
@@ -290,7 +364,7 @@
   (assert-false (method-true-plain-course-p (method :stage nil :place-notation "x1") nil))
   (assert-false (method-true-plain-course-p (method :stage 8) nil)))
 
-(define-test test-hunt-working-bells ()
+(define-test test-method-hunt/working-bells ()
   (labels ((testm (stage place-notation hunt-bells working-bells)
              (let ((method (method :stage stage :place-notation place-notation)))
                (assert-equal hunt-bells (method-hunt-bells method))
@@ -339,8 +413,8 @@
 
 (define-test test-method-rotations-p ()
   (labels ((equal-key (m1 m2)
-             (equal (method-canonical-rotation-key m1)
-                    (method-canonical-rotation-key m2)))
+             (equalp (method-canonical-rotation-key m1)
+                     (method-canonical-rotation-key m2)))
            (test (stage notation &optional other)
              (let ((unrotated (method :stage stage :place-notation notation)))
                (assert-true (method-rotations-p unrotated unrotated))
@@ -391,6 +465,8 @@
     (assert-error 'parse-error (method-rotations-p m2 m))
     (assert-error 'parse-error (method-rotations-p m2 m2))
     (assert-error 'parse-error (method-canonical-rotation-key m2))))
+
+#|
 
 (define-test test-classification ()
   (assert-equal '(6 7 8 9) (method-principal-hunt-bells
@@ -583,45 +659,59 @@
   (assert-error 'type-error (cccbr-name '("Cambridge Surprise")))
   (assert-error 'type-error (cccbr-name '|Cambridge Surprise|)))
 
+|#
+
 (define-test test-method-lead-head-code ()
-  (labels ((test (name &optional even odd)
-             (iter (for i :from +minimum-stage+ :to +maximum-stage+)
-                   (when-let ((m (lookup-method name i)))
-                     (if (evenp (method-stage m))
-                         (assert-equal even (method-lead-head-code m))
-                         (assert-equal odd (method-lead-head-code m)))))))
-    (test "Plain Bob" "a" "p")
-    (test "Cambridge Surprise" "b")
-    (test "Cassiobury Surprise" "c")
-    (test "Ashtead Surprise" "d")
-    (test "Little Bob" "e")
-    (test "St Simon's Bob" nil "q")
-    (test "Glasgow Surprise" "g")
-    (test "Essex Surprise" "h" )
-    (test "Tavistock Surprise" "j")
-    (test "Buckfastleigh Surprise" "k")
-    (test "Cornwall Surprise" "l")
-    (test "Kent Treble Bob" "m")
-    (test "Stedman")
-    (test "Grandsire")
-    (test "Double Glasgow Surprise")
-    (test "Ouse Fen Surprise" "c1")
-    (test "Vernatts Surprise" "c2")
-    (test "Dun Laoghaire Surprise" "d1")
-    (test "Parson's Pleasure Surprise" "d2")
-    (test "Doombar Surprise" "j1")
-    (test "Mildmay Surprise" "j2")
-    (test "Kingland Surprise" "k1")
-    (test "Westland Surprise" "k2")
-    (test "Hessian Surprise" "d1")
-    (test "Milner Surprise" "k1")
-    (test "Twerton Little Bob" nil "q1")
-    (test "Little Little Little Penultimus Little Place" nil "r")
-    (test "Miserden Little Bob" nil "p1")
-    (test "Boston Alliance" "a")
-    (test "Billy Bob Treble Place" "b")
-    (test "Crick Hybrid")
-    (test "London Treble Jump"))
+  (iter (for (title code) :on '("Plain Bob Minimus" :a
+                                "Plain Bob Doubles" :p
+                                "Plain Bob Minor" :a
+                                "Plain Bob Cinques" :p
+                                "Plain Bob Sixteen" :a
+                                "York Surprise Minor" :a
+                                "Cambridge Surprise Sixteen" :b
+                                "Cassiobury Surprise Major" :c
+                                "Sgurr Surprise Royal" :d
+                                "Little Bob Twenty-two" :e
+                                "Barford Surprise Maximus" :f
+                                "Bristol Surprise Royal" :g
+                                "Advent Surprise Major" :h
+                                "Deva Surprise Major" :j
+                                "Double Norwich Court Bob Major" :k
+                                "Cornwall Surprise Major" :l
+                                "Bristol Surprise Major" :m
+                                "Anglia Surprise Royal" :c1
+                                "Ripon Surprise Maximus" :c2
+                                "Horsleydown Surprise Fourteen" :c3
+                                "Gainsborough Little Bob Fourteen" :d1
+                                "Anglia Alliance Maximus" :d2
+                                "Cambridgeshire Court Bob Cinques" :j1
+                                "Bristol Surprise Fourteen" :j2
+                                "Bristol Surprise Sixteen" :j4
+                                "Ariel Surprise Maximus" :k1
+                                "Claret Surprise Maximus" :k2
+                                "Leonis Surprise Fourteen" :k3
+                                "Strathclyde Surprise Sixteen" :k4
+                                "Baldrick Little Bob Doubles" :p1
+                                "Baldrick Little Bob Triples" :q1
+                                "Baldrick Little Bob Caters" :q1
+                                "Baldrick Little Bob Cinques" :q1
+                                "Miserden Little Bob Cinques" :p2
+                                "Ashford Little Bob Doubles" :q
+                                "Ashford Little Bob Triples" :q
+                                "Ashford Little Bob Caters" :q
+                                "Twerton Little Bob Caters" :q2
+                                "Corley Bob Doubles" :r
+                                "Little Penultimus Little Place Cinques" :r
+                                "Alpha Bob Caters" :r1
+                                "Byfield Bob Doubles" :s
+                                "Plymouth Bob Triples" :s1
+                                "Double Glasgow Surprise Major" nil
+                                "Itchingfield Slow Bob Doubles" nil
+                                "Longford Bob Doubles" nil
+                                "Lynx Differential Maximus" nil
+                                )
+             :by #'cddr)
+        (assert-eq code (method-lead-head-code (lookup-method-by-title title))))
   (assert-error 'type-error (method-lead-head-code nil))
   (assert-error 'type-error (method-lead-head-code "London Surprise Major"))
   (assert-error 'parse-error (method-lead-head-code (method :stage 5 :place-notation "x1x1x6,2"))))
@@ -805,11 +895,11 @@
     (assert-prints "L2" (princ (fch-group "L2" t)))
     (assert-prints "a2" (princ (fch-group "a2" t t)))
     (let ((*print-readably* t))
-      (assert-prints "(FCH-GROUP \"B\")" (prin1 (fch-group !12436578)))
-      (assert-prints "(FCH-GROUP \"B\" T NIL)" (prin1 (fch-group !1243657890)))
-      (assert-prints "(FCH-GROUP \"a1\" T T)" (prin1 (fch-group !1234657890)))
-      (assert-prints "(FCH-GROUP \"L2\" T NIL)" (prin1 (fch-group "L2" t)))
-      (assert-prints "(FCH-GROUP \"a2\" T T)" (prin1 (fch-group "a2" t t)))))
+      (assert-prints "#.(FCH-GROUP \"B\")" (prin1 (fch-group !12436578)))
+      (assert-prints "#.(FCH-GROUP \"B\" T NIL)" (prin1 (fch-group !1243657890)))
+      (assert-prints "#.(FCH-GROUP \"a1\" T T)" (prin1 (fch-group !1234657890)))
+      (assert-prints "#.(FCH-GROUP \"L2\" T NIL)" (prin1 (fch-group "L2" t)))
+      (assert-prints "#.(FCH-GROUP \"a2\" T T)" (prin1 (fch-group "a2" t t)))))
   (labels ((group-list (name &rest args)
              (when-let ((g (apply #'fch-group name args)))
                (list g)))
@@ -841,33 +931,37 @@
                                            (list (fch-group "X") (fch-group "A"))
                                            (hash-set (fch-group "K") (fch-group "U")))))
 
+#|
+
+;;; Needs to have method-lead-head-code defined before it will work
+
 (define-test test-method-falseness ()
-  (labels ((test-fch-summary (name stage result)
+  (labels ((test-fch-summary (title result)
              (multiple-value-bind (ignore-1 groups ignore-2)
-                 (method-falseness (lookup-method name stage))
+                 (method-falseness (lookup-method-by-title title))
                (declare (ignore ignore-1 ignore-2))
                (assert-equal result (fch-groups-string groups)))))
-    (test-fch-summary "Cambridge Surprise" 8 "BDEe")
-    (test-fch-summary "Bristol Surprise" 8 "c")
-    (test-fch-summary "Budapest Surprise" 8 "BcdY")
-    (test-fch-summary "Colston Arms Surprise" 8 "DKLOTa")
-    (test-fch-summary "Double Darrowby Surprise" 8 "BCDEFKLMPTUabcd")
-    (test-fch-summary "Othorpe Surprise" 8 "BDXY")
-    (test-fch-summary "Heywood Alliance" 8 "a")
-    (test-fch-summary "Double Glasgow Surprise" 8 nil)
-    (test-fch-summary "Little Bob" 8 nil)
-    (test-fch-summary "Cumberland Bob" 8 nil)
-    (test-fch-summary "Normandy Surprise" 8 "ABa")
-    (test-fch-summary "Crick Hybrid" 8 nil)
-    (test-fch-summary "Cambridge Surprise" 10 "BD/B")
-    (test-fch-summary "Old Surprise" 10 "/BK1a1c")
-    (test-fch-summary "Zorin Surprise" 10 "T/BDa1c")
-    (test-fch-summary "Cambridge Surprise" 12 "D/B")
-    (test-fch-summary "Swindon Surprise" 12 "/Bc")
-    (test-fch-summary "Cambridge Surprise" 14 "D/B")
-    (test-fch-summary "Tauron Surprise" 14 "/Oc")
-    (test-fch-summary "Cambridge Surprise" 16 "D/B")
-    (test-fch-summary "Phobos Moon Surprise" 16 "D/BDa2"))
+    (test-fch-summary "Cambridge Surprise Major" "BDEe")
+    (test-fch-summary "Bristol Surprise Major" "c")
+    (test-fch-summary "Budapest Surprise Major" "BcdY")
+    (test-fch-summary "Colston Arms Surprise Major" "DKLOTa")
+    (test-fch-summary "Double Darrowby Surprise Major" "BCDEFKLMPTUabcd")
+    (test-fch-summary "Othorpe Surprise Major" "BDXY")
+    (test-fch-summary "Heywood Alliance Major" "a")
+    (test-fch-summary "Double Glasgow Surprise Major" nil)
+    (test-fch-summary "Little Bob Major" nil)
+    (test-fch-summary "Cumberland Bob Major" nil)
+    (test-fch-summary "Normandy Surprise Major" "ABa")
+    (test-fch-summary "Crick Hybrid Major" nil)
+    (test-fch-summary "Cambridge Surprise Royal" "BD/B")
+    (test-fch-summary "Old Surprise Royal" "/BK1a1c")
+    (test-fch-summary "Zorin Surprise Royal" "T/BDa1c")
+    (test-fch-summary "Cambridge Surprise Maximus" "D/B")
+    (test-fch-summary "Swindon Surprise Maximus" "/Bc")
+    (test-fch-summary "Cambridge Surprise Fourteen" "D/B")
+    (test-fch-summary "Tauron Surprise Fourteen" "/Oc")
+    (test-fch-summary "Cambridge Surprise Sixteen" "D/B")
+    (test-fch-summary "Phobos Moon Surprise Sixteen" "D/BDa2"))
   (assert-equalp (hash-set !13254678 !13246578 !12436578 !14326578 !14625378 !13245678
                            !12435678 !14325678 !14253678 !13524678 !12543678 !15342678
                            !12536478 !12463578 !12365478 !14265378 !13625478 !16345278
@@ -880,13 +974,13 @@
                            !13476528 !15276348 !13672548 !14372658 !16274538 !12734568
                            !16745238 !15734268 !12745638 !13756248 !12763458 !17254368
                            !17543628 !17236548 !17365428 !17243658 !17654328)
-                 (apply #'hash-set (method-falseness (lookup-method "Belfast Surprise" 8))))
+                 (apply #'hash-set (method-falseness (lookup-method-by-title "Belfast Surprise Major"))))
   (assert-equalp (hash-set !1325467890ET !1462537890ET !1324567890ET
                            !1432567890ET !1254367890ET !1236547890ET)
-                 (apply #'hash-set (method-falseness (lookup-method "Cambridge Surprise" 12))))
+                 (apply #'hash-set (method-falseness (lookup-method-by-title  "Cambridge Surprise Maximus"))))
   (iter (with incidence := (third (multiple-value-list
                                    (method-falseness
-                                    (lookup-method "Cambridge Surprise" 10)))))
+                                    (lookup-method-by-title "Cambridge Surprise Royal")))))
         (for i :from 0 :below 9)
         (iter (for j :from 0 :below 9)
               (when-let ((x (aref incidence i j)))
@@ -916,12 +1010,51 @@
   (assert-error 'no-place-notation-error (method-falseness (method)))
   (assert-error 'no-place-notation-error (method-falseness (method :stage 12)))
   (assert-error 'no-place-notation-error (method-falseness (method :stage nil :place-notation "x1x4,2")))
-  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Stedman" 7)))
-  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Stedman" 11)))
-  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Grandsire" 9)))
-  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Grandsire" 8)))
-  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Grandsire" 10)))
-  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Temple Meads Differential Surprise" 10))))
+  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Stedman Triples")))
+  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Stedman Cinques")))
+  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Grandsire Caters")))
+  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Grandsire Major")))
+  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Grandsire Royal")))
+  (assert-error 'inappropriate-method-error (method-falseness (lookup-method "Temple Meads Differential Surprise Royal"))))
+
+|#
+
+(define-test test-lookup-methods ()
+  (labels ((just-one (list)
+             (assert-eql 1 (length list))
+             (first list))
+           (test-m (title name stage notation &optional class little differential jump)
+             (iter (for m :in (list (just-one (lookup-methods :name name :jump jump
+                                                              :differential differential
+                                                              :little little :class class
+                                                              :stage stage :wildcards nil))
+                                    (lookup-method-by-title title)
+                                    (just-one (lookup-methods-by-notation notation stage))
+                                    (just-one (lookup-methods-by-notation (parse-place-notation notation :stage stage)))))
+                   (assert-equal title (method-title m))
+                   (assert-equal notation (method-place-notation m))
+                   (assert-equal name (method-name m))
+                   (assert-eql stage (method-stage m))
+                   (assert-eq class (method-class m))
+                   (assert-eq little (method-little-p m))
+                   (assert-eq differential (method-differential-p m))
+                   (assert-eq jump (method-jump-p m)))))
+    (test-m "Advent Surprise Major" "Advent" 8 "36x56.4.5x5.6x4x5x4x7,8" :surprise)
+    (test-m "Syon Gipsy Royal" "Syon Gipsy" 10 "x,4x3x1x5x1x34x1x34" :hybrid)
+    (test-m "Stedman Cinques" "Stedman" 11 "3.1.E.3.1.3,1")
+    (test-m "Little Bob Minor" nil 6 "x1x4,2" :bob t)
+    (test-m "Plain Bob Major" "Plain" 8 "x1x1x1x1,2" :bob)
+    (test-m "Plain Bob Triples" "Plain" 7 "7.1.7.1.7.1.7,127" :bob)
+    (test-m "Grandsire Triples" "Grandsire" 7 "3,1.7.1.7.1.7.1" :bob)
+    (test-m "Union Triples" "Union" 7 "3.1.7.1.7.1.7.1.7.1.7.1.5.1" :bob)
+    (test-m "Lynx Differential Maximus" "Lynx" 12 "x49x49.3670x,T" nil nil t)
+    (test-m "London Link Differential Sixteen" "London Link" 16 "5T.1.5T.1.70.3Bx,D" :hybrid t t)
+    (test-m "Bexxx Differential Bob Minor" "Bexxx" 6 "x1x1x23,2" :bob nil t)
+    (test-m "Amaranth Little Place Major" "Amaranth" 8 "34.1.34,8" :place t))
+  (assert-equal '("Mumble Little" nil nil nil nil 12)
+                (multiple-value-list (parse-method-title "Mumble Little Maximus"))))
+
+#|
 
 (define-test test-lookup-methods-by-name ()
   (let ((m (lookup-methods-by-name "Advent Surprise" :stage 8)))
@@ -1151,22 +1284,6 @@
       (test-error type-error 10 "x1x4,2" :url 19)
       (test-error type-error 10 "x1x4,2" :update t :url :site))))
 
-(define-test test-with-methods-database ()
-  (assert-equal '(6 8 10 12 14 16)
-                (sort (with-methods-database (conn)
-                        (iter (for (stage) :in-sqlite-query
-                                   "select stage from methods where name = 'Cambridge Surprise'"
-                                   :on-database conn)
-                              (collect stage)))
-                      #'<))
-  (assert-eq nil (with-methods-database (conn) (declare (ignore conn))))
-  (assert-equal '(1 2 3)
-                (multiple-value-list (with-methods-database (conn)
-                                       (declare (ignore conn))
-                                       (values 1 2 3))))
-  (assert-error 'type-error (with-methods-database (conn :database 17) (declare (ignore conn)) nil))
-  (assert-error 'type-error (with-methods-database (conn :busy-timeout -1) (declare (ignore conn)) nil))
-  (assert-error 'type-error (with-methods-database (conn :busy-timeout t) (declare (ignore conn)) nil)))
 
 (defmacro with-temp-filename ((name-var &optional preserve) &body body)
   `(%with-temp-filename #'(lambda (,name-var) ,@body) ,preserve))
@@ -1343,139 +1460,142 @@
             (assert-eql 1 (length m1))
             (assert-eql 0 (length m2))))))))
 
-;; (define-test test-call ()
-;;   (labels ((check-call (call changes offset from-end fraction replace &key stage following)
-;;              (assert-equalp changes (get-call-changes call (or stage (stage (first changes)))))
-;;              (assert-eql offset (call-offset call))
-;;              (assert-eq from-end (not (not (call-from-end call))))
-;;              (assert-eql fraction (call-fraction call))
-;;              (assert-eql replace (call-replace call))
-;;              (assert-equalp following (call-following call))))
-;;     (let ((c1 (call "X3.Et" :from-end :true :offset 5 :fraction 2/3))
-;;           (c2 (call "3.123" :following "3")))
-;;       (check-call c1 #12!x3.e 5 t 2/3 3)
-;;       (check-call c2 #5!3.123 2 t nil 2 :following (call "3" :from-end nil))
-;;       (assert-true (ppcre:scan "#<CALL X3.Et 5 T 2/3 3 [^ ]+>" (prin1-to-string c1)))
-;;       (assert-true (ppcre:scan "#<CALL 3.123 2 T NIL 2 3 1 [^ ]+>" (prin1-to-string c2)))
-;;       (assert-equal "Call-X3.Et" (princ-to-string c1))
-;;       (assert-equal "Call-3.123*" (princ-to-string c2))
-;;       (let ((*print-readably* t))
-;;         (assert-equal "(CALL \"X3.Et\" :OFFSET 5 :FRACTION 2/3 :REPLACE 3)"
-;;                       (prin1-to-string c1))
-;;         (assert-equal "(CALL \"3.123\" :OFFSET 2 :REPLACE 2 :FOLLOWING \"3\" :FOLLOWING-REPLACE 1)"
-;;                       (prin1-to-string c2))))
-;;     (check-call (call "4") #8!4 1 t nil 1)
-;;     (check-call (call nil :from-end nil :replace 2) nil 0 nil nil 2 :stage 6)
-;;     (check-call (call nil :replace 2) nil 2 t nil 2 :stage 9)
-;;     (check-call (call "5" :fraction 1/2) #8!5 1 t 1/2 1)
-;;     (assert-equalp (call "456") (call "456" :offset nil :replace nil))
-;;     (assert-error 'type-error (call 4))
-;;     (assert-error 'type-error (call #8!4))
-;;     (assert-error 'type-error (call (first #8!4)))
-;;     (assert-error 'type-error (call t))
-;;     (assert-error 'type-error (call "4" :offset -1))
-;;     (assert-error 'type-error (call "4" :offset t))
-;;     (assert-error 'type-error (call "1" :fraction 0))
-;;     (assert-error 'type-error (call "3" :fraction 1))
-;;     (assert-error 'type-error (call "5" :fraction 0.5))
-;;     (assert-error 'type-error (call "7" :fraction t))
-;;     (assert-error 'type-error (call "6" :replace -1))
-;;     (assert-error 'type-error (call "6" :replace t))
-;;     (assert-warning 'warning (call nil :replace 0))
-;;     (assert-warning 'warning (call "" :replace 0))
-;;     (assert-warning 'warning (call nil))
-;;     (assert-warning 'warning (call ""))))
-;; 
-;; (define-test test-call-apply ()
-;;   (labels ((check-call-apply (result method &rest calls)
-;;              (assert-equalp (list (parse-place-notation result :stage (method-stage method))
-;;                                   nil)
-;;                             (multiple-value-list (apply #'call-apply method calls)))))
-;;     (iter (for s :from 6 :to +maximum-stage+ :by 2)
-;;           (check-call-apply "x1x4,4"
-;;                             (method :stage s :place-notation "x1x4,2")
-;;                             (call "4")))
-;;     (check-call-apply "3.1.5.3.1.345,145"
-;;                       (lookup-method "Stedman" 5)
-;;                       (call "145")
-;;                       (call "345" :fraction 1/2))
-;;     (check-call-apply "7.3.1.3.1.3"
-;;                       (lookup-method "Erin" 9)
-;;                       (call "7" :from-end nil))
-;;     (check-call-apply "x4x2x3x4x5x4x3x2x4x3x2"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       nil
-;;                       (call nil :replace 2 :from-end nil))
-;;     (check-call-apply "x3x4x2x3x4x5x4x3x2x4x3x2.3x3x3"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       (call "3x3x3" :replace 0)
-;;                       nil)
-;;     (check-call-apply "x3x4x2x3x4x5x4x3x2x4x3x2"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       nil)
-;;     (check-call-apply "x3x4x2x3x4x5x4x3x2x4x3x2"
-;;                       (lookup-method "Cambridge Surprise" 6))
-;;     (check-call-apply "x5x5x5x3x4x2x3x4x5x4x3x2x4x3x2"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       (call "x5x5x5" :from-end nil :replace 0))
-;;     (check-call-apply "x3x4x2x3x4x5x4x3x2x4x"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       (call nil :replace 3 :offset 3))
-;;     (check-call-apply "x3x4x2x3x4.234.5x6x4x3x2x4x3x2"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       (call "234.5x6" :fraction 1/2 :offset 2 :replace 2))
-;;     (check-call-apply "x3x4x2x3.345.4x5x4x3x2x4x3x2"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       (call "3456" :from-end nil :fraction 1/3))
-;;     (check-call-apply "x3x4x2x3x4x5x4x5x2x4x3x2"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       (call "5" :fraction 2/3))
-;;     (check-call-apply "x5x5x5x3x4x2x3.345.4.234.5x6x4x5x2x4x"
-;;                       (lookup-method "Cambridge Surprise" 6)
-;;                       nil
-;;                       (call nil :replace 3 :offset 3)
-;;                       nil nil nil
-;;                       (call "x5x5x5" :from-end nil :replace 0)
-;;                       nil
-;;                       (call "5" :fraction 2/3)
-;;                       nil
-;;                       (call "234.5x6" :fraction 1/2 :offset 2 :replace 2)
-;;                       (call "3456" :from-end nil :fraction 1/3)
-;;                       nil))
-;;   (let* ((m (lookup-method "Plain Bob" 5)))
-;;     (multiple-value-bind (lead1 following)
-;;         (call-apply m (call "23" :following "3"))
-;;       (let ((lead2 (call-apply m following)))
-;;         (assert-equalp (values (parse-place-notation "5.1.5.1.5.1.5.1.5.123" :stage 5))
-;;                        lead1)
-;;         (assert-equalp (values (parse-place-notation "3.1.5.1.5.1.5.1.5.125" :stage 5))
-;;                        lead2))))
-;;   (let* ((m (lookup-method "Bastow Little Bob" 6)))
-;;     (multiple-value-bind (lead1 following)
-;;         (call-apply m (call "5.4" :replace 3 :following "5.6.3" :following-replace 2))
-;;       (let ((lead2 (call-apply m following)))
-;;         (assert-equalp (values (parse-place-notation "x5.4" :stage 6))
-;;                        lead1)
-;;         (assert-equalp (values (parse-place-notation "5.6.3x6" :stage 6))
-;;                        lead2))))
-;;   (assert-error 'type-error (call-apply nil))
-;;   (assert-error 'type-error (call-apply "Vermont Delight" 8))
-;;   (assert-error 'type-error (call-apply (lookup-method "Cambridge Surprise" 8) "4"))
-;;   (assert-error 'type-error (call-apply (lookup-methods-by-name "Cambridge *" :stage 8)))
-;;   (assert-error 'type-error (call-apply (lookup-method "Cambridge Surprise" 8)
-;;                                         (call "4") "234"))
-;;   (assert-error 'type-error (call-apply (lookup-method "Cambridge Surprise" 8)
-;;                                         nil "234" (call "4") nil))
-;;   (assert-error 'parse-error (call-apply (method :title "Messed Major"
-;;                                                  :place-notation "x1x4,0")
-;;                                          (call "4")))
-;;   (assert-error 'call-application-error (call-apply (lookup-method "Advent Surprise" 8)
-;;                                                     (call "4" :fraction 63/64)))
-;;   (assert-error 'call-application-error (call-apply (lookup-method "Bastow Little Bob" 8)
-;;                                                     (call "x1x4,8")))
-;;   (assert-error 'call-application-error (call-apply (lookup-method "Bastow Little Bob" 8)
-;;                                                     (call "x1x4,8" :from-end nil)))
-;;   (assert-error 'call-application-error (call-apply (lookup-method "Pudsey Surprise" 12)
-;;                                                     (call "36.58.3" :offset 2)))
-;;   (assert-error 'call-application-error (call-apply (lookup-method "Plain Bob" 5)
-;;                                                     (call "145" :offset 2 :following "123"))))
+|#
+
+(define-test test-call ()
+  (labels ((check-call (call changes offset from-end fraction replace &key stage following)
+             (assert-equalp changes (get-call-changes call (or stage (stage (first changes)))))
+             (assert-eql offset (call-offset call))
+             (assert-eq from-end (not (not (call-from-end call))))
+             (assert-eql fraction (call-fraction call))
+             (assert-eql replace (call-replace call))
+             (assert-equalp following (call-following call))))
+    (let ((c1 (call "X3.Et" :from-end :true :offset 5 :fraction 2/3))
+          (c2 (call "3.123" :following "3")))
+      (check-call c1 #12!x3.e 5 t 2/3 3)
+      (check-call c2 #5!3.123 2 t nil 2 :following (call "3" :from-end nil))
+      ;; (assert-true (ppcre:scan "#<CALL X3.Et 5 T 2/3 3 [^ ]+>" (prin1-to-string c1)))
+      ;; (assert-true (ppcre:scan "#<CALL 3.123 2 T NIL 2 3 1 [^ ]+>" (prin1-to-string c2)))
+      ;; (assert-equal "Call-X3.Et" (princ-to-string c1))
+      ;; (assert-equal "Call-3.123*" (princ-to-string c2))
+      ;; (let ((*print-readably* t))
+      ;;   (assert-equal "(CALL \"X3.Et\" :OFFSET 5 :FRACTION 2/3 :REPLACE 3)"
+      ;;                 (prin1-to-string c1))
+      ;;   (assert-equal "(CALL \"3.123\" :OFFSET 2 :REPLACE 2 :FOLLOWING \"3\" :FOLLOWING-REPLACE 1)"
+      ;;                 (prin1-to-string c2))))
+      )
+    (check-call (call "4") #8!4 1 t nil 1)
+    (check-call (call nil :from-end nil :replace 2) nil 0 nil nil 2 :stage 6)
+    (check-call (call nil :replace 2) nil 2 t nil 2 :stage 9)
+    (check-call (call "5" :fraction 1/2) #8!5 1 t 1/2 1)
+    (assert-equalp (call "456") (call "456" :offset nil :replace nil))
+    (assert-error 'type-error (call 4))
+    (assert-error 'type-error (call #8!4))
+    (assert-error 'type-error (call (first #8!4)))
+    (assert-error 'type-error (call t))
+    (assert-error 'type-error (call "4" :offset -1))
+    (assert-error 'type-error (call "4" :offset t))
+    (assert-error 'type-error (call "1" :fraction 0))
+    (assert-error 'type-error (call "3" :fraction 1))
+    (assert-error 'type-error (call "5" :fraction 0.5))
+    (assert-error 'type-error (call "7" :fraction t))
+    (assert-error 'type-error (call "6" :replace -1))
+    (assert-error 'type-error (call "6" :replace t))
+    (assert-warning 'warning (call nil :replace 0))
+    (assert-warning 'warning (call "" :replace 0))
+    (assert-warning 'warning (call nil))
+    (assert-warning 'warning (call ""))))
+
+(define-test test-call-apply ()
+  ;; (labels ((check-call-apply (result method &rest calls)
+  ;;            (assert-equalp (list (parse-place-notation result :stage (method-stage method))
+  ;;                                 nil)
+  ;;                           (multiple-value-list (apply #'call-apply method calls)))))
+  ;;   (iter (for s :from 6 :to +maximum-stage+ :by 2)
+  ;;         (check-call-apply "x1x4,4"
+  ;;                           (method :stage s :place-notation "x1x4,2")
+  ;;                           (call "4")))
+  ;;   (check-call-apply "3.1.5.3.1.345,145"
+  ;;                     (lookup-method "Stedman" 5)
+  ;;                     (call "145")
+  ;;                     (call "345" :fraction 1/2))
+  ;;   (check-call-apply "7.3.1.3.1.3"
+  ;;                     (lookup-method "Erin" 9)
+  ;;                     (call "7" :from-end nil))
+  ;;   (check-call-apply "x4x2x3x4x5x4x3x2x4x3x2"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     nil
+  ;;                     (call nil :replace 2 :from-end nil))
+  ;;   (check-call-apply "x3x4x2x3x4x5x4x3x2x4x3x2.3x3x3"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     (call "3x3x3" :replace 0)
+  ;;                     nil)
+  ;;   (check-call-apply "x3x4x2x3x4x5x4x3x2x4x3x2"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     nil)
+  ;;   (check-call-apply "x3x4x2x3x4x5x4x3x2x4x3x2"
+  ;;                     (lookup-method "Cambridge Surprise" 6))
+  ;;   (check-call-apply "x5x5x5x3x4x2x3x4x5x4x3x2x4x3x2"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     (call "x5x5x5" :from-end nil :replace 0))
+  ;;   (check-call-apply "x3x4x2x3x4x5x4x3x2x4x"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     (call nil :replace 3 :offset 3))
+  ;;   (check-call-apply "x3x4x2x3x4.234.5x6x4x3x2x4x3x2"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     (call "234.5x6" :fraction 1/2 :offset 2 :replace 2))
+  ;;   (check-call-apply "x3x4x2x3.345.4x5x4x3x2x4x3x2"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     (call "3456" :from-end nil :fraction 1/3))
+  ;;   (check-call-apply "x3x4x2x3x4x5x4x5x2x4x3x2"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     (call "5" :fraction 2/3))
+  ;;   (check-call-apply "x5x5x5x3x4x2x3.345.4.234.5x6x4x5x2x4x"
+  ;;                     (lookup-method "Cambridge Surprise" 6)
+  ;;                     nil
+  ;;                     (call nil :replace 3 :offset 3)
+  ;;                     nil nil nil
+  ;;                     (call "x5x5x5" :from-end nil :replace 0)
+  ;;                     nil
+  ;;                     (call "5" :fraction 2/3)
+  ;;                     nil
+  ;;                     (call "234.5x6" :fraction 1/2 :offset 2 :replace 2)
+  ;;                     (call "3456" :from-end nil :fraction 1/3)
+  ;;                     nil))
+  ;; (let* ((m (lookup-method "Plain Bob" 5)))
+  ;;   (multiple-value-bind (lead1 following)
+  ;;       (call-apply m (call "23" :following "3"))
+  ;;     (let ((lead2 (call-apply m following)))
+  ;;       (assert-equalp (values (parse-place-notation "5.1.5.1.5.1.5.1.5.123" :stage 5))
+  ;;                      lead1)
+  ;;       (assert-equalp (values (parse-place-notation "3.1.5.1.5.1.5.1.5.125" :stage 5))
+  ;;                      lead2))))
+  ;; (let* ((m (lookup-method "Bastow Little Bob" 6)))
+  ;;   (multiple-value-bind (lead1 following)
+  ;;       (call-apply m (call "5.4" :replace 3 :following "5.6.3" :following-replace 2))
+  ;;     (let ((lead2 (call-apply m following)))
+  ;;       (assert-equalp (values (parse-place-notation "x5.4" :stage 6))
+  ;;                      lead1)
+  ;;       (assert-equalp (values (parse-place-notation "5.6.3x6" :stage 6))
+  ;;                      lead2))))
+  (assert-error 'type-error (call-apply nil))
+  (assert-error 'type-error (call-apply "Vermont Delight" 8))
+  ;; (assert-error 'type-error (call-apply (lookup-method "Cambridge Surprise" 8) "4"))
+  ;; (assert-error 'type-error (call-apply (lookup-methods-by-name "Cambridge *" :stage 8)))
+  ;; (assert-error 'type-error (call-apply (lookup-method "Cambridge Surprise" 8)
+  ;;                                       (call "4") "234"))
+  ;; (assert-error 'type-error (call-apply (lookup-method "Cambridge Surprise" 8)
+  ;;                                       nil "234" (call "4") nil))
+  (assert-error 'parse-error (call-apply (method-from-title "Messed Major" "x1x4,0")
+                                         (call "4")))
+  ;; (assert-error 'call-application-error (call-apply (lookup-method "Advent Surprise" 8)
+  ;;                                                   (call "4" :fraction 63/64)))
+  ;; (assert-error 'call-application-error (call-apply (lookup-method "Bastow Little Bob" 8)
+  ;;                                                   (call "x1x4,8")))
+  ;; (assert-error 'call-application-error (call-apply (lookup-method "Bastow Little Bob" 8)
+  ;;                                                   (call "x1x4,8" :from-end nil)))
+  ;; (assert-error 'call-application-error (call-apply (lookup-method "Pudsey Surprise" 12)
+  ;;                                                   (call "36.58.3" :offset 2)))
+  ;; (assert-error 'call-application-error (call-apply (lookup-method "Plain Bob" 5)
+  ;;                                                   (call "145" :offset 2 :following "123"))))
+)

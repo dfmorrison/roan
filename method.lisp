@@ -22,56 +22,154 @@
 
 ;;; Methods
 
-;;; Don't confuse change ringing methods with CLOS methods; they are completely different
-;;; animals. The ringing package shadows the symbols method and method-name.
+;;; Don't confuse change ringing methods and classes with CLOS methods and classes, they
+;;; are completely different animals. The ringing package shadows the symbols method,
+;;; method-name, class and class-name.
+
+;; The classification slot of a method encodes its stage and classification.
+
+(define-constant +stage-field+ (byte (ceiling (log +maximum-stage+ 2)) 0)
+  :test #'equal-byte-specifiers)
+
+(define-constant +classes+
+    ;; important that nil comes first, so it's zero
+    #(nil :surprise :delight :treble-bob :bob :place :alliance :treble-place :hybrid)
+  :test #'equalp)
+
+(define-constant +class-names+
+    (iter (for k :in-vector +classes+)
+          (when k
+            (collect (cons k (string-capitalize (substitute #\Space #\- (string k)))))))
+  :test #'equalp)
+
+(deftype class () `(member ,@(coerce +classes+ 'list)))
+
+(define-constant +class-field+
+    (byte (ceiling (log (length +classes+) 2)) (byte-size +stage-field+))
+  :test #'equal-byte-specifiers)
+
+(define-constant +little-field+ (byte 1 (byte-left +class-field+))
+  :test #'equal-byte-specifiers)
+
+(define-constant +differential-field+ (byte 1 (byte-left +little-field+))
+  :test #'equal-byte-specifiers)
+
+(define-constant +jump-field+ (byte 1 (byte-left +differential-field+))
+  :test #'equal-byte-specifiers)
+
+(deftype encoded-classification ()
+  `(integer 0 ,(dpb -1 (byte (1+ (byte-position roan::+jump-field+)) 0) 0)))
 
 (defclass method ()
-  ((stage :initform nil :accessor method-stage)
-   (name :accessor method-name)
-   (place-notation :initform nil :accessor method-place-notation)
-   (properties :initform nil :accessor method-properties)
-   (traits :initform nil))
+  ((name :type (or string null) :initform nil :accessor method-name :initarg :name)
+   (classification :type encoded-classification :initform 0
+                   :accessor %method-classification :initarg :classification)
+   (place-notation :type (or string null) :initform nil
+                   :accessor method-place-notation :initarg :place-notation))
   (:documentation "===summary===
 Roan provides the @code{method} type to describe change ringing methods, not to be
-confused with CLOS methods. A @code{method} can only describe a method that can be viewed
-as a fixed sequence of changes, including jump changes; while this includes all methods
-recognized by the Central Council (as of mid-2017), and many others, it does exclude, for
-example, Dixonoids. A @code{method} has a stage, a name, an associated place-notation, and
-a property list, though any or all of these may be @code{nil}. In the case of the stage,
-name or place notation @code{nil} indicates that the corresponding value is not known. The
-stage, if known, should be a @code{stage}, and the name and place notation, if known,
-should be strings. The name is not just the portion that the Central Council considers its
-name: it also includes any explictly named class, such as 'Surprise', as well as modifiers
-such as 'Little' or 'Differential'. For example, the name of Littleport Little Surprise
-Royal is \"Littleport Little Surprise\".
+confused with CLOS methods. A @code{method} can only describe what the Central Council of
+Church Bell Ringers @url{https://cccbr.github.io/method_ringing_framework/, Framework for
+Method Ringing} (FMR) calls a static method, a method that can be viewed as as a fixed
+sequence of changes, including jump changes; while this includes nearly all methods rung
+and named to date, it does exclude, for example, Dixonoids. A @code{method} has a name, a
+stage, classifacation details, and an associated place-notation, though any or all of
+these may be @code{nil}. In the case of the stage or place notation @code{nil} indicates
+that the corresponding value is not known; the same is also true if the name is
+@code{nil}, except for the case of Little Bob, which in the taxonomy of the FMR has no
+name. The stage, if known, should be a @code{stage}, and the name and place notation, if
+known, should be strings.
 
-The property list may be used to store further information about a method. For example,
-@code{lookup-methods-by-name} typically adds the properties @code{:first-tower} and
-@code{:first-hand} to methods it creates with details of their first performances. Besides
-accessing the property list as a whole with @code{method-properties} individual properties
-can be interrogated and set with @code{method-property}.
+The classification follows the taxonomy in the FMR and consists of a @code{class} and
+three boolean attributes for jump methods, differential methods and little methods. The
+@code{class} may be @code{nil}, for principles and pure differentials; or one of the
+keywords @code{:bob}, @code{:place}, @code{:surprise}, @code{:delight},
+@code{:treble-bob}, @code{:alliance}, @code{:treble-place} or @code{:hybrid}. The
+classification consists merely of details stored in the @code{method} object, and does not
+necessary correspond to the actual classification of the method described by the
+@code{place-notation}, if supplied. The classification can be set to match the place
+notation by calling TBD.
 
-Because a ringing method is unrelated to a CLOS method the @code{roan} package
-shadows @code{common-lisp:method} and @code{common-lisp:method-name}.
+Similarly the name does not necessarily correspond to the name by which the place notation
+is known, unless the @code{method} has been looked up from a suitable library. See TBD.
+
+Because ringing methods and their classes are unrelated to CLOS methods and classes, the
+@code{roan} package shadows the symbols @code{common-lisp:method},
+@code{common-lisp:method-name},@code{common-lisp:class} and @code{common-lisp:class-name}.
 ===endsummary===
-Describes a change ringing method, typically including its name, stage and place notation,
-and possibly other properties of the method."))
+Describes a change ringing method, typically including its name, stage, classificaiton and
+place notation."))
 
-(defmethod (setf method-stage) :before (value (method method))
-  (unless (eql value (method-stage method))
-    (check-type* value (or null stage))
-    (clear-method-traits method)))
+(defun copy-method (method)
+  (make-instance 'method
+                 :name (and (method-name method)
+                            (copy-sequence 'string (method-name method)))
+                 :classification (%method-classification method)
+                 :place-notation (and (method-place-notation method)
+                                      (copy-sequence 'string (method-place-notation method)))))
 
-(defmethod method-stage ((method t))
-  ;; Signal a less inscrutable error if method-stage is misused.
+(defmethod %method-classification ((method t))
+  ;; Signal a less inscrutable error when our callers are misused than would otherwise
+  ;; be the case.
+  (error 'type-error :expected-type 'method :datum method))
+
+(defmethod method-name ((method t))
+  ;; Signal a less inscrutable error when we are misused than would otherwise be the case.
   (error 'type-error :expected-type 'method :datum method))
 
 (defmethod (setf method-name) :before (value (method method))
   (check-type* value (or null string)))
 
-(defmethod method-name ((method t))
-  ;; Signal a less inscrutable error if method-name is misused.
-  (error 'type-error :expected-type 'method :datum method))
+(defun method-stage (method)
+  (let ((result (mask-field +stage-field+ (%method-classification method))))
+    (if (zerop result) nil result)))
+
+(defun set-method-stage (method stage)
+  (unless (eql stage (mask-field +stage-field+ (%method-classification method)))
+    (check-type* stage (or stage null))
+    (clear-method-traits method)
+    (setf (mask-field +stage-field+ (%method-classification method)) (or stage 0))))
+
+(defsetf method-stage set-method-stage)
+
+(defun method-class (method)
+  (svref +classes+ (ldb +class-field+ (%method-classification method))))
+
+(defun set-method-class (method class)
+  (let ((c (position class +classes+)))
+    (unless c
+      (error 'type-error :expected-type 'class :datum class))
+    (setf (ldb +class-field+ (%method-classification method)) c))
+  class)
+
+(defsetf method-class set-method-class)
+
+(defun class-name (class)
+  (cdr (assoc class +class-names+)))
+
+(defun class-from-name (string)
+  (and string (typep string 'string) (not (equalp string "nil"))
+       (or (find string +classes+ :test #'string-equal)
+           (car (rassoc string +class-names+ :test #'string-equal)))))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defmacro define-method-boolean (name field documentation)
+    (let ((setter (symbolicate "SET-" name)))
+      `(let ((bit (dpb -1 ,field 0)))
+         (defun ,name (method)
+           ,documentation
+           (not (zerop (mask-field ,field (%method-classification method)))))
+         (defun ,setter (method value)
+           (not (zerop (setf (mask-field ,field (%method-classification method))
+                             (if value bit 0)))))
+         (defsetf ,name ,setter))))
+  (define-method-boolean method-little-p +little-field+ nil)
+  (define-method-boolean method-differential-p +differential-field+ nil)
+  (define-method-boolean method-jump-p +jump-field+ nil))
+
+(defun method-details (method)
+  (values (method-name method) (method-jump-p method) (method-differential-p method)
+          (method-little-p method) (method-class method) (method-stage method)))
 
 (defmethod (setf method-place-notation) :before (value (method method))
   (unless (equalp value (method-place-notation method))
@@ -82,142 +180,393 @@ and possibly other properties of the method."))
   ;; Signal a less inscrutable error if method-place-notation is misused.
   (error 'type-error :expected-type 'method :datum method))
 
-(defmethod (setf method-properties) :before (value (method method))
-  (check-type* value list))
+(defun method (&key name jump differential little class (stage nil stage-supplied)
+                 place-notation)
+  "Creates a new @code{method} instance, with the specified @var{name}, @var{stage},
+@var{classification} and @var{place-notation}.
+If @var{stage} is not provided, it defaults to
+the current value of @code{*default-stage*}; to create a @code{method} with no stage
+@code{:stage nil} must be explicitly supplied.
 
-(defmethod method-properties ((method t))
-  ;; Signal a less inscrutable error if method-properties is misused.
-  (error 'type-error :expected-type 'method :datum method))
+A @code{type-error} is signaled if @var{stage} is supplied and is neither @code{nil} nor a
+@code{stage}; if either of @var{name} or @var{place-notation} are supplied and are neither
+@code{nil} nor a string; or if @code{class} is supplied and is neither @code{nil} nor one
+of the keywords @code{:bob}, @code{:place}, @code{:surprise}, @code{:delight},
+@code{:treble-bob}, @code{:alliance}, @code{:treble-place} or @code{:hybrid}."
+  (check-type* name (or string null))
+  (check-type* place-notation (or string null))
+  (cond (stage (check-type* stage stage))
+        (stage-supplied (setf stage 0))
+        (t (setf stage *default-stage*)))
+  (let ((result (make-instance 'method
+                               :name name
+                               :classification stage
+                               :place-notation place-notation)))
+    (when class (setf (method-class result) class))
+    (when jump (setf (method-jump-p result) t))
+    (when differential (setf (method-differential-p result) t))
+    (when little (setf (method-little-p result) t))
+    result))
+
+(define-constant +suppress-class+
+    '("Grandsire" "Double Grandsire" "Reverse Grandsire" "Little Grandsire"
+      "Union" "Double Union" "Reverse Union" "Little Union")
+  :test #'equalp)
 
 (defun method-title (method &optional show-unknown)
   "Returns a string containing as much of the @var{method}'s title as is known. If
 @var{show-unknown}, a generalized boolean defaulting to false, is not true then an unknown
-name is described as \"Unknown\", and otherwise is simply omitted. If neither the name nor
-the stage is known, and @var{show-unknown} is @code{nil}, then @code{nil} is returned
-instead of a string. Can be used with @code{setf}, in which case it potentially sets both
-the name and stage of @var{method}.
+name is described as \"Unknown\", and otherwise is simply omitted. Signals a
+@code{type-error} if @var{method} is not a @code{method}.
+
+The one argument case can be used with @code{setf}, in which case it potentially sets any
+or all of the name, classification and stage of @var{method}. There is an ambiguity when
+parsing method titles in that there being no explicit class named can indicate with that
+the method has no class (principles and purse differentials) or that the class is Hybrid.
+When parsing titles for @code{setf} an absence of a class name is taken to mean that there
+is no class. Also, if there is no stage name specified when using @code{setf} with
+@code{method-title} the stage is set to @code{nil}; @code{*default-stage*} is not
+consulted.
 @example
 @group
- (method-title (method :stage 8 :name \"Advent Surprise\"))
+ (method-title (method \"Advent\" :class :surprise :stage 8))
    @result{} \"Advent Surprise Major\"
+ (method-title (method :name \"Grandsire\" :class :bob :stage 9))
+   @result{} \"Grandsire Caters\"
  (method-title (method :stage 8))
    @result{} \"Major\"
- (method-title (method :stage 8) t)
-   @result{} \"Unknown Major\
- (method-title (method :stage nil :name \"Advent Surprise\"))
+ (method-title (method :class :delight :stage 8) t)
+   @result{} \"Unknown Delight Major\
+ (method-title (method :name \"Advent\" :class :surprise :stage nil))
    @result{} \"Advent Surprise\"
- (method-title (method :stage nil))
-   @result{} nil
+ (method-title (method :name \"Slinky\" :stage 12 :class :place
+                       :little t :differential t))
+   @result{} \"Slinky Differential Little Place Maximimus\"
+ (method-title (method :name \"Stedman\" :stage 11))
+   @result{} \"Stedman Cinques\"
+ (method-title (method :name \"Meson\" :class :hybrid
+                       :little t :stage 12))
+   @result{} \"Meson Maximus\"
 @end group
 @end example"
-  (let ((name (method-name method)) (stage (stage-name (method-stage method))))
-    (if (or name show-unknown)
-        (format nil "~:[Unknown~;~:*~A~]~@[ ~A~]" name stage)
-        stage)))
-
-(defun parse-method-title (string)
-  "Returns two values, the method name and the stage extracted from @var{string}, if they
-are present. If one or both components is missing then @code{nil} is returned as the
-corresponding value. Signals a @code{type-error} if @var{string} is neither a string nor
-@code{nil}.
-@example
-@group
- (multiple-value-list
-   (parse-method-title \"Advent Surprise Major\"))
-     @result{} (\"Advent Surprise\" 8)
-@end group
-@end example"
-  (unless string
-    (return-from parse-method-title (values nil nil)))
-  (check-type* string string)
-  (setf string (collapse-whitespace string))
-  (if (> (length string) 0)
-      (let* ((space-pos (position #\Space string :from-end t))
-             (stage (stage-from-name (subseq string (if space-pos (1+ space-pos) 0))))
-             (name (cond ((null stage) string)
-                         (space-pos (subseq string 0 space-pos)))))
-        (values name stage))
-      (values nil nil)))
-
-(defsetf method-title (method &optional show-unknown) (string)
-  `(multiple-value-bind (name stage) (parse-method-title ,string)
-     (setf (method-name ,method) (if (and ,show-unknown (equalp name "Unknown")) nil name)
-           (method-stage ,method) stage)
-     ,string))
-
-(defun method (&key title (stage nil stage-supplied) name place-notation properties)
-  "Creates a new @code{method} instance, with the specified @var{stage}, @var{name}
-@var{place-notation} and @var{properties}. If @var{title} is supplied it provides default
-values for @var{name} and @var{stage} if none are explicitly provided or are @code{nil}.
-If @var{stage} is not provided, and no default is provided by @var{title}, it defaults to
-the current value of @code{*default-stage*}. A @code{type-error} is signaled if
-@var{stage} is supplied and is neither @code{nil} nor a @code{stage}; if any of
-@var{name}, @var{title} or @var{place-notation} are supplied and are neither @code{nil}
-nor a string; or if @code{properties} is supplied and is not a list."
-  (check-type* title (or null string))
-  (when (and title (or (not stage) (not name)))
-    (multiple-value-bind (t-name t-stage) (parse-method-title title)
-      (unless name
-        (setf name t-name))
-      (unless stage
-        (setf stage t-stage))))
-  (let ((result (make-instance 'method)))
-    (setf (method-stage result) (or stage (and (not stage-supplied) *default-stage*)))
-    (setf (method-name result) name)
-    (setf (method-place-notation result) place-notation)
-    (setf (method-properties result) properties)
-    result))
+  (multiple-value-bind (name jump differential little class stage)
+      (method-details method)
+    (when (and (null name) show-unknown
+               ;; Little bob is special, and has no name.
+               (not (and little (eq class :bob) (not (or jump differential)))))
+      (setf name "Unnamed"))
+    (when (or (eq class :hybrid)
+              (and (member name +suppress-class+ :test #'string-equal)
+                   (member class '(:bob :place))
+                   (not jump)
+                   (not differential)
+                   (or (not little) (member name '("Little Grandsire" "Little Union")
+                                            :test #'string-equal))
+                   ;; nasty special case
+                   (not (and (eql stage 5) (eq class :bob) (string-equal name "Union")))))
+      (setf class nil)
+      (setf little nil))
+    (format nil "~{~@[~A~^ ~]~}"
+            (iter (for phrase :in (list name
+                                        (and jump "Jump")
+                                        (and differential "Differential")
+                                        (and little "Little")
+                                        (and class (class-name class))
+                                        (and stage (stage-name stage))))
+                  (when phrase
+                    (collect phrase))))))
 
 (defmethod print-object ((method method) stream)
   (cond (*print-readably*
-         (with-slots (stage name place-notation properties) method
-           (format stream "(~S~:[~2*~; ~S ~S~] ~S ~S~:[~2*~; ~S ~S~]~:[~2*~; ~S ~S~])"
-                   'method
-                   name :name name
-                   :stage stage
-                   place-notation :place-notation place-notation
-                   properties :properties properties)))
+         (unless *read-eval*
+           (error 'print-not-readable :object method))
+         (multiple-value-bind  (name jump differential little class stage)
+             (method-details method)
+           (let ((place-notation (method-place-notation method)))
+             (format stream "#.(~S ~S ~S~{~^ ~S ~S~})" 'method :stage stage
+                     (iter (for v :in (list name jump differential little class place-notation))
+                           (for k :in '(:name :jump :differential :little :class :place-notation))
+                           (for b :in '(nil t t t nil nil nil))
+                           (when v
+                             (nconcing (list k (if b t v)))))))))
         (*print-escape*
          (print-unreadable-object (method stream :type t :identity t)
-           (with-slots (stage name place-notation) method
-             (when name (princ name stream))
-             (when stage
-               (when name (princ #\Space stream))
-               (princ stage stream))
-             (when place-notation
-               (when (or name stage) (princ #\Space stream))
-               (princ place-notation stream)))))
+           (format stream "~@[~A~]~@[~:*~@[ ~*~]~A~]"
+                   (method-title method) (method-place-notation method))))
         (t (format stream "~A" (method-title method t)))))
 
-(defun method-property (method key &optional default)
-  "Returns the property attached to @var{method} with the given @var{key}, if there is
-one, and otherwise returns @var{default}, or @code{nil} if no @var{default} is supplied.
-Can be used with @code{setf} to change a property. Signals a @code{type-error} if
-@var{method} is not a @code{method}. Just a short-hand for, and equivalent to,
-@code{(getf (method-properties @var{method}) @var{key} @var{default})}.
+(defparameter +method-title-scanner+
+  (ppcre:create-scanner
+   `(:sequence
+     :start-anchor
+     (:greedy-repetition 0 1
+        (:sequence
+         (:greedy-repetition 0 nil #\Space)
+         (:register (:sequence (:non-greedy-repetition 0 nil :everything) :word-boundary))
+         (:greedy-repetition 0 nil #\Space)
+         (:greedy-repetition 0 1 (:register (:sequence :word-boundary "Jump" :word-boundary)))
+         (:greedy-repetition 0 nil #\Space)
+         (:greedy-repetition 0 1 (:register (:sequence :word-boundary "Differential" :word-boundary)))
+         (:greedy-repetition 0 nil #\Space)
+         (:greedy-repetition 0 1 (:register (:sequence :word-boundary "Little" :word-boundary)))
+         (:greedy-repetition 0 nil #\Space)
+         (:greedy-repetition 0 1 (:register
+                                  (:sequence :word-boundary
+                                             (:group (:alternation ,@(iter (for (nil . c) :in +class-names+)
+                                                                           (when c
+                                                                             (collect (string c))))))
+                                             :word-boundary)))
+         (:greedy-repetition 0 nil #\Space)
+         (:greedy-repetition 0 1 (:register
+                                  (:sequence :word-boundary
+                                             (:group (:alternation ,@(iter (for s :in-vector +stage-names+)
+                                                                           (when s
+                                                                             (collect s))))))))
+         (:greedy-repetition 0 nil #\Space)))
+     :end-anchor)
+   :case-insensitive-mode t))
+
+(defun parse-method-title (title)
+  (check-type* title string)
+  (ppcre:register-groups-bind (name jump differential little class stage)
+      (+method-title-scanner+ title)
+    (setf stage (stage-from-name stage))
+    (setf class (class-from-name class))
+    (when (and little (null class))
+      (setf name (concatenate 'string name " " "Little"))
+      (setf little nil))
+    (when (equal name "")
+      (setf name nil))
+    (when (and (null class) (not jump) (not differential))
+      ;; special cases
+      (cond ((and (eql stage 4)
+                  (not little)
+                  (member name '("Grandsire" "Reverse Grandsire") :test #'string-equal))
+             (setf class :place))
+            ((member name +suppress-class+ :test #'string-equal)
+             (setf class :bob)
+             (when (member name '("Little Grandsire" "Little Union") :test #'string-equal)
+               (setf little t)))))
+    (values name jump differential little class stage)))
+
+(defun set-method-title (method title)
+  (multiple-value-bind (name jump differential little class stage)
+      (parse-method-title title)
+    (setf (method-name method) name)
+    (setf (method-jump-p method) jump)
+    (setf (method-differential-p method) differential)
+    (setf (method-little-p method) little)
+    (setf (method-class method) class)
+    (setf (method-stage method) stage))
+  title)
+
+(defsetf method-title set-method-title)
+
+(defun method-from-title (title &optional place-notation)
+  "Creates a new @code{method} instance, with its name, classification and stage
+as specified by @var{title}, and with the given @var{place-notation}.
+If the title does not include a stage name, the stage of the result is the current value
+of @code{*default-stage*}.
+
+A @code{type-error} is signaled if @var{title} is not a string, or if @var{place-notation}
+is neither a string nor @code{nil}.
 @example
 @group
- (let ((m (method :title \"Advent Surprise Major\")))
-   (setf (method-property m :first-rung) \"1988-07-31\")
-   (method-property m :first-rung))
-     @result{} \"1988-07-31\"
+ (let ((m (method-from-title \"Advent Surprise Major\")))
+   (list (method-title m) (method-class m) (method-stage m)))
+   @result{} (\"Advent\" :surprise 8)
 @end group
 @end example"
-  (getf (method-properties method) key default))
+  (check-type* title string)
+  (check-type* place-notation (or string null))
+  (let ((result (method :place-notation place-notation)))
+    (setf (method-title result) title)
+    (unless (method-stage result)
+      (setf (method-stage result) *default-stage*))
+    result))
 
-(defsetf method-property (method key &optional default) (value)
-  `(setf (getf (method-properties ,method) ,key ,default) ,value))
+
+;;; Method names
+
+;;; Makes the value for the following constant
+;; #+sbcl
+;; (defun make-method-name-character-data ()
+;;   (labels ((alphanp (char &optional exclude)
+;;              (let ((category (sb-unicode:general-category char)))
+;;                (and (not (eq category exclude)) (member category '(:ll :lu :nd))))))
+;;     (let ((character-data (make-hash-table)))
+;;       (iter (for i :from 0 :to #x7f)      ; Basic Latin
+;;             (for c := (code-char i))
+;;             (when (alphanp c)
+;;               (setf (gethash c character-data) t)))
+;;       (iter (for i :from #x80 :to #xff)   ; Latin-1 Supplement
+;;             (for c := (code-char i))
+;;             (when (alphanp c :nd)
+;;               (setf (gethash c character-data) t)))
+;;       (iter (for i :from #x100 :to #x24f) ; Latin Extended-A & Latin Extended-B
+;;             (for c := (code-char i))
+;;             (unless (eql c #\Latin_Small_Letter_N_Preceded_By_Apostrophe)
+;;               (setf (gethash c character-data) t)))
+;;       (iter (for c :in-string " !\"&'(),-./=%?£$€™⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
+;;             (setf (gethash c character-data) t))
+;;       (iter (for (c nil) :in-hashtable character-data)
+;;             (setf (gethash c character-data)
+;;                   (let ((result (sb-unicode:normalize-string (string c) :nfkd)))
+;;                     (setf result (delete-if-not (rcurry #'gethash character-data) result))
+;;                     (setf result (sb-unicode:casefold result))
+;;                     (setf result (ppcre:regex-replace "ø" result "o"))
+;;                     (setf result (ppcre:regex-replace "æ" result "ae"))
+;;                     (setf result (ppcre:regex-replace "œ" result "oe"))
+;;                     (setf result (nsubstitute-if-not #\Space (rcurry #'alphanp :lu) result))
+;;                     (cons (not (null (alphanp c))) (coerce result 'list)))))
+;;       (iter (for (c (b . r)) :in-hashtable character-data)
+;;             (collect (list* (char-code c) b (mapcar #'char-code r)))))))
+
+(define-constant +method-name-character-data+
+    (iter (with data := '((48 T 48) (49 T 49) (50 T 50) (51 T 51) (52 T 52) (53 T 53) (54 T 54)
+                          (55 T 55) (56 T 56) (57 T 57) (65 T 97) (66 T 98) (67 T 99) (68 T 100)
+                          (69 T 101) (70 T 102) (71 T 103) (72 T 104) (73 T 105) (74 T 106) (75 T 107)
+                          (76 T 108) (77 T 109) (78 T 110) (79 T 111) (80 T 112) (81 T 113) (82 T 114)
+                          (83 T 115) (84 T 116) (85 T 117) (86 T 118) (87 T 119) (88 T 120) (89 T 121)
+                          (90 T 122) (97 T 97) (98 T 98) (99 T 99) (100 T 100) (101 T 101) (102 T 102)
+                          (103 T 103) (104 T 104) (105 T 105) (106 T 106) (107 T 107) (108 T 108)
+                          (109 T 109) (110 T 110) (111 T 111) (112 T 112) (113 T 113) (114 T 114)
+                          (115 T 115) (116 T 116) (117 T 117) (118 T 118) (119 T 119) (120 T 120)
+                          (121 T 121) (122 T 122) (181 T) (192 T 97) (193 T 97) (194 T 97) (195 T 97)
+                          (196 T 97) (197 T 97) (198 T 97 101) (199 T 99) (200 T 101) (201 T 101)
+                          (202 T 101) (203 T 101) (204 T 105) (205 T 105) (206 T 105) (207 T 105)
+                          (208 T 240) (209 T 110) (210 T 111) (211 T 111) (212 T 111) (213 T 111)
+                          (214 T 111) (216 T 111) (217 T 117) (218 T 117) (219 T 117) (220 T 117)
+                          (221 T 121) (222 T 254) (223 T 115 115) (224 T 97) (225 T 97) (226 T 97)
+                          (227 T 97) (228 T 97) (229 T 97) (230 T 97 101) (231 T 99) (232 T 101)
+                          (233 T 101) (234 T 101) (235 T 101) (236 T 105) (237 T 105) (238 T 105)
+                          (239 T 105) (240 T 240) (241 T 110) (242 T 111) (243 T 111) (244 T 111)
+                          (245 T 111) (246 T 111) (248 T 111) (249 T 117) (250 T 117) (251 T 117)
+                          (252 T 117) (253 T 121) (254 T 254) (255 T 121) (256 T 97) (257 T 97)
+                          (258 T 97) (259 T 97) (260 T 97) (261 T 97) (262 T 99) (263 T 99) (264 T 99)
+                          (265 T 99) (266 T 99) (267 T 99) (268 T 99) (269 T 99) (270 T 100) (271 T 100)
+                          (272 T 273) (273 T 273) (274 T 101) (275 T 101) (276 T 101) (277 T 101)
+                          (278 T 101) (279 T 101) (280 T 101) (281 T 101) (282 T 101) (283 T 101)
+                          (284 T 103) (285 T 103) (286 T 103) (287 T 103) (288 T 103) (289 T 103)
+                          (290 T 103) (291 T 103) (292 T 104) (293 T 104) (294 T 295) (295 T 295)
+                          (296 T 105) (297 T 105) (298 T 105) (299 T 105) (300 T 105) (301 T 105)
+                          (302 T 105) (303 T 105) (304 T 105) (305 T 305) (306 T 105 106)
+                          (307 T 105 106) (308 T 106) (309 T 106) (310 T 107) (311 T 107) (312 T 312)
+                          (313 T 108) (314 T 108) (315 T 108) (316 T 108) (317 T 108) (318 T 108)
+                          (319 T 108) (320 T 108) (321 T 322) (322 T 322) (323 T 110) (324 T 110)
+                          (325 T 110) (326 T 110) (327 T 110) (328 T 110) (330 T 331) (331 T 331)
+                          (332 T 111) (333 T 111) (334 T 111) (335 T 111) (336 T 111) (337 T 111)
+                          (338 T 111 101) (339 T 111 101) (340 T 114) (341 T 114) (342 T 114)
+                          (343 T 114) (344 T 114) (345 T 114) (346 T 115) (347 T 115) (348 T 115)
+                          (349 T 115) (350 T 115) (351 T 115) (352 T 115) (353 T 115) (354 T 116)
+                          (355 T 116) (356 T 116) (357 T 116) (358 T 359) (359 T 359) (360 T 117)
+                          (361 T 117) (362 T 117) (363 T 117) (364 T 117) (365 T 117) (366 T 117)
+                          (367 T 117) (368 T 117) (369 T 117) (370 T 117) (371 T 117) (372 T 119)
+                          (373 T 119) (374 T 121) (375 T 121) (376 T 121) (377 T 122) (378 T 122)
+                          (379 T 122) (380 T 122) (381 T 122) (382 T 122) (383 T 115) (384 T 384)
+                          (385 T 595) (386 T 387) (387 T 387) (388 T 389) (389 T 389) (390 T 596)
+                          (391 T 392) (392 T 392) (393 T 598) (394 T 599) (395 T 396) (396 T 396)
+                          (397 T 397) (398 T 477) (399 T 601) (400 T 603) (401 T 402) (402 T 402)
+                          (403 T 608) (404 T 611) (405 T 405) (406 T 617) (407 T 616) (408 T 409)
+                          (409 T 409) (410 T 410) (411 T 411) (412 T 623) (413 T 626) (414 T 414)
+                          (415 T 629) (416 T 111) (417 T 111) (418 T 419) (419 T 419) (420 T 421)
+                          (421 T 421) (422 T 640) (423 T 424) (424 T 424) (425 T 643) (426 T 426)
+                          (427 T 427) (428 T 429) (429 T 429) (430 T 648) (431 T 117) (432 T 117)
+                          (433 T 650) (434 T 651) (435 T 436) (436 T 436) (437 T 438) (438 T 438)
+                          (439 T 658) (440 T 441) (441 T 441) (442 T 442) (443 NIL 32) (444 T 445)
+                          (445 T 445) (446 T 446) (447 T 447) (448 NIL 32) (449 NIL 32) (450 NIL 32)
+                          (451 NIL 32) (452 T 100 122) (453 NIL 100 122) (454 T 100 122) (455 T 108 106)
+                          (456 NIL 108 106) (457 T 108 106) (458 T 110 106) (459 NIL 110 106)
+                          (460 T 110 106) (461 T 97) (462 T 97) (463 T 105) (464 T 105) (465 T 111)
+                          (466 T 111) (467 T 117) (468 T 117) (469 T 117) (470 T 117) (471 T 117)
+                          (472 T 117) (473 T 117) (474 T 117) (475 T 117) (476 T 117) (477 T 477)
+                          (478 T 97) (479 T 97) (480 T 97) (481 T 97) (482 T 97 101) (483 T 97 101)
+                          (484 T 485) (485 T 485) (486 T 103) (487 T 103) (488 T 107) (489 T 107)
+                          (490 T 111) (491 T 111) (492 T 111) (493 T 111) (494 T 658) (495 T)
+                          (496 T 106) (497 T 100 122) (498 NIL 100 122) (499 T 100 122) (500 T 103)
+                          (501 T 103) (502 T 405) (503 T 447) (504 T 110) (505 T 110) (506 T 97)
+                          (507 T 97) (508 T 97 101) (509 T 97 101) (510 T 111) (511 T 111) (512 T 97)
+                          (513 T 97) (514 T 97) (515 T 97) (516 T 101) (517 T 101) (518 T 101)
+                          (519 T 101) (520 T 105) (521 T 105) (522 T 105) (523 T 105) (524 T 111)
+                          (525 T 111) (526 T 111) (527 T 111) (528 T 114) (529 T 114) (530 T 114)
+                          (531 T 114) (532 T 117) (533 T 117) (534 T 117) (535 T 117) (536 T 115)
+                          (537 T 115) (538 T 116) (539 T 116) (540 T 541) (541 T 541) (542 T 104)
+                          (543 T 104) (544 T 414) (545 T 545) (546 T 547) (547 T 547) (548 T 549)
+                          (549 T 549) (550 T 97) (551 T 97) (552 T 101) (553 T 101) (554 T 111)
+                          (555 T 111) (556 T 111) (557 T 111) (558 T 111) (559 T 111) (560 T 111)
+                          (561 T 111) (562 T 121) (563 T 121) (564 T 564) (565 T 565) (566 T 566)
+                          (567 T 567) (568 T 568) (569 T 569) (570 T 11365) (571 T 572) (572 T 572)
+                          (573 T 410) (574 T 11366) (575 T 575) (576 T 576) (577 T 578) (578 T 578)
+                          (579 T 384) (580 T 649) (581 T 652) (582 T 583) (583 T 583) (584 T 585)
+                          (585 T 585) (586 T 587) (587 T 587) (588 T 589) (589 T 589) (590 T 591)
+                          (591 T 591) (32 NIL 32) (33 NIL 32) (34 NIL 32) (38 NIL 32) (39 NIL 32)
+                          (40 NIL 32) (41 NIL 32) (44 NIL 32) (45 NIL 32) (46 NIL 32) (47 NIL 32)
+                          (61 NIL 32) (37 NIL 32) (63 NIL 32) (163 NIL 32) (36 NIL 32) (8364 NIL 32)
+                          (8482 NIL 116 109) (8304 NIL 48) (185 NIL 49) (178 NIL 50) (179 NIL 51)
+                          (8308 NIL 52) (8309 NIL 53) (8310 NIL 54) (8311 NIL 55) (8312 NIL 56)
+                          (8313 NIL 57) (8320 NIL 48) (8321 NIL 49) (8322 NIL 50) (8323 NIL 51)
+                          (8324 NIL 52) (8325 NIL 53) (8326 NIL 54) (8327 NIL 55) (8328 NIL 56)
+                          (8329 NIL 57)))
+          (with result := (make-hash-table :size (length data)))
+          (for (c p . s) :in data)
+          (setf (gethash (code-char c) result) (cons p (mapcar #'code-char s)))
+          (finally (return result)))
+  :test #'equalp)
+
+(defun comparable-method-name (string)
+  "If @var{string} is a suitable name for a method, returns a version appropriate for
+comparison with other comparable names, and otherwise returns @code{nil}.
+
+The Central Council of Church Bell Ringers
+@url{https://cccbr.github.io/method_ringing_framework/, Framework for Method
+Ringing} (FMR), appendix B describes a syntax for method names and their comparisons. This
+function both determines whether or not they fit within the syntax described by the FMR,
+and, if so, provides a canonical representation for them suitable for comparing whether or
+not two apparently different names will be considered the same when describing a method.
+This comparable representation is not intended for presentation to end users, but
+rather just for comparing names for equivalence.
+
+Signals a @code{type-error} if @var{string} is not a string.
+@example
+@group
+ (comparable-method-name \"New Cambridge\")
+   @result{} \"new cambridge\"
+ (comparable-method-name \"London No.3\")
+   @result{} \"london no 3\"
+ (comparable-method-name \"m@U{00E4}k@U{010D}e@U{0148} E=mc@U{00B2}\")
+   @result{} \"makcen e mc2\"
+ (comparable-method-name \"Two is Too  Many Spaces\")
+   @result{} nil
+ (comparable-method-name \"@U{0395}@U{03BB}@U{03BB}@U{03B7}@U{03BD}@U{03B9}@U{03BA}@U{03AC} is Greek to me\")
+   @result{} nil
+@end group
+@end example"
+  (check-type* string string)
+  (and (<= 1 (length string) 120)
+       (not (ppcre:scan "^ |  | $" string))
+       (iter (with result := (make-array (* 2 (length string))
+                                         :element-type 'character
+                                         :fill-pointer 0))
+             (for c :in-string string)
+             (for d := (gethash c +method-name-character-data+))
+             (always d)
+             (counting (first d) :into n)
+             (mapc (rcurry #'vector-push result) (rest d))
+             (finally (return (and (> n 0)
+                                   (values (ppcre:regex-replace-all "  +"
+                                                                    (string-trim " " result)
+                                                                    " "))))))))
 
 
 ;;; Method traits
 
 ;; A method-traits instance is used to cache information about a method that is
-;; computable from its stage and place notation. It is only weakly referred to by the
-;; method, since it can always be reconstructed at need.
+;; computable from its stage and place notation. A least recently used (LRU) cache of
+;; method-traits is maintained to improve the performance of some method functions.
 
 (defstruct (method-traits (:copier nil) (:predicate nil))
   (changes nil)
-  (contains-jump-changes nil)
+  (contains-jump-changes-p nil)
   (lead-length nil)
   (lead-head nil)
   (lead-count nil)
@@ -231,14 +580,33 @@ Can be used with @code{setf} to change a property. Signals a @code{type-error} i
   (classification nil)
   (lead-head-code nil))
 
-(defun get-method-traits (method)
-  (with-slots (traits) method
-    (or (and traits (weak-pointer-value traits))
-        (weak-pointer-value (setf traits
-                                  (make-weak-pointer (make-instance 'method-traits)))))))
+(defconstant +method-traits-cache-size+ 100)
+
+(defparameter *method-traits-cache* (make-lru-cache +method-traits-cache-size+ :test #'eq))
+
+(defun get-method-traits (method &optional (create-if-necessary t))
+  (let ((exisiting (getcache method *method-traits-cache*)))
+    (cond (exisiting)
+          (create-if-necessary
+           (putcache method *method-traits-cache* (make-instance 'method-traits))))))
 
 (defun clear-method-traits (method)
-  (setf (slot-value method 'traits) nil))
+  (when-let ((traits (get-method-traits method nil)))
+    (setf (method-traits-changes traits) nil)
+    (setf (method-traits-contains-jump-changes-p traits) nil)
+    (setf (method-traits-lead-length traits) nil)
+    (setf (method-traits-lead-head traits) nil)
+    (setf (method-traits-lead-count traits) nil)
+    (setf (method-traits-plain-lead traits) nil)
+    (setf (method-traits-plain-course traits) nil)
+    (setf (method-traits-course-length traits) nil)
+    (setf (method-traits-hunt-bells traits) nil)
+    (setf (method-traits-principal-hunt-bells traits) nil)
+    (setf (method-traits-secondary-hunt-bells traits) nil)
+    (setf (method-traits-working-bells traits) nil)
+    (setf (method-traits-classification traits) nil)
+    (setf (method-traits-lead-head-code traits) nil))
+  method)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun get-accessor-names (slot)
@@ -273,7 +641,7 @@ Can be used with @code{setf} to change a property. Signals a @code{type-error} i
              (place-notation (method-place-notation method)))
     (let ((changes (parse-place-notation place-notation :stage stage)))
       (setf (method-traits-changes traits) changes)
-      (setf (method-traits-contains-jump-changes traits) (notevery #'changep changes)))))
+      (setf (method-traits-contains-jump-changes-p traits) (notevery #'changep changes)))))
 
 (define-method-trait changes (%update-changes)
   "If @var{method}'s stage and place-notation have been set returns a fresh list of
@@ -321,28 +689,34 @@ cannot be properly parsed as place notation at @var{method}'s stage.
           (with-initial-format-characters
             (apply #'place-notation-string changes :comma comma keys)))))
 
-(define-method-trait contains-jump-changes (%update-changes changes)
+(define-method-trait contains-jump-changes-p (%update-changes changes)
+  ;; TODO add another xref here once method classification is redone
   "If @var{method}'s stage and place-notation have been set and method contains one or
 more jump changes returns true, and otherwise returns @code{nil}. Note that even if the
 place notation is set and implies jump changes, if the stage is not set
-@code{method-contains-jump-changes} will still return @code{nil}. Signals a
-@code{type-error} if @var{method} is not a @code{method}. Signals a @code{parse-error} if
-the place notation string cannot be properly parsed as place notation at @var{method}'s
-stage.
+@code{method-contains-jump-changes-p} will still return @code{nil}.
+
+Note that this function reflects the place notation of @var{method} while
+@code{method-jump-p} reflects the classification stored in the method, and they may not
+agree.
+
+Signals a @code{type-error} if @var{method} is not a @code{method}. Signals a
+@code{parse-error} if the place notation string cannot be properly parsed as place
+notation at @var{method}'s stage.
 @example
 @group
- (method-contains-jump-changes
+ (method-contains-jump-changes-p
    (method :place-notation \"x3x4x2x3x4x5,2\"
            :stage 6))
      @result{} nil
- (method-contains-jump-changes
+ (method-contains-jump-changes-p
    (method :place-notation \"x3x(24)x2x(35)x4x5,2\"
            :stage 6))
      @result{} t
- (method-contains-jump-changes
+ (method-contains-jump-changes-p
    (method :stage 6))
      @result{} nil
- (method-contains-jump-changes
+ (method-contains-jump-changes-p
    (method :place-notation \"x3x(24)x2x(35)x4x5,2\"
            :stage nil))
      @result{} nil
@@ -362,8 +736,7 @@ stage.
 @example
 @group
  (method-lead-length
-   (method :title \"Cambridge Surprise Minor\"
-           :place-notation \"x3x4x2x3x4x5,2\"))
+   (method-from-title \"Cambridge Surprise Minor\" \"x3x4x2x3x4x5,2\"))
      @result{} 24
 @end group
 @end example")
@@ -389,8 +762,7 @@ the place notation string cannot be properly parsed as place notation at @var{me
 stage.
 @example
 @group
- (method-lead-head (method :stage 8
-                           :place-notation \"x1x4,2\"))
+ (method-lead-head (method-from-title \"Little Bob Major\" \"x1x4,2\"))
      @result{} !16482735
 @end group
 @end example")
@@ -418,43 +790,14 @@ at each lead head), and otherwise returns @code{nil}. The bells in the list are 
 increasing numeric order. Note that for a method with no hunt bells this function will
 also return @code{nil}.
 
-The CCCBR's taxonomy of methods is largely driven by a division of hunt bells into
-``principal'' hunt bells and ``secondary'' hunt bells (see the
-@url{http://www.methods.org.uk/ccdecs.htm,Central Council's Decisions} for details). The
-@code{method-principal-hunt-bells} and @code{method-secondary-hunt-bells} functions return
-lists, again ordered in increasing numeric order, of these hunt bells. The lists returned
-by these two functions are disjoint, and, in the absence of jump changes, their union
-consists exactly of the contents of the list returned by @code{method-hunt-bells}. The
-CCCBR's taxonomy, and its definitions of principal and secondary hunt bells, is predicated on
-the absence of jump changes, and it is not clear how they would best be extended for
-methods with jump changes. The @code{method-principal-hunt-bells} and
-@code{method-secondary-hunt-bells} functions therefore return @code{nil} for any methods
-containing jump changes; however, @code{method-hunt-bells} can still be usefully used for
-such methods. Note that @code{method-principal-hunt-bells} and
-@code{method-secondary-hunt-bells} also return @code{nil} for methods without jump changes
-that do not contain any of the relevant hunt bells, as well as for methods that have not
-had both their stage and place-notation set.
-
-All three of these functions ignal a @code{type-error} if @var{method} is not a
-@code{method}, and signal a @code{parse-error} if the place notation string cannot be
-properly parsed as place notation at @var{method}'s stage.
+Signals a @code{type-error} if @var{method} is not a @code{method}, and signal a
+@code{parse-error} if the place notation string cannot be properly parsed as place
+notation at @var{method}'s stage.
 @example
 @group
- (method-hunt-bells (method :stage 5
-                            :place-notation \"3,1.5.1.5.1\"))
+ (method-hunt-bells (method-from-title \"Grandsire Doubles\"
+                                       \"3,1.5.1.5.1\"))
      @result{} (0 1)
- (method-principal-hunt-bells (method :stage 5
-                            :place-notation \"3,1.5.1.5.1\"))
-     @result{} (0 1)
- (method-secondary-hunt-bells (method :stage 5
-                            :place-notation \"3,1.5.1.5.1\"))
-     @result{} nil
- (method-principal-hunt-bells (method :stage 5
-                            :place-notation \"5.1.5.1.125,2\"))
-     @result{} (0)
- (method-secondary-hunt-bells (method :stage 5
-                            :place-notation \"5.1.5.1.345,2\"))
-     @result{} (1)
 @end group
 @end example")
 
@@ -481,6 +824,126 @@ be properly parsed as place notation at @var{method}'s stage.
 @end group
 @end example")
 
+(define-constant +lead-head-codes+
+    (iter (for s :in '("ABCDEF" "GHJKLM" "PQ" "RS"))
+          (collect (iter (with vlen = (- (* 2 (ceiling +maximum-stage+ 2)) 4))
+                         ;; vlen is always even
+                         (with v := (make-array vlen))
+                         (with mid := (floor (length s) 2))
+                         (for i :from 0 :below (floor vlen 2))
+                         (for j := (if (eql mid 1) i (- i 2)))
+                         (labels ((set-val (vi ci &optional d)
+                                    (setf (svref v vi)
+                                          (make-keyword (format nil "~C~@[~D~]"
+                                                                (char s ci) d)))))
+                           (cond ((< i mid)
+                                  (set-val i i)
+                                  (set-val (- vlen 1 i) (- (* 2 mid) 1 i)))
+                                 (t
+                                  (set-val i (- mid 1) j)
+                                  (set-val (- vlen 1 i) mid j))))
+                         (finally (return v)))))
+  :test #'equalp)
+
+(defun %update-lead-head-code (method traits)
+  (setf (method-traits-lead-head-code traits) nil)
+  (when (>= (method-lead-length method) 2)
+    (let* ((stage (method-stage method))
+           (max (- stage 2))
+           (lh (method-lead-head method))
+           n)
+      (labels ((set-code (kind)
+                 (let ((codes (find kind +lead-head-codes+ :key #'(lambda (x) (svref x 0)))))
+                   (setf (method-traits-lead-head-code traits)
+                         (aref codes (if (<= n (funcall (if (evenp stage) #'floor #'ceiling)
+                                                        max 2))
+                                         (- n 1)
+                                         (- (length codes) (- max n) 1)))))))
+        (cond ((setf n (which-plain-bob-lead-head lh))
+               (let ((bells (row-bells (first (last (method-changes method))))))
+                 (if (evenp stage)
+                     (cond ((%placesp bells 0 1)
+                            (set-code :a))
+                           ((%placesp bells 0 (- stage 1))
+                            (set-code :g)))
+                     (cond ((%placesp bells 0 1 (- stage 1))
+                            (set-code :p))
+                           ((%placesp bells 0)
+                            (set-code :r))))))
+              ((and (setf n (which-grandsire-lead-head lh))
+                    (>= (method-lead-length method) 3)
+                    (%placesp (row-bells (first (last (method-changes method))))
+                              ;; Note that %placesp will ignore the second argument at
+                              ;; odd stages.
+                              0 (- stage 1)))
+               (decf max)
+               (let ((bells (row-bells (first (method-changes method)))))
+                 (if (oddp stage)
+                     (cond ((%placesp bells 2)
+                            (set-code :a))
+                           ((%placesp bells (- stage 1))
+                            (set-code :g)))
+                     (cond ((%placesp bells 2 (- stage 1))
+                            (set-code :p))
+                           ((%placesp bells)
+                            (set-code :r)))))))))))
+
+(define-method-trait lead-head-code (%update-lead-head-code)
+  "Returns the lead head code for @var{method}, as a keyword, if its stage and place
+
+notation are set and it has Plain Bob or Grandsire lead ends, and otherwise returns
+@code{nil}. No methods below minimus are considered to have such lead ends, nor is rounds
+considered such a lead end. When not @code{nil} the result is a keyword whose name
+consists of a single letter, possibly followed by a digit.
+
+The CCCBR's various collections of methods have, for several decades, used succinct codes,
+typically single letters or, more recently, single letters followed by digits, to denote
+various lead ends for the methods they contain. While the choices made have in the past
+varied by collection, in recent decades a consistent set of codes has been used, which is
+now codified in the Central Council of Church Bell Ringers
+@url{https://cccbr.github.io/method_ringing_framework/, Framework for Method
+Ringing} (FMR), appendix C. While these codes actually describe both a row and a change
+adjacent to that row, and thus two different rows, the FMR calls them \"lead head codes\",
+so that phrasing is also used here.
+
+There is currently (as of July 2019) an issue with the definitions of these codes in the
+FMR, where those for Grandsire-like methods do not correctly correspond to common
+practice. For example, most ringers would consider Itchingfield Slow Bob Doubles and
+Longford Bob Doubles to have the same lead ends. However, the current FMR definition says
+that the former has 'c' Grandsire lead ends, and the latter does not. This is currently
+under discussion for correction in the next revision of the FMR. The
+@code{method-lead-head-code} function is implemented assuming that this will be corrected
+in the next revision of the FMR to match common practice. For example, it considers
+neither Itchingfield Slow Bob nor Longford Bob as having Grandsire lead ends.
+
+It is also worth noting that, for some of the less common cases, the lead end codes
+defined in the FMR differ from those used in earlier CCCBR collections.
+
+Signals a @code{type-error} if @var{method} is not a @code{method}, and a
+@code{parse-error} if @var{method}'s place notation cannot be interpreted at its stage.
+@example
+@group
+ (method-lead-head-code
+   (lookup-method-by-title \"Advent Surprise Major\"))
+     @result{} :h
+ (method-lead-head-code
+   (lookup-method-by-title \"Zanussi Surprise Maximus\"))
+     @result{} :j2
+ (method-lead-head-code
+   (lookup-method-by-title \"Sgurr Surprise Royal\"))
+     @result{} :d
+ (method-lead-head-code
+   (lookup-method-by-title \"Twerton Little Bob Caters\"))
+     @result{} :q2
+ (method-lead-head-code
+   (lookup-method-by-title \"Grandsire Royal\"))
+     @result{} :p
+ (method-lead-head-code
+   (lookup-method-by-title \"Double Glasgow Surprise Major\"))
+     @result{} nil
+@end group
+@end example")
+
 (defun %update-lead-count (method traits)
   (if-let ((cycles (%get-working-bells method traits)))
     (iter (with lengths := '())
@@ -498,16 +961,16 @@ stage.
 @example
 @group
  (method-lead-count
-   (method :title \"Cambridge Surprise Minor\"
-           :place-notation \"x3x4x2x3x4x5,2\"))
+   (method-from-title \"Cambridge Surprise Minor\"
+                      \"x3x4x2x3x4x5,2\"))
      @result{} 5
  (method-lead-count
-   (method :title \"Cromwell Tower Block Minor\"
-           :place-notation \"3x3.4x2x3x4x3,6\"))
+   (method-from-title \"Cromwell Tower Block Surprise Minor\"
+                      \"3x3.4x2x3x4x3,6\"))
      @result{} 1
  (method-lead-count
-   (method :title \"Bexx Differential Bob Minor\"
-           :place-notation \"x1x1x23,2\"))
+   (method-from-title \"Bexx Differential Bob Minor\"
+                      \"x1x1x23,2\"))
      @result{} 6
 @end group
 @end example")
@@ -544,8 +1007,8 @@ stage.
   (when-let ((lead (%get-changes method traits)))
     (iter (for head :initially (rounds (method-stage method)) :then next)
           (for (values rows next) := (generate-rows lead head))
+          (for n :from 1)
           (nconcing rows :into result)
-          (counting t :into n)
           (until (roundsp next))
           (finally (setf (method-traits-plain-course traits) result)
                    (setf (method-traits-lead-count traits) n)))))
@@ -558,154 +1021,154 @@ final rounds. Signals a @code{type-error} if @var{method} is not a @code{method}
 a @code{parse-error} if the place notation string cannot be properly parsed as place
 notation at @var{method}'s stage.")
 
-(defmacro define-hunt-path-constants (&rest keys)
-  `(progn ,@(iter (for k :in keys)
-                  (for i :from 0 :by 2)
-                  (collect `(defconstant ,(intern (format nil "+~:@(~A~)+" k))  ,i)))
-          (define-constant +hunt-path-keywords+
-              (vector ,@(iter (for k :in keys) (nconcing (list k nil))))
-            :test #'equalp)))
-
-(define-hunt-path-constants :plain :treble-dodging :treble-place :alliance :hybrid)
-
-(defstruct (hunt-path-info
-             (:constructor make-hunt-path-info (bell little-p apex))
-             (:copier nil)
-             (:predicate nil))
-  (bell 0 :type bell)
-  ;; kind is the value of a numeric constant, such as +plain+, describing the path
-  (kind -1 :type integer)
-  ;; little-p is a genearlized boolean that is true if the hunt path is little and false
-  ;; otherwise
-  (little-p nil)
-  ;; apex is non-nil iff the path is what the Central Council calls well-formed, and is
-  ;; the index into the lead of the second row of the place made at the apex in the first
-  ;; half-lead of the palindrome; while unusual, it is possible for the palindrome to have
-  ;; multiple pairs of apices, in which case this is the first of them
-  (apex nil)
-  ;; section-length is the number of rows in which the hunt bell remains in the same
-  ;; dodging position in a treble dodging method; section-length is nil if this is not
-  ;; a treble dodging method; making a place is considered moving to a new dodging
-  ;; position; in the usual case of the treble single dodging section-length is 4
-  (section-length nil))
-
-(define-method-trait principal-hunt-bells (%update-classification classification)
-  "===merge: method-hunt-bells 1")
-
-(define-method-trait secondary-hunt-bells (%update-classification classification)
-  "===merge: method-hunt-bells 2")
-
-(define-method-trait classification (%update-classification)
-  "If @var{method} has had its stage and place-notation set returns a list of keywords
-describing how it fits into the CCCBR's taxonomy of methods (see
-@url{http://www.methods.org.uk/ccdecs.htm,Central Council's Decisions}), and otherwise
-@code{nil}. In the absence of jump changes the first element of the result will be one of
-@code{:principle}, @code{:bob}, @code{:place}, @code{:slow-course}, @code{:treble-bob},
-@code{:delight}, @code{:surprise}, @code{:treble-place}, @code{:alliance} or
-@code{:hybrid}. This may be followed by @code{:differential} and/or @code{:little}, if
-appropriate. While the CCCBR considers ``differentials'' as a distinct class from
-``principles'', what the CCCBR calls a pure ``differential'' is here described as
-@code{(:principle :differential)}, in parallel with with ``differential
-hunters@footnote{No, ``differential hunter'' is not a description of an infintesimal horse used for
-sport, it is an unattractive name for a meta-class of methods. See the CCCBR Decisions for
-further details.}'' Note that a principle, whether or not differential, can never be
-little.
-
-The CCCBR's taxonomy deals only with methods not containing jump changes, and it is not at
-all clear how it should be extended to deal with methods that do contain them. Therefore
-@code{method-classificaiton} simply returns @code{(:jump)} for any such methods, and never
-appends @code{:differential} or @code{:little} to such a classification. Be careful when
-constructing the titles of such methods as the bands that have rung them have sometimes
-used more complex names, such as ``treble jump'' to describe them.
-
-The CCCBR's taxonomy unfortunately does contain some ambiguities around unusual methods;
-for example little treble dodging methods containing multiple hunt bells with different
-cross section locations. The @code{method-classification} function will take its best
-guess in such cases, but there is no guarantee that what it returns is how the Council
-will end up classifying such methods if they are rung and named.
-
-Signals a @code{type-error} if @var{method} is not a @code{method}, and a
-@code{parse-error} if its place-notation cannot be parsed at its stage.
-
-See also @ref{set-method-classified-name} and @ref{method-hunt-bells}.
-@example
-@group
- (method-classification (method :stage 8
-                                :place-notation \"x3x4x2x34,2\")
-   @result{} (:surprise :little)
- (method-classification (method :stage 11
-                                :place-notation \"3.1.E.3.1.3,1\")
-   @result{} (:principle)
- (method-classification (method :stage 12
-                                :place-notation \"58x1x67x67x49x,x\")
-   @result{} (:hybrid :differential :little)
-@end group
-@end example")
-
-(defun %get-hunt-bell-info (method traits bell)
-  ;; Assumes that
-  ;;  - method has its stage and place notation set
-  ;;  - that method contains no jump changes
-  ;;  - that method has an even lead length
-  ;;  - and that bell is a hunt-bell
-  ;; Returns a hunt-path-info
-  (iter (with occurences := (make-array (method-stage method) :initial-element 0))
-        (with last-pos)
-        (for pos :initially bell :then (aref (row-bells c) pos))
-        (for prev :previous pos)
-        (for c :in (%get-changes method traits))
-        (for i :from 0)
-        (incf (svref occurences pos))
-        (when (eql pos prev)
-          (collect i :into places))
-        (collect pos :into path)
-        (setf last-pos pos)
-        (finally
-         (when (eql last-pos bell)
-           (push 0 places))
-         (nconcf path path)   ; make it a circular list
-         (let ((result (make-hunt-path-info
-                        bell
-                        (or (zerop (svref occurences 0))
-                            (zerop (svref occurences (- (method-stage method) 1))))
-                        (iter (with half-lead-length := (/ (method-lead-length method) 2))
-                              (for p :in places)
-                              (while (< p half-lead-length))
-                              (when (every #'equalp
-                                           (nthcdr p path)
-                                           (subseq-reversed-circular path
-                                                                     (+ p half-lead-length)
-                                                                     half-lead-length))
-                                (return p))))))
-                 (setf (hunt-path-info-kind result)
-                       (cond ((or (null places)
-                                  (oddp (length places))
-                                  (null (hunt-path-info-apex result)))
-                              +hybrid+)
-                             ((iter (with first-non-zero)
-                                    (for n :in-vector occurences)
-                                    (cond ((> n 0)
-                                           (if first-non-zero
-                                               (thereis (not (eql n first-non-zero)))
-                                               (setf first-non-zero n)))
-                                          (first-non-zero (return nil))))
-                              ;; not all non-zero occurrences are eql
-                              +alliance+)
-                             ((> (length places) 2)
-                              +treble-place+)
-                             ((> (svref occurences 0) 2)
-                              +treble-dodging+)
-                             (t +plain+)))
-                 (setf (hunt-path-info-section-length result)
-                       (and (eql (hunt-path-info-kind result) +treble-dodging+)
-                            (iter (with init-pos)
-                                  (for p :in (nthcdr (hunt-path-info-apex result) path))
-                                  (for prev :previous p)
-                                  (if-first-time (setf init-pos p))
-                                  (for i :from 0)
-                                  (until (or (eql p prev) (>= (abs (- p init-pos)) 2)))
-                                  (finally (return i)))))
-                 (return result)))))
+;; (defmacro define-hunt-path-constants (&rest keys)
+;;   `(progn ,@(iter (for k :in keys)
+;;                   (for i :from 0 :by 2)
+;;                   (collect `(defconstant ,(intern (format nil "+~:@(~A~)+" k))  ,i)))
+;;           (define-constant +hunt-path-keywords+
+;;               (vector ,@(iter (for k :in keys) (nconcing (list k nil))))
+;;             :test #'equalp)))
+;;
+;; (define-hunt-path-constants :plain :treble-dodging :treble-place :alliance :hybrid)
+;;
+;; (defstruct (hunt-path-info
+;;              (:constructor make-hunt-path-info (bell little-p apex))
+;;              (:copier nil)
+;;              (:predicate nil))
+;;   (bell 0 :type bell)
+;;   ;; kind is the value of a numeric constant, such as +plain+, describing the path
+;;   (kind -1 :type integer)
+;;   ;; little-p is a genearlized boolean that is true if the hunt path is little and false
+;;   ;; otherwise
+;;   (little-p nil)
+;;   ;; apex is non-nil iff the path is what the Central Council calls well-formed, and is
+;;   ;; the index into the lead of the second row of the place made at the apex in the first
+;;   ;; half-lead of the palindrome; while unusual, it is possible for the palindrome to have
+;;   ;; multiple pairs of apices, in which case this is the first of them
+;;   (apex nil)
+;;   ;; section-length is the number of rows in which the hunt bell remains in the same
+;;   ;; dodging position in a treble dodging method; section-length is nil if this is not
+;;   ;; a treble dodging method; making a place is considered moving to a new dodging
+;;   ;; position; in the usual case of the treble single dodging section-length is 4
+;;   (section-length nil))
+;;
+;; (define-method-trait principal-hunt-bells (%update-classification classification)
+;;   "===merge: method-hunt-bells 1")
+;;
+;; (define-method-trait secondary-hunt-bells (%update-classification classification)
+;;   "===merge: method-hunt-bells 2")
+;;
+;; (define-method-trait classification (%update-classification)
+;;   "If @var{method} has had its stage and place-notation set returns a list of keywords
+;; describing how it fits into the CCCBR's taxonomy of methods (see
+;; @url{http://www.methods.org.uk/ccdecs.htm,Central Council's Decisions}), and otherwise
+;; @code{nil}. In the absence of jump changes the first element of the result will be one of
+;; @code{:principle}, @code{:bob}, @code{:place}, @code{:slow-course}, @code{:treble-bob},
+;; @code{:delight}, @code{:surprise}, @code{:treble-place}, @code{:alliance} or
+;; @code{:hybrid}. This may be followed by @code{:differential} and/or @code{:little}, if
+;; appropriate. While the CCCBR considers ``differentials'' as a distinct class from
+;; ``principles'', what the CCCBR calls a pure ``differential'' is here described as
+;; @code{(:principle :differential)}, in parallel with with ``differential
+;; hunters@footnote{No, ``differential hunter'' is not a description of an infintesimal horse used for
+;; sport, it is an unattractive name for a meta-class of methods. See the CCCBR Decisions for
+;; further details.}'' Note that a principle, whether or not differential, can never be
+;; little.
+;;
+;; The CCCBR's taxonomy deals only with methods not containing jump changes, and it is not at
+;; all clear how it should be extended to deal with methods that do contain them. Therefore
+;; @code{method-classificaiton} simply returns @code{(:jump)} for any such methods, and never
+;; appends @code{:differential} or @code{:little} to such a classification. Be careful when
+;; constructing the titles of such methods as the bands that have rung them have sometimes
+;; used more complex names, such as ``treble jump'' to describe them.
+;;
+;; The CCCBR's taxonomy unfortunately does contain some ambiguities around unusual methods;
+;; for example little treble dodging methods containing multiple hunt bells with different
+;; cross section locations. The @code{method-classification} function will take its best
+;; guess in such cases, but there is no guarantee that what it returns is how the Council
+;; will end up classifying such methods if they are rung and named.
+;;
+;; Signals a @code{type-error} if @var{method} is not a @code{method}, and a
+;; @code{parse-error} if its place-notation cannot be parsed at its stage.
+;;
+;; See also @ref{set-method-classified-name} and @ref{method-hunt-bells}.
+;; @example
+;; @group
+;;  (method-classification (method :stage 8
+;;                                 :place-notation \"x3x4x2x34,2\")
+;;    @result{} (:surprise :little)
+;;  (method-classification (method :stage 11
+;;                                 :place-notation \"3.1.E.3.1.3,1\")
+;;    @result{} (:principle)
+;;  (method-classification (method :stage 12
+;;                                 :place-notation \"58x1x67x67x49x,x\")
+;;    @result{} (:hybrid :differential :little)
+;; @end group
+;; @end example")
+;;
+;; (defun %get-hunt-bell-info (method traits bell)
+;;   ;; Assumes that
+;;   ;;  - method has its stage and place notation set
+;;   ;;  - that method contains no jump changes
+;;   ;;  - that method has an even lead length
+;;   ;;  - and that bell is a hunt-bell
+;;   ;; Returns a hunt-path-info
+;;   (iter (with occurences := (make-array (method-stage method) :initial-element 0))
+;;         (with last-pos)
+;;         (for pos :initially bell :then (aref (row-bells c) pos))
+;;         (for prev :previous pos)
+;;         (for c :in (%get-changes method traits))
+;;         (for i :from 0)
+;;         (incf (svref occurences pos))
+;;         (when (eql pos prev)
+;;           (collect i :into places))
+;;         (collect pos :into path)
+;;         (setf last-pos pos)
+;;         (finally
+;;          (when (eql last-pos bell)
+;;            (push 0 places))
+;;          (nconcf path path)   ; make it a circular list
+;;          (let ((result (make-hunt-path-info
+;;                         bell
+;;                         (or (zerop (svref occurences 0))
+;;                             (zerop (svref occurences (- (method-stage method) 1))))
+;;                         (iter (with half-lead-length := (/ (method-lead-length method) 2))
+;;                               (for p :in places)
+;;                               (while (< p half-lead-length))
+;;                               (when (every #'equalp
+;;                                            (nthcdr p path)
+;;                                            (subseq-reversed-circular path
+;;                                                                      (+ p half-lead-length)
+;;                                                                      half-lead-length))
+;;                                 (return p))))))
+;;                  (setf (hunt-path-info-kind result)
+;;                        (cond ((or (null places)
+;;                                   (oddp (length places))
+;;                                   (null (hunt-path-info-apex result)))
+;;                               +hybrid+)
+;;                              ((iter (with first-non-zero)
+;;                                     (for n :in-vector occurences)
+;;                                     (cond ((> n 0)
+;;                                            (if first-non-zero
+;;                                                (thereis (not (eql n first-non-zero)))
+;;                                                (setf first-non-zero n)))
+;;                                           (first-non-zero (return nil))))
+;;                               ;; not all non-zero occurrences are eql
+;;                               +alliance+)
+;;                              ((> (length places) 2)
+;;                               +treble-place+)
+;;                              ((> (svref occurences 0) 2)
+;;                               +treble-dodging+)
+;;                              (t +plain+)))
+;;                  (setf (hunt-path-info-section-length result)
+;;                        (and (eql (hunt-path-info-kind result) +treble-dodging+)
+;;                             (iter (with init-pos)
+;;                                   (for p :in (nthcdr (hunt-path-info-apex result) path))
+;;                                   (for prev :previous p)
+;;                                   (if-first-time (setf init-pos p))
+;;                                   (for i :from 0)
+;;                                   (until (or (eql p prev) (>= (abs (- p init-pos)) 2)))
+;;                                   (finally (return i)))))
+;;                  (return result)))))
 
 (defun subseq-reversed-circular (clist start length)
   ;; Returns the reverse of a subsequence of a list, which can be circular. Note that the
@@ -716,320 +1179,230 @@ See also @ref{set-method-classified-name} and @ref{method-hunt-bells}.
         (push p result)
         (finally (return result))))
 
-(define-constant +even-stage-lead-head-codes+
-    #3A(((#\a #\b #\c) (#\f #\e #\d)) ((#\g #\h #\j) (#\m #\l #\k)))
-  :test #'equalp)
-
-(define-constant +odd-stage-lead-head-codes+ #2A((#\p #\q) (#\r #\s)) :test #'equalp)
-
-(defconstant +seconds-index+ 0)
-(defconstant +hunt-index+ 1)
-
-(defconstant +early-index+ 0)
-(defconstant +late-index+ 1)
-
-(defun lead-head-code (lead-head change)
-  ;; assumes lead-head and change are both rows of the same stage
-  (let ((c-bells (row-bells change)))
-     (when (zerop (aref c-bells 0))
-       (when-let ((n (which-plain-bob-lead-head lead-head)))
-         (decf n)
-         (when-let ((kind (lead-end-kind c-bells)))
-           (let ((stage (length c-bells)))
-            (if (evenp stage)
-                (let* ((break (- (/ stage 2) 2))
-                       (half (if (<= n break) +early-index+ +late-index+)))
-                  (unless (zerop half)
-                    (setf n (- stage n 3)))
-                  (let ((excess (- n 2)))
-                    (format nil "~C~@[~D~]"
-                            (aref +even-stage-lead-head-codes+ kind half (clamp n 0 2))
-                            (and (> excess 0) excess))))
-                (and (evenp n)
-                     (progn
-                       (let ((break (- (floor stage 2) 1)))
-                         (and (not (eql n break))
-                              (let ((half (if (< n break) +early-index+ +late-index+)))
-                                (unless (zerop half)
-                                  (setf n (- stage n 3)))
-                                (format nil "~C~@[~D~]"
-                                        (aref +odd-stage-lead-head-codes+ kind half)
-                                        (and (> n 0) (/ n 2)))))))))))))))
-
-(defun lead-end-kind (bells)
-  (let ((stage (length bells)))
-    (if (eql (aref bells 1) 1)
-        (and (if (evenp stage)
-                 (%placesp bells 0 1)
-                 (%placesp bells 0 1 (- stage 1)))
-             +seconds-index+)
-        (and (if (evenp stage)
-                 (%placesp bells 0 (- stage 1))
-                 (%placesp bells 0))
-             +hunt-index+))))
-
-(defun %update-classification (method traits)
-  (cond ((null (%get-changes method traits)))
-        ((method-contains-jump-changes method)
-         (setf (method-traits-classification traits) '(:jump)))
-        (t (iter (with principal := '())
-                 (with secondary := '())
-                 (for b :in (%get-hunt-bells method traits))
-                 (for info := (%get-hunt-bell-info method traits b))
-                 (if-first-time (push info principal)
-                                (let ((diff (labels ((kind-little (x)
-                                                       (+ (hunt-path-info-kind x)
-                                                          (if (hunt-path-info-little-p x) 1 0))))
-                                              (- (kind-little info)
-                                                 (kind-little (first principal))))))
-                                  (cond ((zerop diff)
-                                         (push info principal))
-                                        ((< diff 0)
-                                         (nconcf secondary principal)
-                                         (setf principal (list info)))
-                                        (t (push info secondary)))))
-                 (finally
-                  (when-let ((info (first principal)))
-                    (when (and (null secondary)
-                               (null (rest principal))
-                               (zerop (hunt-path-info-bell info))
-                               (eql (hunt-path-info-apex info) 0))
-                      (setf (method-traits-lead-head-code traits)
-                            (lead-head-code (method-traits-lead-head traits)
-                                            (first (last (method-traits-changes traits)))))))
-                  (setf (method-traits-principal-hunt-bells traits)
-                        (sort (mapcar #'hunt-path-info-bell principal) #'<))
-                  (setf (method-traits-secondary-hunt-bells traits)
-                        (sort (mapcar #'hunt-path-info-bell secondary) #'<))
-                  (let ((classification (and principal
-                                             (hunt-path-info-little-p (first principal))
-                                             '(:little))))
-                    (when (> (length (%get-working-bells method traits)) 1)
-                      (push :differential classification))
-                    (setf (method-traits-classification traits)
-                          (cons (if (null principal)
-                                    :principle
-                                    (let ((k (hunt-path-info-kind (first principal))))
-                                      (cond ((eql k +plain+)
-                                             (%plain-classification method traits principal secondary))
-                                            ((eql k +treble-dodging+)
-                                             (%treble-dodging-classification method traits principal))
-                                            (t (svref +hunt-path-keywords+ k)))))
-                                classification))))))))
-
-(defun %plain-classification (method traits principal-hunts secondary-hunts)
-  ;; Note that on entry method is known not to contain jump changes, principal-hunts is
-  ;; known to be non-null, and to be all plain (though possibily all little as well).
-  (block test-slow-course
-    (when (and (null (rest principal-hunts)) secondary-hunts)
-      (let* ((hunt (first principal-hunts)) (apex (hunt-path-info-apex hunt)))
-        (labels ((bell-at-location (index pos)
-                   (aref (row-bells (nth index (%get-plain-lead method traits))) pos)))
-          (unless (eql (bell-at-location apex 0) (hunt-path-info-bell hunt))
-            (incf apex (/ (method-lead-length method) 2))
-            (unless (eql (bell-at-location apex 0) (hunt-path-info-bell hunt))
-              (return-from test-slow-course)))
-          (let ((change-index (- apex 1)))
-            (when (< change-index 0)
-              (incf change-index (method-lead-length method)))
-            (unless (eql (aref (row-bells (nth (mod (- apex 1) (method-lead-length method))
-                                               (%get-changes method traits)))
-                               1)
-                         1)
-              ;; second place isn't being made as the principal hunt is leading so not
-              ;; slow course
-              (return-from test-slow-course))
-            (iter (with bell := (bell-at-location apex 1))
-                  (for sh :in secondary-hunts)
-                  (when (eql (hunt-path-info-bell sh) bell)
-                    (return-from %plain-classification :slow-course))))))))
-  (labels ((test-bob (b)
-             (iter (with prev
-                         := (aref (row-bells (first (last (%get-changes method traits))))
-                                  b))   ; an involution since no jump changes
-                   (with p := b)
-                   (with diff := (- p prev))
-                   (with new-diff)
-                   (if-first-time nil (until (eql p b)))
-                   (iter (for c :in (%get-changes method traits))
-                         (setf prev p)
-                         (setf p (aref (row-bells c) p))
-                         (setf new-diff (- p prev))
-                         (unless (or (zerop diff) (zerop new-diff) (eql diff new-diff))
-                           (return-from %plain-classification :bob))
-                         (setf diff new-diff)))))
-    (iter (for (wb) :in (%get-working-bells method traits))
-          (test-bob wb))
-    (iter (for sh :in secondary-hunts)
-          (test-bob (hunt-path-info-bell sh)))
-    :place))
-
-(defun %treble-dodging-classification (method traits principal-hunts)
-  (iter (with all := t)
-        (with none := t)
-        (with len := (method-lead-length method))
-        (with half := (- (/ len 2) 1))
-        (with stage := (method-stage method))
-        (for h :in principal-hunts)
-        (for hl := (mod (+ (hunt-path-info-apex h) half) len))
-        (for sec := (hunt-path-info-section-length h))
-        (for i := (mod (+ (hunt-path-info-apex h) sec -1) len))
-        (for p := (nthcdr i (%get-changes method traits)))
-        (iter (repeat (- (/ len sec) 1))
-              (unless (eql i hl)
-                (let ((v (row-bells (first p))))
-                  (if (iter (for j :from 1 :below (- stage 1))
-                            (thereis (eql (aref v j) j)))
-                      (setf none nil)
-                      (setf all nil))))
-              (incf i sec)
-              (cond ((>= i len)
-                     (setf i (mod i len))
-                     (setf p (nthcdr i (%get-changes method traits))))
-                    (t (setf p (nthcdr sec p)))))
-        (finally (return (cond (none :treble-bob)
-                               (all :surprise)
-                               (t :delight))))))
-
-(define-constant +no-explicit-class-names+
-    '("Grandsire" "Double Grandsire" "Reverse Grandsire" "Little Grandsire"
-      "Union" "Double Union" "Reverse Union")
-  :test #'equal)
-
-(defun set-method-classified-name (method name &optional (error-if-named t))
-  "If @var{method} has its stage and place notation set, sets its @code{method-name} to be
-@var{name} suitably augmented with its class and other modifiers, mostly from the CCCBR
-taxonomy (@pxref{method-classification}). That is, @var{name} will be what the CCCBR calls
-its ``name'', and its @code{method-name} will be set so that its @code{method-title} will
-usually be as the CCCBR dictates. @var{name} may not be null, but may be an empty string.
-If @var{method}'s stage or place notation is not set @code{set-method-classified-name}
-does nothing. Returns @var{method}.
-
-Both because of ambiguities in the CCCBR Decsisions, for example around complex
-combinations of hunt bell types, and  that Roan supports jump changes, there are
-some methods that may not be classified exactly as the CCCBR would dictate. Since the
-CCCBR doesn't recognize ringing incorporating jump changes there are no standards for the
-name of methods containing them, and there have been a variety of styles of names applied
-by those bands that do enjoy them: @code{set-method-classified-name} always just appends
-``jump'' to @var{name}.
-methods containing jump changes
-
-If the generalized boolean @var{error-if-named} is true, the default, an error will be
-signaled if @var{method} already has its name set and that name is not @code{string-equal}
-to the one @code{set-method-classified-name} will set it to. If @var{error-if-named} is
-false any existing name will be superseded.
-
-Signals a @code{type-error} if @var{method} is not a @code{method} or if @var{name} is not
-a string. Signals a @code{parse-error} if @var{method}'s place notation cannot be parsed
-at @var{method}'s stage. Signals an error if @var{error-if-named} is true, @var{method}
-already has a name and @code{set-method-classified-name} would change that name.
-@example
-@group
- (let ((meth (method :stage 8 :place-notation \"x34x45x34,2\")))
-   (set-method-classified-name meth \"Trafalgar\")
-   (method-name meth))
-     @result{} \"Trafalgar Differential Little Alliance\"
- (method-title
-   (set-method-classified-name
-     (method :stage 12 :place-notation \"x1x4,2\")
-     \"\"))
-        @result{} \"Little Bob Maximus\"
- (method-title
-   (set-method-classified-name
-     (method :stage 9 :place-notation \"147.(13)(46)(79)\")
-     \"Roller Coaster\"))
-        @result{} \"Roller Coaster Jump Caters\"
-@end group
-@end example"
-  (check-type* name string)
-  (when-let ((classification (method-classification method)))
-    (let ((result (string-left-trim
-                   " "
-                   (format nil "~A~:[~; Differential~]~:[~; Little~]~@[ ~A~]"
-                           name
-                           (member :differential classification)
-                           (member :little classification)
-                           (let ((cls (first classification)))
-                             (and (not (eq cls :principle))
-                                  (not (and (eq cls :bob)
-                                            (member name +no-explicit-class-names+
-                                                    :test #'equalp)))
-                                  (nsubstitute #\Space #\- (string-capitalize cls))))))))
-      (if (and error-if-named
-               (method-name method)
-               (not (string-equal (method-name method) result)))
-          (error "~S is already named, and will not be renamed to ~S." method result)
-          (setf (method-name method) result))))
-  method)
-
-(defparameter +cccbr-name-pattern+
-  (ppcre:create-scanner
-   (format nil "^(.*?)(?: *\\bDifferential)?(?: *\\bLittle)?(?: *(?:\\b~{~A~^|~}))$"
-           '("Bob" "Place" "Treble Bob" "Surprise" "Delight" "Treble Place"
-             "Alliance" "Hybrid"))
-   :case-insensitive-mode t))
-
-(defun cccbr-name (method-or-string)
-  "Strips the class name and Little and Differential modifiers off a method name to leave
-just that portion that the CCCBR considers a method's name. The argument can be either a
-string or a @code{method}, in which latter case it's @code{method-name} is used. In either
-case the value returned is a string. It is strict about the ordering of Differential and
-Little, and does not strip off stage names. Signals a @code{type-error} if
-@var{method-or-string} is neither a method nor a string.
-See also @ref{method-classification}.
-@example
-@group
- (cccbr-name \"Slink Differential Little Place\")
-   @result{} \"Slink\"
- (cccbr-name \"Little Bob\")
-   @result{} \"\"
- (cccbr-name \"Cambridge Major\")
-   @result{} \"Cambridge Major\"
-@end group
-@end example"
-  (let ((s (if (typep method-or-string 'method)
-               (method-name method-or-string)
-               method-or-string)))
-    (check-type* s string)
-    (or (ppcre:register-groups-bind (result) (+cccbr-name-pattern+ s) result) s)))
-
-(define-method-trait lead-head-code (%update-classification classification)
-  "Returns the lead head code for @var{method} if its stage and place notation are set and
-it has Plain Bob lead ends, and otherwise returns @code{nil}. Considers neither twin hunt
-methods, such as Grandsire, nor any method below minimus, as having Plain Bob lead ends,
-and Rounds is not considered a Plain Bob lead head. When not @code{nil} the result is a
-string containing a lower case letter, possibly followed by a digit.
-
-The CCCBR's various collections of methods have, for several decades, use succinct codes
-to denote the combination of a Plain Bob lead head and the change that leads to
-it (@url{http://methods.org.uk/online/notes.htm}). While officially just a convention for
-these collections it has become a de facto standard. Unfortunately these codes are not
-precisely defined, and there are ambiguities for some uncommon hunt paths. Consequently
-this function only returns a non-@code{nil} result for single hunt, non-hybrid methods,
-including little methods, that do not contain any jump changes. Thus there are cases
-where a code is used in a CCCBR collection, but not returned by
-@code{method-lead-head-code}. It is also worth noting that for odd stages there are
-Plain Bob lead heads for which the CCCBR does not define any code; when called on such a
-method @code{method-lead-head-code} also returns @code{nil}.
-
-Signals a @code{type-error} if @var{method} is not a @code{method}, and a @code{parse-error}
-if @var{method}'s place notation cannot be interpreted at its stage.
-@example
-@group
- (method-lead-head-code
-   (lookup-method \"Ashtead Surprise\" 8))
-     @result{} \"d\"
- (method-lead-head-code
-   (lookup-method \"Zanussi Surprise\" 12))
-     @result{} \"j2\"
- (method-lead-head-code
-     (lookup-method \"Twerton Little Bob\" 9))
-       @result{} \"q1\"
- (method-lead-head-code
-   (lookup-method \"Double Glasgow Surprise\" 8))
-     @result{} nil
-@end group
-@end example")
+;; (defun %update-classification (method traits)
+;;   (cond ((null (%get-changes method traits)))
+;;         ((method-contains-jump-changes-p method)
+;;          (setf (method-traits-classification traits) '(:jump)))
+;;         (t (iter (with principal := '())
+;;                  (with secondary := '())
+;;                  (for b :in (%get-hunt-bells method traits))
+;;                  (for info := (%get-hunt-bell-info method traits b))
+;;                  (if-first-time (push info principal)
+;;                                 (let ((diff (labels ((kind-little (x)
+;;                                                        (+ (hunt-path-info-kind x)
+;;                                                           (if (hunt-path-info-little-p x) 1 0))))
+;;                                               (- (kind-little info)
+;;                                                  (kind-little (first principal))))))
+;;                                   (cond ((zerop diff)
+;;                                          (push info principal))
+;;                                         ((< diff 0)
+;;                                          (nconcf secondary principal)
+;;                                          (setf principal (list info)))
+;;                                         (t (push info secondary)))))
+;;                  (finally
+;;                   (when-let ((info (first principal)))
+;;                     (when (and (null secondary)
+;;                                (null (rest principal))
+;;                                (zerop (hunt-path-info-bell info))
+;;                                (eql (hunt-path-info-apex info) 0))
+;;                       (setf (method-traits-lead-head-code traits)
+;;                             (lead-head-code (method-traits-lead-head traits)
+;;                                             (first (last (method-traits-changes traits)))))))
+;;                   (setf (method-traits-principal-hunt-bells traits)
+;;                         (sort (mapcar #'hunt-path-info-bell principal) #'<))
+;;                   (setf (method-traits-secondary-hunt-bells traits)
+;;                         (sort (mapcar #'hunt-path-info-bell secondary) #'<))
+;;                   (let ((classification (and principal
+;;                                              (hunt-path-info-little-p (first principal))
+;;                                              '(:little))))
+;;                     (when (> (length (%get-working-bells method traits)) 1)
+;;                       (push :differential classification))
+;;                     (setf (method-traits-classification traits)
+;;                           (cons (if (null principal)
+;;                                     :principle
+;;                                     (let ((k (hunt-path-info-kind (first principal))))
+;;                                       (cond ((eql k +plain+)
+;;                                              (%plain-classification method traits principal secondary))
+;;                                             ((eql k +treble-dodging+)
+;;                                              (%treble-dodging-classification method traits principal))
+;;                                             (t (svref +hunt-path-keywords+ k)))))
+;;                                 classification))))))))
+;;
+;; (defun %plain-classification (method traits principal-hunts secondary-hunts)
+;;   ;; Note that on entry method is known not to contain jump changes, principal-hunts is
+;;   ;; known to be non-null, and to be all plain (though possibily all little as well).
+;;   (block test-slow-course
+;;     (when (and (null (rest principal-hunts)) secondary-hunts)
+;;       (let* ((hunt (first principal-hunts)) (apex (hunt-path-info-apex hunt)))
+;;         (labels ((bell-at-location (index pos)
+;;                    (aref (row-bells (nth index (%get-plain-lead method traits))) pos)))
+;;           (unless (eql (bell-at-location apex 0) (hunt-path-info-bell hunt))
+;;             (incf apex (/ (method-lead-length method) 2))
+;;             (unless (eql (bell-at-location apex 0) (hunt-path-info-bell hunt))
+;;               (return-from test-slow-course)))
+;;           (let ((change-index (- apex 1)))
+;;             (when (< change-index 0)
+;;               (incf change-index (method-lead-length method)))
+;;             (unless (eql (aref (row-bells (nth (mod (- apex 1) (method-lead-length method))
+;;                                                (%get-changes method traits)))
+;;                                1)
+;;                          1)
+;;               ;; second place isn't being made as the principal hunt is leading so not
+;;               ;; slow course
+;;               (return-from test-slow-course))
+;;             (iter (with bell := (bell-at-location apex 1))
+;;                   (for sh :in secondary-hunts)
+;;                   (when (eql (hunt-path-info-bell sh) bell)
+;;                     (return-from %plain-classification :slow-course))))))))
+;;   (labels ((test-bob (b)
+;;              (iter (with prev
+;;                          := (aref (row-bells (first (last (%get-changes method traits))))
+;;                                   b))   ; an involution since no jump changes
+;;                    (with p := b)
+;;                    (with diff := (- p prev))
+;;                    (with new-diff)
+;;                    (if-first-time nil (until (eql p b)))
+;;                    (iter (for c :in (%get-changes method traits))
+;;                          (setf prev p)
+;;                          (setf p (aref (row-bells c) p))
+;;                          (setf new-diff (- p prev))
+;;                          (unless (or (zerop diff) (zerop new-diff) (eql diff new-diff))
+;;                            (return-from %plain-classification :bob))
+;;                          (setf diff new-diff)))))
+;;     (iter (for (wb) :in (%get-working-bells method traits))
+;;           (test-bob wb))
+;;     (iter (for sh :in secondary-hunts)
+;;           (test-bob (hunt-path-info-bell sh)))
+;;     :place))
+;;
+;; (defun %treble-dodging-classification (method traits principal-hunts)
+;;   (iter (with all := t)
+;;         (with none := t)
+;;         (with len := (method-lead-length method))
+;;         (with half := (- (/ len 2) 1))
+;;         (with stage := (method-stage method))
+;;         (for h :in principal-hunts)
+;;         (for hl := (mod (+ (hunt-path-info-apex h) half) len))
+;;         (for sec := (hunt-path-info-section-length h))
+;;         (for i := (mod (+ (hunt-path-info-apex h) sec -1) len))
+;;         (for p := (nthcdr i (%get-changes method traits)))
+;;         (iter (repeat (- (/ len sec) 1))
+;;               (unless (eql i hl)
+;;                 (let ((v (row-bells (first p))))
+;;                   (if (iter (for j :from 1 :below (- stage 1))
+;;                             (thereis (eql (aref v j) j)))
+;;                       (setf none nil)
+;;                       (setf all nil))))
+;;               (incf i sec)
+;;               (cond ((>= i len)
+;;                      (setf i (mod i len))
+;;                      (setf p (nthcdr i (%get-changes method traits))))
+;;                     (t (setf p (nthcdr sec p)))))
+;;         (finally (return (cond (none :treble-bob)
+;;                                (all :surprise)
+;;                                (t :delight))))))
+;;
+;; (define-constant +no-explicit-class-names+
+;;     '("Grandsire" "Double Grandsire" "Reverse Grandsire" "Little Grandsire"
+;;       "Union" "Double Union" "Reverse Union")
+;;   :test #'equal)
+;;
+;; (defun set-method-classified-name (method name &optional (error-if-named t))
+;;   "If @var{method} has its stage and place notation set, sets its @code{method-name} to be
+;; @var{name} suitably augmented with its class and other modifiers, mostly from the CCCBR
+;; taxonomy (@pxref{method-classification}). That is, @var{name} will be what the CCCBR calls
+;; its ``name'', and its @code{method-name} will be set so that its @code{method-title} will
+;; usually be as the CCCBR dictates. @var{name} may not be null, but may be an empty string.
+;; If @var{method}'s stage or place notation is not set @code{set-method-classified-name}
+;; does nothing. Returns @var{method}.
+;;
+;; Both because of ambiguities in the CCCBR Decsisions, for example around complex
+;; combinations of hunt bell types, and  that Roan supports jump changes, there are
+;; some methods that may not be classified exactly as the CCCBR would dictate. Since the
+;; CCCBR doesn't recognize ringing incorporating jump changes there are no standards for the
+;; name of methods containing them, and there have been a variety of styles of names applied
+;; by those bands that do enjoy them: @code{set-method-classified-name} always just appends
+;; ``jump'' to @var{name}.
+;; methods containing jump changes
+;;
+;; If the generalized boolean @var{error-if-named} is true, the default, an error will be
+;; signaled if @var{method} already has its name set and that name is not @code{string-equal}
+;; to the one @code{set-method-classified-name} will set it to. If @var{error-if-named} is
+;; false any existing name will be superseded.
+;;
+;; Signals a @code{type-error} if @var{method} is not a @code{method} or if @var{name} is not
+;; a string. Signals a @code{parse-error} if @var{method}'s place notation cannot be parsed
+;; at @var{method}'s stage. Signals an error if @var{error-if-named} is true, @var{method}
+;; already has a name and @code{set-method-classified-name} would change that name.
+;; @example
+;; @group
+;;  (let ((meth (method :stage 8 :place-notation \"x34x45x34,2\")))
+;;    (set-method-classified-name meth \"Trafalgar\")
+;;    (method-name meth))
+;;      @result{} \"Trafalgar Differential Little Alliance\"
+;;  (method-title
+;;    (set-method-classified-name
+;;      (method :stage 12 :place-notation \"x1x4,2\")
+;;      \"\"))
+;;         @result{} \"Little Bob Maximus\"
+;;  (method-title
+;;    (set-method-classified-name
+;;      (method :stage 9 :place-notation \"147.(13)(46)(79)\")
+;;      \"Roller Coaster\"))
+;;         @result{} \"Roller Coaster Jump Caters\"
+;; @end group
+;; @end example"
+;;   (check-type* name string)
+;;   (when-let ((classification (method-classification method)))
+;;     (let ((result (string-left-trim
+;;                    " "
+;;                    (format nil "~A~:[~; Differential~]~:[~; Little~]~@[ ~A~]"
+;;                            name
+;;                            (member :differential classification)
+;;                            (member :little classification)
+;;                            (let ((cls (first classification)))
+;;                              (and (not (eq cls :principle))
+;;                                   (not (and (eq cls :bob)
+;;                                             (member name +no-explicit-class-names+
+;;                                                     :test #'equalp)))
+;;                                   (nsubstitute #\Space #\- (string-capitalize cls))))))))
+;;       (if (and error-if-named
+;;                (method-name method)
+;;                (not (string-equal (method-name method) result)))
+;;           (error "~S is already named, and will not be renamed to ~S." method result)
+;;           (setf (method-name method) result))))
+;;   method)
+;;
+;; (defparameter +cccbr-name-pattern+
+;;   (ppcre:create-scanner
+;;    (format nil "^(.*?)(?: *\\bDifferential)?(?: *\\bLittle)?(?: *(?:\\b~{~A~^|~}))$"
+;;            '("Bob" "Place" "Treble Bob" "Surprise" "Delight" "Treble Place"
+;;              "Alliance" "Hybrid"))
+;;    :case-insensitive-mode t))
+;;
+;; (defun cccbr-name (method-or-string)
+;;   "Strips the class name and Little and Differential modifiers off a method name to leave
+;; just that portion that the CCCBR considers a method's name. The argument can be either a
+;; string or a @code{method}, in which latter case it's @code{method-name} is used. In either
+;; case the value returned is a string. It is strict about the ordering of Differential and
+;; Little, and does not strip off stage names. Signals a @code{type-error} if
+;; @var{method-or-string} is neither a method nor a string.
+;; See also @ref{method-classification}.
+;; @example
+;; @group
+;;  (cccbr-name \"Slink Differential Little Place\")
+;;    @result{} \"Slink\"
+;;  (cccbr-name \"Little Bob\")
+;;    @result{} \"\"
+;;  (cccbr-name \"Cambridge Major\")
+;;    @result{} \"Cambridge Major\"
+;; @end group
+;; @end example"
+;;   (let ((s (if (typep method-or-string 'method)
+;;                (method-name method-or-string)
+;;                method-or-string)))
+;;     (check-type* s string)
+;;     (or (ppcre:register-groups-bind (result) (+cccbr-name-pattern+ s) result) s)))
 
 
 ;;; Further method properties that are not currently cached as traits
@@ -1177,7 +1550,7 @@ stage.
   ;; Huffman encodes the stage + place notation, based on the frequencies in the methods
   ;; database as of June 2017. Only place notation characters are allowed, including
   ;; parens and commas (but no brackets). Note that digraphs ending in dot or cross get
-  ;; their own encodings.
+  ;; their own encodings. Returns an ASCII85 encoded string.
   (let ((result (make-array (length notation)
                             :element-type '(unsigned-byte 8)
                             :adjustable t
@@ -1212,9 +1585,10 @@ stage.
       (encode-char #\) #'first)
       (unless (zerop index)
         (vector-push-extend buffer result))
-      (string-right-trim "=" (with-output-to-string (s)
-                               (s-base64:encode-base64-bytes result s nil))))))
+      (binascii:encode-ascii85 result))))
 
+;; code used with an older version of Roan to generate the character frequencies
+;;
 ;; (with-methods-database (conn)
 ;;   (iter (with table := (make-hash-table))
 ;;         (initially (iter (for c :in-string (format nil "~Ax,()" +bell-names+))
@@ -1311,17 +1685,21 @@ place notation at its stage.
          (equalp (canonical-rotation (or c1 (fail method-1)))
                  (canonical-rotation (or c2 (fail method-2))))))))
 
+(defun canonical-rotation-key (changes)
+  (encode-place-notation (canonicalize-place-notation (canonical-rotation changes))
+                         (stage (first changes))))
+
 (defun method-canonical-rotation-key (method)
   "If @var{method} has its stage and place notation set returns a string uniquely
 identifying, using @code{equal}, the changes of a lead of this method, invariant under
-rotation. That is, if two methods are rotations of one another their
-@code{method-canonical-rotation-key}s will always be @code{equal}. The string is, other
-than being a string, essentially an opaque type and should generally not be displayed to
-an end user or otherwise have its structure depended upon. Case is significant;
-@code{equalp} should not be used to compare these keys. While, within one version of Roan,
-this key can be counted on to be the same in different sessions and on different machines,
-it may change between versions of Roan. If @var{method} does not have both its stage and
-place notation set @code{method-canonical-rotation-key} returns @code{nil}.
+rotation. That is, if, and only if, two methods are rotations, possibly trivially so, of
+one another their @code{method-canonical-rotation-key}s will always be @code{equal}. While
+a string, the value is essentially an opaque type and should generally not be displayed to
+an end user or otherwise have its structure depended upon, though it can be printed and
+read back in again. While, within one version of Roan, this key can be counted on to be
+the same in different sessions and on different machines, it may change between versions
+of Roan. If @var{method} does not have both its stage and place notation set
+@code{method-canonical-rotation-key} returns @code{nil}.
 
 Signals a @code{type-error} if @var{method} is not a @code{method}. Signals a
 @code{parse-error} if @var{method}'s place notation cannot be properly parsed at its
@@ -1345,8 +1723,7 @@ stage.
 @end group
 @end example"
   (when-let ((changes (method-changes method)))
-    (encode-place-notation (canonicalize-place-notation (canonical-rotation changes))
-                           (method-stage method))))
+    (canonical-rotation-key changes)))
 
 
 ;;; Falseness
@@ -1360,9 +1737,9 @@ together, the false course heads of such methods are traditionally partitioned i
 sets all of whose elements must occur together in such methods. These are traditionally
 called ``false course head groups'' (FCHs), although they are not what mathemeticians
 usually mean by the word ``group''. Further information is available from a variety of
-sources, including Appendix B of the
-@url{http://www.methods.org.uk/method-collections/xml-zip-files/method+xml+1.0.pdf, CCCBR
-Methods Committee's XML format documentation}.
+sources, including Appendix B of
+@url{http://www.methods.org.uk/method-collections/xml-zip-files/method%20xml%201.0.pdf,
+Peter Niblett's XML format documentation}.
 
 Roan provides a collection of @code{fch-group} objects that represent these FCH groups.
 Each is intended to be an singleton object, and under normal circumstances new instances
@@ -1401,7 +1778,9 @@ for a higher stage @code{fch-group} are royal @code{row}s."
 
 (defmethod print-object ((fch-group fch-group) stream)
   (cond (*print-readably*
-         (format stream "(FCH-GROUP ~S~:[~*~; T ~:[NIL~;T~]~])"
+         (unless *read-eval*
+           (error 'print-not-readable :object fch-group))
+         (format stream "#.(FCH-GROUP ~S~:[~*~; T ~:[NIL~;T~]~])"
                  (fch-group-name fch-group)
                  (fch-group-parity fch-group)
                  (eq (fch-group-parity fch-group) :out-of-course)))
@@ -1451,7 +1830,7 @@ either a @code{row} or a string designator.
 
 If @var{item} is a @code{row} the @code{fch-group} that contains that row among its
 elements is returned. If it is not at an even stage, major or above, or if it is at an
-even stage royal or above but with any of the bells conventially called the seven (and
+even stage royal or above but with any of the bells conventionally called the seven (and
 represented in Roan by the integer @code{6}) or higher out of their rounds positions,
 @code{nil} is returned. If @var{item} is a @code{row} at an even stage maximus or above,
 with the back bells in their home positions, it is treated as if it were the equivalent
@@ -1768,7 +2147,7 @@ useful slots accessible with @code{inappropriate-method-error-details} and
 (defun falseness-groups (method fchs)
   (and (evenp (method-lead-length method))
        (method-lead-head-code method)
-       (funcall (if (method-contains-jump-changes method)
+       (funcall (if (method-contains-jump-changes-p method)
                     #'test-jump-palindrome
                     #'test-ordinary-palindrome)
                 (method-changes method)
@@ -1904,752 +2283,942 @@ stage major or above, does not have one hunt bell, the treble, or is differentia
     (fch-list-f summary)
     (values summary (falseness-groups method summary) incidence)))
 
-
-;;; Method lookup
-
-(defmacro define-method-lookup (name lambda-list &optional docstring)
-  (multiple-value-bind (required optional ignore keyword)
-      (parse-ordinary-lambda-list lambda-list :normalize nil)
-    (declare (ignore ignore))
-    (let ((dispatch-to (format-symbol :roan "%~A" name)))
-      (labels ((prune (x)
-                 (mapcar #'(lambda (y) (if (atom y) y (first y))) x)))
-      `(defun ,name ,lambda-list
-         ,docstring
-         (if-let ((fn (and (fboundp ',dispatch-to) (symbol-function ',dispatch-to))))
-           (funcall fn ,@required ,@(prune optional) ,@(prune keyword))
-           (signal-method-lookup-error ',name)))))))
-
-(defun signal-method-lookup-error (name)
-  (error "The ~A function requires that the full :roan system be loaded, with SQLite support."
-         name))
-
-(defmacro with-methods-database ((var &key database busy-timeout) &body body)
-  "For more complex uses of Roan's methods database than the various @code{lookup-methods-}
-facilitate SQL queries can be made against the database directly using the
-@url{https://common-lisp.net/project/cl-sqlite/,CL-SQLITE API}. The
-@code{with-methods-database} macro binds @var{var} to a database handle to Roan's methods
-database and executes @var{body}, returning the result; returns @code{nil} if @var{body}
-is empty. The database handle is closed on exit.
-
-If @var{database} is supplied it should be a pathname designator to a database with the
-Schema of Roan's methods database. If @code{nil}, the default, the standard location for
-the database is used.
-
-If @var{busy-timeout} is supplied it should be a non-negative integer, the number of
-milliseconds to wait when attempting to operate on a busy database. If @code{nil}, the
-default, operations on a busy database fail immediately.
-
-Signals a @code{type-error} if @var{database} is neither @code{nil} nor a pathname
-designator, or if @var{busy-timeout} is neither @code{nil} nor a non-negative integer. A
-variety of SQLite or file system errors may be signaled if there is difficulty opening the
-database file.
-@example
-@group
- (with-methods-database (conn)
-   (iter (for (stage) :in-sqlite-query
-                \"select stage from methods
-                  where name = 'Cambridge Surprise'\"
-              :on-database conn)
-         (collect stage)))
-     @result{} (6 8 10 12 14 16)
-@end group
-@end example
-
-The Roan methods database has the following schema:
-@example
-@group
-CREATE TABLE methods (stage int not null,
-                      name text not null,
-                      notation text not null,
-                      canonicalRotation text,
-                      firstTower text,
-                      firstHand text);
-CREATE TABLE version (updated text non null, etag text);
-CREATE UNIQUE INDEX key on methods (stage, name);
-CREATE INDEX notationIndex on methods (notation);
-CREATE INDEX rotationIndex on methods (canonicalRotation);
-@end group
-@end example
-The actual methods data is stored in the @code{methods} table. The @code{version} table
-should contain only a single row, and records information used by
-@code{update-methods-database} to determine whether or not the database needs updating.
-Neither the indices nor the contents of the canonicalRotation column exist in the copy of
-the database on the server, and are instead created by @code{update-methods-database}
-after it is downloaded to reduce the size of the file transferred over the network.
-
-The @code{stage} and @code{name} columns of the @code{methods} table are the stage and
-name of the method described by that row of the table (polysemy alert: a table row is
-unrelated to a change ringing row), and together form a primary key for that table; that
-is, there can be no two rows that have the same @code{stage} and @code{name}.
-
-The @code{notation} column is the corresponding place notation, in a canonical form with
-internal places elided as by @code{:elide :lead-end} in @code{write-place-notation},
-capital letters used for place eleven or above, a lower case @samp{x} used for cross, and
-palindromic methods with an even lead length unfolded as by @code{:comma t}.
-
-The @code{canonicalRotation} is the place notation corresponding to a unique rotation of
-of changes of the method. That is, if two methods have the same changes, up to rotation,
-they will have the same @code{canonicalRotation}. Note that this rotation is in no way
-a preferred one, and is in most cases one few bands would ever care to ring; it is just a
-way of comparing two methods to see if they are the same up to rotation. The place
-notation for @code{canonicalRotation} is in the same canonical form as @code{notation}.
-
-The @code{firstTower} and @code{firstHand} columns are succinct, textual representations
-of when, and possibly where, the first peal in the methods occurred in tower or hand,
-respectively, if that information is available in the database. Sometimes it is not
-available, or no such peal has occured, in which the column is @code{null}.
-@xref{canonicalize-method-place-notation}
-@xref{write-place-notation}"
-  `(execute-with-methods-database #'(lambda (,var) ,@body) ,database ,busy-timeout))
-
-(define-method-lookup execute-with-methods-database (thunk database busy-timeout))
-
-(define-method-lookup lookup-methods-by-name
-    (name &key (stage *default-stage*) limit update url database busy-timeout)
-  "===summary===
-Roan provides an @url{https://www.sqlite.org/,SQLite database} of method definitions,
-containing the same methods as in the @url{http://www.ringing.org/methods/,ringing.org
-web site}. Because use of SQLite requires installation of a binary library,
-@code{libsqlite3} available from the @url{https://www.sqlite.org/,SQLite web site},
-some Roan users may perfer to avoid it. Roan, without any of the facilities in this
-section for looking up methods, can be loaded by using the system @code{roan-base} instead
-of the full @code{roan}. Everything else in Roan should work fine without the lookup
-functions, and any calls to them will result in an error indicating that they are not
-loaded.
-
-In addition to all the methods recognized by the CCCBR at the time Roan's database was
-last updated, the database also contains a variety of methods not CCCBR recognized, or, in
-some cases, with names or classifications differing from those with the CCCBR's
-imprimatur. For example, it contains methods with jump changes; methods that the Council
-does not consider distinct from others (for example, New Grandsire); sometimes attaches
-commonly-used names to methods in addition to those blessed by the Council (for example,
-what the Council calls Bastow Little Bob Doubles is in the database under that name, and
-also under St Helen's Doubles and Cloister Doubles); and methods that were disavowed by
-the Council because they were rung and named in a peal that did not meet the Council's
-requirements at the time is was rung (for example, Brindle Bob Royal, which itself met the
-Council's requirements at the time it was rung in spliced, but the peal contained another
-method, then illegal but now perfectly acceptable even to the Council). While this
-database does extend what the Central Council's collection of methods provides, it is
-still not as complete and comprehensive as it could be, though I hope it is at least
-helpful.
-
-This database can be interrogated with the @code{lookup-methods-by-name},
-@code{lookup-method}, @code{lookup-methods-by-notation} and
-@code{lookup-methods-from-changes} functions.
-
-The methods in the database provided by Roan are a collation of methods extracted from
-several different sources
-@itemize @bullet
-@item
-The Central Council of Church Bell Ringers Method's Committee's
-@url{http://www.methods.org.uk/,,collection of methods}. This collection is copyright
-by the Central Council of Church Bell Ringers, and the method definitions extracted
-from it have been modified: their place notation and other details have been reformated,
-and they have been merged with method definitions from other sources.
-
-@item
-Tony Smith's
-@url{http://www.methods.org.uk/supplement/provisionally-named/intro.txt,,
-Collection of Provisionally Named Methods}. This collection is copyright by Tony Smith,
-and the method definitions extracted from it have been modified: their place notation and
-other details have been reformated, and they have been merged with method definitions from
-other sources.
-
-@item
-The Central Council's 1988 @emph{Collection of Plain Methods},
-
-@item
-Steven Coleman's @emph{The Method Ringer's Companion}, 1995,
-
-@item
-Peter Hinton's
-@url{http://www.cambridgeringing.info/Methods/Doubles/DoublesMethods-index.htm,,
-Palindromic Plain Doubles Methods} web page,
-
-@item
-a variety of helpful messages on the
-@url{http://www.bellringers.net/mailman/listinfo/ringing-theory_bellringers.net,,
-ringing-theory mailing list},
-
-@item and tradition and word of mouth.
-@end itemize
-===endsummary===
-The @code{lookup-methods-by-name} function returns a list of @code{method}s of a given
-@var{stage} and with a name matching @var{name}, or an empty list if there are no such
-methods in the database. If the @var{stage} argument is not provided it defaults to the
-current value of @code{*default-stage*}. Comparison is done case-insensitively. Note that,
-just like for @code{method} objects, the name in this function is not the same as the name
-in the CCCBR's taxonomy: it includes what the CCCBR calls the class as well as appropriate
-modifiers such as ``Differential'' and ``Little''. That is, for purposes of this function,
-the name is the method's entire title with the stage removed. So, for example, the name of
-Cambridge Surprise Major is ``Cambridge Surprise'', and that of Baldrick Differential
-Little Bob Cinques is ``Baldrick Differential Little Bob''.
-
-The @var{name} argument to @code{lookup-methods-by-name} can include wildcard characters:
-@samp{?} matches any one character, and @samp{*} matches any sequence of zero or more
-characters. To include a @samp{?} or @samp{*} in a string, not as a wildcard, escape it
-with a backslash @samp{\\}. Note that in Lisp literal strings you must backslash escape a
-backslash so you will typically end up with two backslashes. To include a backslash in a
-@var{name} pattern escape it with a backslash; in a Lisp literal string this will be a
-total of four backslashes. Any other use of backslash in a @var{name} pattern other than
-escaping @samp{?}, @samp{*} or @samp{\\} signals an error.
-
-For the common case of looking up a single method by name the function
-@code{lookup-method} is available. If a @code{method} is found it is returned and
-otherwise @code{nil} is returned. Apart from the @var{name}, which may not contain
-wildards, and the optiional @var{stage}, no other arguments may be supplied. If
-@var{stage} is not supplied, or is @code{nil}, then @var{name} is treated as a method
-title if it ends with a stage name, that stage being used, and otherwise @var{stage}
-defaults to the current value of @code{*default-stage*}. In other respects
-@code{lookup-method} behaves similarly to @code{lookup-methods-by-name}, when @var{limit},
-@var{update}, @var{url}, @var{database} and @var{busy-timeout} are all @code{nil} or
-unsupplied in that latter fucntion.
-
-The @code{lookup-methods-by-notation} function returns a list of @code{method}s of a given
-@var{stage} and with a plain lead defined by the place notation @var{notation}, a
-string, or an empty list if there are no such methods in the database. If
-@var{stage} is not supplied it defaults to the current value of @code{*default-stage*}. If
-the generalized boolean @var{rotations} is true it also returns any methods whose changes
-are a rotation of those given. While the CCCBR recognizes only one method with any given
-notation, or rotation thereof, Roan's database may contain multiple such. Wildcards cannot
-be used in @var{notation}.
-
-The @code{lookup-methods-from-changes} function returns a list of @code{method}s with a
-given list of @var{changes} constituting its plain lead. All the elements of the list
-@var{changes} must be @code{row}s, and be of the same stage. The @var{rotations} argument
-is as for @code{lookup-methods-by-notation}.
-
-There is no guarantee of what order methods are in the lists returned by any of these
-three functions.
-
-For any of these functions the @var{limit} keyword argument can be used to limit the
-number of methods returned. If supplied it should be a positive integer. If @code{nil},
-the default, there is no limit.
-
-For any of these functions the @var{update} argument can be used to ask that the database
-be updated from @url{http://www.ringing.org/methods/,,ringing.org} before querying it.
-Possible values for @var{update} are:
-@table @asis
-@item @code{nil} (the default)
-no updating is done: whatever version of the database is
-already present is used as is
-
-@item @code{:query} or @code{t}
-@url{http://www.ringing.org/methods/,ringing.org} is queried
-before executing the lookup, and, if it appears the version of the database on the server
-is more recent than that already on the local machine, a fresh copy is downloaded from the
-web site and used to replace the version already present
-
-@item a non-negative integer
-a time duration, in units of seconds: only if at least this
-much time has elapsed since the version on the local machine was created is the server
-queried and, if a new version is present there, downloaded; the time the database on the
-server was created is not the same as the created or modified timestamp on the local file,
-nor the time it was download to the local machine
-
-@item @code{:force}
-the most recent version on the server is downloaded, regardless of
-whether or not it appears to be any more recent than the version already on the local
-machine
-@end table
-An error is signaled if @var{update} has any other value. If the database does not exist
-on the local machine an @code{error} is signaled if @var{update} is @code{nil}, and
-otherwise an attempt is made to download and install it.
-
-Unfortunately the libraries required to download and unzip an updated libary do not
-currently (as of June 2017) work in CLISP or LispWorks. An attempt to update the the
-database with a non-nil value of @var{update} will signal an error in these Lisp
-implementations. @xref{update-methods-database}.
-
-The @var{url} argument can be used to specify a different location for downloading a
-fresh database, if @var{update} indicates that such an action should be taken. If
-@var{update} is @code{nil}, or otherwise indicates that the server need not be queried,
-@var{url} is ignored. If @code{nil} the default location is used, and otherwise @var{url}
-should be a string.
-
-The @var{database} argument enables use of a different database than Roan's default. It
-should be a pathname designator for an existing file which is an SQLite database with the
-same schema as Roan's default database. @xref{with-methods-database} for further
-information on such databases. If @var{database} is @code{nil}, the default, Roan's
-default location for the database is used.
-
-The @var{busy-timout} argument specifies how long to wait, in milliseconds, for a locked
-database; if @code{nil}, the default, operations on a locked database fail immediately.
-
-There is no guarantee that any @code{method} object returned by any of these functions is
-distinct from that returned by a different call to the same one or a different one that
-needs to return such an object describing the same underlying method. For example, if two
-different invocations of one or two of these methods are asked to provide a definition for
-Cambridge Surprise Major the resulting @code{method} objects may or may not be @code{eq},
-and subsequent changes to one may or may not be reflected in the ``other'' (since it may
-or may not be the same one).
-
-A @code{type-error} is signaled if @var{stage} is not a @code{stage} (or, in the case of
-@code{lookup-method} only, @code{nil}); @var{name} or @var{notation} is not a string;
-@var{changes} is not a non-empty list of @code{row}s; @var{limit} is neither @code{nil}
-nor a positive integer; @var{update} is not of any of the types itemized above; @var{url}
-is neither @code{nil} nor a string; @var{database} is not a pathname designator; or
-@var{busy-timeout} is neither @code{nil} nor a non-negative integer. A @code{parse-error}
-is signaled if @var{notation} is a string and is not parseable as place notation at
-@var{stage}. An @code{error} is signaled if @var{name} contains a @samp{\\} followed by
-anything other than @samp{?}, @samp{*} or @samp{\\}; or if @var{changes} is a list of
-@code{row}s, but they are not all of the same stage.
-
-A variety of SQLite, file system or network errors may be signaled if there is difficulty
-opening the database file or, if necessary, reaching the server to download a fresh
-database.
-@example
-@group
- (method-place-notation
-   (lookup-method \"Advent Surprise\" 8))
-     @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
- (method-place-notation
-   (lookup-method \"Advent Surprise Major\"))
-     @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
- (method-place-notation
-   (first (lookup-methods-by-name \"A?ve?t Sur*e\" :stage 8)))
-     @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
-@end group
-@group
- (method-property
-   (lookup-methods-by-name 8 \"Advent Surprise\" :stage 8))
-   :first-tower)
-     @result{} \"1988-07-31 at Boston, Massachusetts, USA (Advent)\"
-@end group
- (lookup-methods-by-name \"No-such-method-anywhere\" 8) @result{} nil
- (lookup-method \"No-such-method-anywhere\" 9) @result{} nil
- (length (lookup-methods-by-name 8 \"Advent *\")) @result{} 3
-@group
- (length (lookup-methods-by-name 8 \"Advent *\" :limit 2))
-   @result{} 2
-@end group
-@group
- (method-title
-   (first
-     (lookup-methods-by-notation 8 \"36x56.4.5x5.6x4x5x4x7,8\")))
-       @result{} \"Advent Surprise Major\"
-@end group
- (method-title
-  (first (lookup-methods-by-changes '(!214365 !132546))))
-    @result{} \"Original Minor\"
-@group
- (mapcar #'method-title
-  (lookup-methods-by-notation 5 \"5,1.3.1\"))
-    @result{} (\"Bastow Little Bob Doubles\"
-               \"Cloister Doubles\"
-               \"St Helen's Doubles\")
-@end group
-@group
- (mapcar #'method-title
-        (lookup-methods-by-notation \"3,1.5.1.5.1\"
-                                    :stage 5
-                                    :rotations nil))
-   @result{} (\"Grandsire Doubles\")
-@end group
-@group
- (mapcar #'method-title
-        (lookup-methods-by-notation \"3,1.5.1.5.1\"
-                                    :stage 5
-                                    :rotations t))
-   @result{} (\"Grandsire Doubles\" \"New Grandsire Doubles\")
-@end group
-@end example")
-
-(define-method-lookup lookup-method (name &optional stage)
-  "===merge: lookup-methods-by-name 1")
-
-(define-method-lookup lookup-methods-by-notation
-    (place-notation &key (stage *default-stage*) rotations limit update url database busy-timeout)
-  "===merge: lookup-methods-by-name 2")
-
-(define-method-lookup lookup-methods-from-changes
-    (changes &key rotations limit update url database busy-timeout)
-  "===merge: lookup-methods-by-name 3")
-
-(define-method-lookup update-methods-database (&key since force url database)
-  "Possibly downloads a fresh copy of the methods database from
-@url{http://www.ringing.org/methods/,the ringing.org server}.
-
-If @var{since} is not @code{nil} it should be a non-negative integer. If fewer than that
-number of seconds have passed since the database was created, as recorded in the database,
-@code{update_methods-databse} will return @code{nil} immediately, doing nothing further.
-
-Typically, before downloading the database, @code{update-methods-database} queries the
-server to see if the copy thereon differs from the local copy, and does not download it if
-they are the same. If @var{force} is not @code{nil}, however, it will always attempt to
-download a fresh copy of the database, even if it appears to be unchanged.
-
-However, if the database does not exist on the local machine both @var{since} and
-@var{force} are ignored, and in this case an attempt is always made to download the
-database. That is, if the database does not exist locally the behavior is as if
-@var{since} were @code{nil} and @var{force} were @code{t}.
-
-For example,
-@example
- (update-methods-database :since (* 24 60 60 30))
-@end example
-will download a fresh database only if the current one was created at least thirty
-days ago, and the version on the server is different than the one currently
-stored locally; or if there is currently no such database on the local machine.
-
-If @var{url} is @code{nil}, the default, a standard location from which to download the
-database is used. This can be changed by providing a URL as a string as @var{url}.
-
-If @var{database} is @code{nil}, the default, a standard location is used for the
-database. This can be overriden by supplying a pathname designator as @var{database}.
-
-Returns the pathname of the database if a fresh database is downloaded and @code{nil}
-otherwise.
-
-Signals a @code{type-error} if since is neither @code{nil} nor a non-negative integer;
-@var{url} is neither @code{nil} nor a string; or @var{database} is neither @code{nil}
-nor a pathname designator.
-
-Unforunately some of the libraries (Drakma, usocket and zip) required to download and
-unzip the updated database either don't install or no longer work in CLISP and LispWorks,
-as of June 2017. On these implementations a call to @code{update-methods-database} will
-result in an error. Several work arounds are practical:
-@itemize
-@item
-The version of the database that is downloaded with Roan will have been reasonably current
-at the time that version of Roan was released. For many purposes there may be no need to
-update it.
-
-@item
-Roan can be used to update it in a different Lisp implementation, such as SBCL or
-Clozure CL: the copy of the database so updated will then be available to CLISP
-or LispWorks.
-
-@item
-The database can be downloaded by hand. Consult the source code for
-@code{update-methods-database} for the URL, and where to put the file after unzipping it.
-If simply unzipped and not altered it will work for all purposes except searching for
-rotations of exisiting methods. To support that as well another column of one of the
-tables in the database must be populated after downloading the new database; in addition
-some indecies are created to speed up access slightly. This, too, can easily be done by
-hand: again, consult the source code.
-@end itemize")
-
-(define-method-lookup methods-database-attributes (&optional database)
-  "Returns five values describing the Roan methods database:
-@itemize
-@item
-the truename of the database file
-
-@item
-the date and time the database was created, as a univeral time; note that this will
-typically not be be same as the time the file was created nor the time it was downloaded
-
-@item
-a string (the ETag) representing that state of the file on the server, typically used to
-determine if an updated version is available
-
-@item
-the number of methods (that is, distinct stage and name pairs) that the database
-contains
-
-@item
-a vector, indexed by stage, of the number methods at each stage that the database
-contains
-@end itemize
-If @var{database} does not name a database currently on the local machine a single value,
-@code{nil}, is returned. If @var{database} is @code{nil} or not supplied the default
-location for Roan's database is used.
-
-Signals a @code{type-error} if @var{database} is neither @code{nil} nor a pathname
-designator. May also signal a variety of file system or SQLite errors if the database
-cannot be opened or is not in the correct format.")
 
 
 ;;; Calls
 
-;; (defstruct (call (:copier nil) (:predicate nil))
-;;   "===summary===
-;; Roan provides an immutable @code{call} object that describes a change ringing call, such
-;; as a bob or single, that modifies a lead of a @code{method}. A @code{call} usually has a
-;; fragment of place notation representing changes that are added to the the sequence of
-;; changes constituting the lead, typically replacing some existing changes in the lead.
-;;
-;; A @code{call} has an offset, which specifies where in the lead the changes are added,
-;; replaced or deleted; this offset can be indexed from the beginning or the end of a lead,
-;; which frequently allows the same call to be used for similar methods with possibly
-;; different lead lengths. It is also possible to index from a postion within the lead rather
-;; than the beginning or end by supplying a fraction; again, this allows using, for example,
-;; half-lead calls with similar methods with different lead lengths.
-;;
-;; Typically a @code{call} replaces exactly as many changes as it supplies. However it is
-;; possible to replace none, in which case the @code{call} adds to the lead length; to only
-;; replace changes with a zero length set of changes, in which case the @code{call} shortens
-;; the lead by deleting changes; or even to add more or fewer changes than it replaces.
-;;
-;; Typically a call only affects the lead of a method to which is is applied. In exceptional
-;; cases, most notably doubles variations, it may also affect the subsequent lead. To support
-;; such use a @code{call} may have a following place notation fragment and a following
-;; replacement length. Such use is always restricted to being positioned at the beginning of
-;; the subsequent lead, and in the main lead the call must replace changes all the way to the
-;; end of the lead. Note that by starting the call at the end of the lead this could be
-;; simply adding changes, or even doing nothing.
-;;
-;; A @code{call} is applied to a lead with the function @code{call-apply}. This can take
-;; multiple @code{call}s, all of which are applied to the same lead. They must not, however,
-;; overlap. The @code{call-apply} function returns two values. The first is a list of the
-;; changes of the lead, modified by the @code{call}(s). The second, if not @code{nil}, is
-;; another @code{call} to be applied to the following lead, and is only non-nil when a
-;; @code{call} does apply also to the subsequent lead.
-;;
-;; Two @code{call}s may be compared with @code{equalp}.
-;;
-;; Examples of @code{call}s:
-;; @itemize
-;; @item
-;; The usual bob for Cambridge Surprise is @code{(call \"4\")}.
-;; @item
-;; The usual single for Grandsire is @code{(call \"3.123\" :offset 2)}.
-;; @item
-;; The usual bob for Erin Triples is @code{(call \"7\" :from-end nil)}.
-;; @item
-;; A 58 half-lead bob for Bristol Major is @code{(call \"5\" :fraction 1/2)}.
-;; @item
-;; A bob in April Day Doubles is @code{(call \"3.123\" :following \"3\")}.
-;; @item
-;; A call for surprise that shortens the lead by omitting the first two
-;; blows, so that ringing of the lead commences at the backstroke snap is
-;; @code{(call nil :from-end nil :replace 2)}.
-;; @end itemize
-;; ===endsummary===
-;; An immutable object describing a change ringing call, such as a bob or single."
-;;   (place-notation nil :read-only t :type (or null string))
-;;   (offset 0 :read-only t :type (integer 0))
-;;   (from-end t :read-only t)
-;;   (fraction nil :read-only t :type (or null (rational (0) (1))))
-;;   (replace 0 :read-only t :type (integer 0))
-;;   (following nil :read-only t)
-;;   (changes #() :read-only t :type simple-vector))
-;;
-;; (defmethod print-object ((call call) stream)
-;;   (cond (*print-readably*
-;;          (prin1 `(call ,(call-place-notation call)
-;;                        ,@(unless (call-from-end call) '(:from-end nil))
-;;                        ,@(when-let ((offset (call-offset call))) `(:offset ,offset))
-;;                        ,@(when-let ((fraction (call-fraction call))) `(:fraction ,fraction))
-;;                        ,@(when-let ((replace (call-replace call))) `(:replace ,replace))
-;;                        ,@(when-let ((following (call-following call)))
-;;                                    `(:following ,(call-place-notation following)
-;;                                      :following-replace ,(call-replace following))))
-;;                 stream))
-;;         (*print-escape*
-;;          (print-unreadable-object (call stream :type t :identity t)
-;;            (format stream "~A ~@{~A~^ ~}"
-;;                    (call-place-notation call)
-;;                    (call-offset call)
-;;                    (not (not (call-from-end call)))
-;;                    (call-fraction call)
-;;                    (call-replace call))
-;;            (when-let ((f (call-following call)))
-;;              (format stream " ~@{~A~^ ~}" (call-place-notation f) (call-replace f)))))
-;;         (t (format stream "Call~@[-~A~]~:[~;*~]"
-;;                    (call-place-notation call) (call-following call))))
-;;   call)
-;;
-;; (defconstant +call-changes-vector-length+ (+ (- +maximum-stage+ +minimum-stage+) 1))
-;;
-;; (defmacro %get-call-changes (vector stage)
-;;   `(svref ,vector (- ,stage +minimum-stage+)))
-;;
-;; (defmacro get-call-changes (call stage)
-;;   `(%get-call-changes (call-changes ,call) ,stage))
-;;
-;; (defun call (place-notation &key (from-end t) offset fraction replace
-;;                               (following nil following-supplied-p)
-;;                               (following-replace nil following-replace-supplied-p))
-;;   "Creates and returns a @code{call}, which modifies the changes of a lead of a
-;; @code{method}. The @var{place-notation} argument is a string of place, the changes
-;; corresponding to which will add or replace changes in a a lead of the @code{method} when
-;; applying the @code{code}. The @var{place-notation} may be @code{nil}, in which case no
-;; changes are add or replace existing ones. The @var{offset}, a non-negative integer, is the
-;; position at which to begin modifying the lead, and is measured from the beginning of the
-;; lead if the generalized boolean @var{from-end} is false, and from the end, otherwise. This
-;; can be further modifed by @var{fraction} which is multiplied by the lead length; the
-;; offset is counted forward or backward from that product. The @code{fraction}, if non-nill,
-;; must be a ratio greater than @code{0} and less than @code{1}, whose denominator evenly
-;; divides the lead length. The non-negative integer @var{replace} is the number of changes
-;; in the lead to be deleted or replaced. It is typically equal to the length of
-;; @var{changes}, which results in exact replacement of changes in the lead, but may be
-;; greater or less than that length, in which case the resulting lead is of a different
-;; length than a plain lead.
-;;
-;; If either or both of @var{following} or @var{following-replace} are supplied the call is
-;; intended to also apply to the subsequent lead. These operate just like
-;; @var{place-notation} and @var{replace}, but on the subsequent lead, and always at the
-;; begining of that lead. This use also depends upon the caller of @code{call-apply} making
-;; correct use of its second return value.
-;;
-;; If @var{replace} is not supplied or is @code{nil} it defaults to the number of changes
-;; represented by the @var{place-notation}. If @var{offset} is not supplied or is @code{nil},
-;; it defaults to @code{0} if @var{from-end} is false, and otherwise to the value of
-;; @var{replace}, which may itself have been defaulted from the value of
-;; @var{place-notation}. The default value of @var{from-end} is @code{t}. The default value
-;; of @var{fraction} is @code{nil}. If @var{following} is supplied but
-;; @var{following-replace} is not, @var{following-replace} defaults to the number of changes
-;; represetned by @var{following}. If @var{following-replace} is supplied but @var{following}
-;; is not, @var{following} defaults to @code{nil}.
-;;
-;; A @code{parse-error} is signaled if either @var{place-notation} or @var{following} is
-;; non-@code{nil} but not interpretable as place notation at the stage of @var{method}. A
-;; @code{type-error} is signaled if @var{offset} is supplied and is neither @code{nil} nor a
-;; non-negative integer; if @var{replace} is supplied and is neither @code{nil} nor a
-;; non-negative integer; @var{fraction} is supplied and is neither @code{nil} nor a ratio
-;; between @code{0} and @code{1}, exclusive; or if @var{following-replace} is supplied and is
-;; neither @code{nil} nor a non-negative integer."
-;;   (check-type* place-notation (or null string))
-;;   (check-type* offset (or null (integer 0)))
-;;   (check-type* fraction (or null (rational (0) (1))))
-;;   (check-type* replace (or null (integer 0)))
-;;   (check-type* following (or null string))
-;;   (check-type* following-replace (or null (integer 0)))
-;;   (when (equal place-notation "")
-;;     (setf place-notation nil))
-;;   (when (equal following "")
-;;     (setf following nil))
-;;   (iter (with primary-instance)
-;;         (with following-instance)
-;;         (with primary-vector := (make-array +call-changes-vector-length+ :initial-element nil))
-;;         (with following-vector := (make-array +call-changes-vector-length+ :initial-element nil))
-;;         (for stage :from +minimum-stage+ :to +maximum-stage+)
-;;         (handler-case
-;;             (let ((primary-changes (and place-notation (parse-place-notation place-notation
-;;                                                                              :stage stage)))
-;;                   (following-changes (and following (parse-place-notation following
-;;                                                                           :stage stage))))
-;;               (unless (or primary-instance following-instance)
-;;                 (setf primary-instance primary-changes)
-;;                 (setf following-instance following-changes))
-;;               (setf (%get-call-changes primary-vector stage) primary-changes)
-;;               (setf (%get-call-changes following-vector stage) following-changes))
-;;           (parse-error ()))
-;;         (finally
-;;          (when (and place-notation (null primary-instance))
-;;            (simple-parse-error "Call's place notation, ~A, cannot be interpreted at any stage."
-;;                                place-notation))
-;;          (when (and following (null following-instance))
-;;            (simple-parse-error "Call's :FOLLOWING, ~A, cannot be interepted as place notation at any stage."
-;;                                following))
-;;          (unless replace
-;;            (setf replace (length primary-instance)))
-;;          (unless following-replace
-;;            (setf following-replace (length following-instance)))
-;;          (let ((result (make-call :place-notation place-notation
-;;                                   :offset (or offset (if from-end replace 0))
-;;                                   :from-end from-end
-;;                                   :fraction fraction
-;;                                   :replace replace
-;;                                   :changes primary-vector
-;;                                   :following (and (or following-supplied-p
-;;                                                       following-replace-supplied-p)
-;;                                                   (make-call :place-notation following
-;;                                                              :offset 0
-;;                                                              :from-end nil
-;;                                                              :replace following-replace
-;;                                                              :changes following-vector)))))
-;;            (when (and (null primary-instance) (zerop replace)
-;;                       (null following-instance) (zerop following-replace))
-;;              (warn "Vacuous call contains no changes and zero length replacement: ~S." result))
-;;            (return result)))))
-;;
-;; (define-condition call-application-error (simple-error)
-;;   ((call :initarg :call :reader call-application-error-call)
-;;    (method :initarg :method :reader call-application-error-method)
-;;    (details :initarg :details :reader call-application-error-details))
-;;   (:documentation "Signaled when an anaomalous condition is detected while trying to
-;; apply a @code{call} to a @code{method}. Contains three potentially useful slots
-;; accessible with @code{call-application-error-call}, @code{call-application-error-method}
-;; and @code{call-application-error-details}."))
-;;
-;; (defun call-application-error (call method message &rest args)
-;;   (let ((details (apply #'format nil message args)))
-;;     (error 'call-application-error
-;;            :format-control "Error when applying ~S to ~S: ~A."
-;;            :format-arguments (list call method details)
-;;            :details details
-;;            :call call
-;;            :method method)))
-;;
-;; (defun call-apply (method &rest calls)
-;;   "Applies zero or more @var{calls} to a lead of @var{method}. Returns two values, the
-;; first a list of @code{row}s constituting the changes of the modified lead and the second
-;; @code{nil} or a @code{call}, such that the call should be applied to the succeeding lead.
-;; This second value is only non-nil for complex calls that affect two consecutive leads, as
-;; are encountered in doubles variations. One or more of the @var{calls} may be @code{nil},
-;; in which case they are ignored, just as if they had not been supplied. If no non-nil
-;; @var{calls} are supplied returns a list of the changes constituting a plain lead of
-;; @var{method}.
-;;
-;; When multiple @var{calls} are supplied the indices of all are computed relative to the
-;; length and position within the plain lead, before the application of any others of the
-;; calls. For example, a half-lead call that replaces the 7th's in Cambridge Major continues
-;; to replace that change even if an earlier call removes or adds several changes.
-;;
-;; Signals a @code{type-error} if @var{method} is not a @code{method} or if any of the
-;; @var{calls} are neither a @code{call} nor @code{nil}. Signals a @code{parse-error} if
-;; @var{method} does not have its stage or place-notation defined. Signals a
-;; @code{call-application-error} in any of the following circumstances: if the stage of
-;; @var{method} is such that the place notation or following place notation of one or more of
-;; the @var{calls} is inapplicable; if an attempt is made to apply a fractional lead
-;; @code{call} where the denominator of the fraction does not evenly divide the lead length;
-;; if the @code{call} would be positioned, or replace changes, that lie outside the lead; if
-;; a @code{call} with following changes does not replace changes up to the end of the first
-;; lead, or an attempt is made to applly two or more @code{call}s with following place
-;; notation to the same lead."
-;;   (let* ((stage (method-stage method))
-;;          (result (cons nil (method-changes method)))
-;;          (p result)
-;;          (i 0)
-;;          (end (method-lead-length method)))
-;;     (labels ((err (call message &rest args)
-;;                (apply #'call-application-error call method message args))
-;;              (start (call)
-;;                (+ (cond ((call-fraction call)
-;;                          (let ((result (* (method-lead-length method) (call-fraction call))))
-;;                            (if (integerp result)
-;;                                result
-;;                                (err call "can't have a call at ~A of a lead length of ~A"
-;;                                     (call-fraction call) (method-lead-length method)))))
-;;                         ((call-from-end call) (method-lead-length method))
-;;                         (t 0))
-;;                   (funcall (if (call-from-end call) #'- #'identity) (call-offset call))))
-;;              (capply (start call)
-;;                (cond ((< start i) (err call "overlapping calls"))
-;;                      ((> start end) (err call "call does not start within lead")))
-;;                (setf p (nthcdr (- start i) p))
-;;                (setf i start)
-;;                (let* ((e (+ i (call-replace call)))
-;;                       (changes (copy-list (get-call-changes call stage)))
-;;                       (q (last changes)))
-;;                  (when (> e end)
-;;                    (err call "can't replace changes past the end of the lead"))
-;;                  (setf (rest p) (nconc changes (rest (nthcdr (call-replace call) p))))
-;;                  (setf p q)
-;;                  (setf i e)
-;;                  (= e end))))
-;;       (unless result
-;;         (err nil "method is insufficiently defined to apply calls to"))
-;;       (iter (for c :in calls)
-;;             (when c
-;;               (when (or (and (call-place-notation c)
-;;                              (null (get-call-changes c stage)))
-;;                         (when-let ((sub-call (call-following c)))
-;;                           (and (call-place-notation sub-call)
-;;                                (null (get-call-changes sub-call stage)))))
-;;                 (err c "call is not applicable to ~A methods" (stage-name stage)))
-;;               (collect (cons (start c) c) :into alist))
-;;             (finally (iter (with following := nil)
-;;                            (for (s . c) :in (sort alist #'< :key #'car))
-;;                            (for e := (capply s c))
-;;                            (when following
-;;                              (err c "can't have multiple calls with following changes"))
-;;                            (setf following (call-following c))
-;;                            (when (and following (not e))
-;;                              (err c "following changes found where call does not replace to end of lead"))
-;;                            (finally (return-from call-apply (values (rest result)
-;;                                                                     following)))))))))
+(defstruct (call (:copier nil) (:predicate nil))
+  "===summary===
+Roan provides an immutable @code{call} object that describes a change ringing call, such
+as a bob or single, that modifies a lead of a @code{method}. A @code{call} usually has a
+fragment of place notation representing changes that are added to the the sequence of
+changes constituting the lead, typically replacing some existing changes in the lead.
+
+A @code{call} has an offset, which specifies where in the lead the changes are added,
+replaced or deleted; this offset can be indexed from the beginning or the end of a lead,
+which frequently allows the same call to be used for similar methods with possibly
+different lead lengths. It is also possible to index from a postion within the lead rather
+than the beginning or end by supplying a fraction; again, this allows using, for example,
+half-lead calls with similar methods with different lead lengths.
+
+Typically a @code{call} replaces exactly as many changes as it supplies. However it is
+possible to replace none, in which case the @code{call} adds to the lead length; to only
+replace changes with a zero length set of changes, in which case the @code{call} shortens
+the lead by deleting changes; or even to add more or fewer changes than it replaces.
+
+Typically a call only affects the lead of a method to which is is applied. In exceptional
+cases, most notably doubles variations, it may also affect the subsequent lead. To support
+such use a @code{call} may have a following place notation fragment and a following
+replacement length. Such use is always restricted to being positioned at the beginning of
+the subsequent lead, and in the main lead the call must replace changes all the way to the
+end of the lead. Note that by starting the call at the end of the lead this could be
+simply adding changes, or even doing nothing.
+
+A @code{call} is applied to a lead with the function @code{call-apply}. This can take
+multiple @code{call}s, all of which are applied to the same lead. They must not, however,
+overlap. The @code{call-apply} function returns two values. The first is a list of the
+changes of the lead, modified by the @code{call}(s). The second, if not @code{nil}, is
+another @code{call} to be applied to the following lead, and is only non-nil when a
+@code{call} does apply also to the subsequent lead.
+
+Two @code{call}s may be compared with @code{equalp}.
+
+Examples of @code{call}s:
+@itemize
+@item
+The usual bob for Cambridge Surprise is @code{(call \"4\")}.
+@item
+The usual single for Grandsire is @code{(call \"3.123\" :offset 2)}.
+@item
+The usual bob for Erin Triples is @code{(call \"7\" :from-end nil)}.
+@item
+A 58 half-lead bob for Bristol Major is @code{(call \"5\" :fraction 1/2)}.
+@item
+A bob in April Day Doubles is @code{(call \"3.123\" :following \"3\")}.
+@item
+A call for surprise that shortens the lead by omitting the first two
+blows, so that ringing of the lead commences at the backstroke snap is
+@code{(call nil :from-end nil :replace 2)}.
+@end itemize
+===endsummary===
+An immutable object describing a change ringing call, such as a bob or single."
+  (place-notation nil :read-only t :type (or null string))
+  (offset 0 :read-only t :type (integer 0))
+  (from-end t :read-only t)
+  (fraction nil :read-only t :type (or null (rational (0) (1))))
+  (replace 0 :read-only t :type (integer 0))
+  (following nil :read-only t)
+  (changes #() :read-only t :type simple-vector))
+
+(defmethod print-object ((call call) stream)
+  (cond (*print-readably*
+         (prin1 `(call ,(call-place-notation call)
+                       ,@(unless (call-from-end call) '(:from-end nil))
+                       ,@(when-let ((offset (call-offset call))) `(:offset ,offset))
+                       ,@(when-let ((fraction (call-fraction call))) `(:fraction ,fraction))
+                       ,@(when-let ((replace (call-replace call))) `(:replace ,replace))
+                       ,@(when-let ((following (call-following call)))
+                                   `(:following ,(call-place-notation following)
+                                     :following-replace ,(call-replace following))))
+                stream))
+        (*print-escape*
+         (print-unreadable-object (call stream :type t :identity t)
+           (format stream "~A ~@{~A~^ ~}"
+                   (call-place-notation call)
+                   (call-offset call)
+                   (not (not (call-from-end call)))
+                   (call-fraction call)
+                   (call-replace call))
+           (when-let ((f (call-following call)))
+             (format stream " ~@{~A~^ ~}" (call-place-notation f) (call-replace f)))))
+        (t (format stream "Call~@[-~A~]~:[~;*~]"
+                   (call-place-notation call) (call-following call))))
+  call)
+
+(defconstant +call-changes-vector-length+ (+ (- +maximum-stage+ +minimum-stage+) 1))
+
+(defmacro %get-call-changes (vector stage)
+  `(svref ,vector (- ,stage +minimum-stage+)))
+
+(defmacro get-call-changes (call stage)
+  `(%get-call-changes (call-changes ,call) ,stage))
+
+(defun call (place-notation &key (from-end t) offset fraction replace
+                              (following nil following-supplied-p)
+                              (following-replace nil following-replace-supplied-p))
+  "Creates and returns a @code{call}, which modifies the changes of a lead of a
+@code{method}. The @var{place-notation} argument is a string of place, the changes
+corresponding to which will add or replace changes in a a lead of the @code{method} when
+applying the @code{code}. The @var{place-notation} may be @code{nil}, in which case no
+changes are add or replace existing ones. The @var{offset}, a non-negative integer, is the
+position at which to begin modifying the lead, and is measured from the beginning of the
+lead if the generalized boolean @var{from-end} is false, and from the end, otherwise. This
+can be further modifed by @var{fraction} which is multiplied by the lead length; the
+offset is counted forward or backward from that product. The @code{fraction}, if non-nill,
+must be a ratio greater than @code{0} and less than @code{1}, whose denominator evenly
+divides the lead length. The non-negative integer @var{replace} is the number of changes
+in the lead to be deleted or replaced. It is typically equal to the length of
+@var{changes}, which results in exact replacement of changes in the lead, but may be
+greater or less than that length, in which case the resulting lead is of a different
+length than a plain lead.
+
+If either or both of @var{following} or @var{following-replace} are supplied the call is
+intended to also apply to the subsequent lead. These operate just like
+@var{place-notation} and @var{replace}, but on the subsequent lead, and always at the
+begining of that lead. This use also depends upon the caller of @code{call-apply} making
+correct use of its second return value.
+
+If @var{replace} is not supplied or is @code{nil} it defaults to the number of changes
+represented by the @var{place-notation}. If @var{offset} is not supplied or is @code{nil},
+it defaults to @code{0} if @var{from-end} is false, and otherwise to the value of
+@var{replace}, which may itself have been defaulted from the value of
+@var{place-notation}. The default value of @var{from-end} is @code{t}. The default value
+of @var{fraction} is @code{nil}. If @var{following} is supplied but
+@var{following-replace} is not, @var{following-replace} defaults to the number of changes
+represetned by @var{following}. If @var{following-replace} is supplied but @var{following}
+is not, @var{following} defaults to @code{nil}.
+
+A @code{parse-error} is signaled if either @var{place-notation} or @var{following} is
+non-@code{nil} but not interpretable as place notation at the stage of @var{method}. A
+@code{type-error} is signaled if @var{offset} is supplied and is neither @code{nil} nor a
+non-negative integer; if @var{replace} is supplied and is neither @code{nil} nor a
+non-negative integer; @var{fraction} is supplied and is neither @code{nil} nor a ratio
+between @code{0} and @code{1}, exclusive; or if @var{following-replace} is supplied and is
+neither @code{nil} nor a non-negative integer."
+  (check-type* place-notation (or null string))
+  (check-type* offset (or null (integer 0)))
+  (check-type* fraction (or null (rational (0) (1))))
+  (check-type* replace (or null (integer 0)))
+  (check-type* following (or null string))
+  (check-type* following-replace (or null (integer 0)))
+  (when (equal place-notation "")
+    (setf place-notation nil))
+  (when (equal following "")
+    (setf following nil))
+  (iter (with primary-instance)
+        (with following-instance)
+        (with primary-vector := (make-array +call-changes-vector-length+ :initial-element nil))
+        (with following-vector := (make-array +call-changes-vector-length+ :initial-element nil))
+        (for stage :from +minimum-stage+ :to +maximum-stage+)
+        (handler-case
+            (let ((primary-changes (and place-notation (parse-place-notation place-notation
+                                                                             :stage stage)))
+                  (following-changes (and following (parse-place-notation following
+                                                                          :stage stage))))
+              (unless (or primary-instance following-instance)
+                (setf primary-instance primary-changes)
+                (setf following-instance following-changes))
+              (setf (%get-call-changes primary-vector stage) primary-changes)
+              (setf (%get-call-changes following-vector stage) following-changes))
+          (parse-error ()))
+        (finally
+         (when (and place-notation (null primary-instance))
+           (simple-parse-error "Call's place notation, ~A, cannot be interpreted at any stage."
+                               place-notation))
+         (when (and following (null following-instance))
+           (simple-parse-error "Call's :FOLLOWING, ~A, cannot be interepted as place notation at any stage."
+                               following))
+         (unless replace
+           (setf replace (length primary-instance)))
+         (unless following-replace
+           (setf following-replace (length following-instance)))
+         (let ((result (make-call :place-notation place-notation
+                                  :offset (or offset (if from-end replace 0))
+                                  :from-end from-end
+                                  :fraction fraction
+                                  :replace replace
+                                  :changes primary-vector
+                                  :following (and (or following-supplied-p
+                                                      following-replace-supplied-p)
+                                                  (make-call :place-notation following
+                                                             :offset 0
+                                                             :from-end nil
+                                                             :replace following-replace
+                                                             :changes following-vector)))))
+           (when (and (null primary-instance) (zerop replace)
+                      (null following-instance) (zerop following-replace))
+             (warn "Vacuous call contains no changes and zero length replacement: ~S." result))
+           (return result)))))
+
+(define-condition call-application-error (simple-error)
+  ((call :initarg :call :reader call-application-error-call)
+   (method :initarg :method :reader call-application-error-method)
+   (details :initarg :details :reader call-application-error-details))
+  (:documentation "Signaled when an anaomalous condition is detected while trying to
+apply a @code{call} to a @code{method}. Contains three potentially useful slots
+accessible with @code{call-application-error-call}, @code{call-application-error-method}
+and @code{call-application-error-details}."))
+
+(defun call-application-error (call method message &rest args)
+  (let ((details (apply #'format nil message args)))
+    (error 'call-application-error
+           :format-control "Error when applying ~S to ~S: ~A."
+           :format-arguments (list call method details)
+           :details details
+           :call call
+           :method method)))
+
+(defun call-apply (method &rest calls)
+  "Applies zero or more @var{calls} to a lead of @var{method}. Returns two values, the
+first a list of @code{row}s constituting the changes of the modified lead and the second
+@code{nil} or a @code{call}, such that the call should be applied to the succeeding lead.
+This second value is only non-nil for complex calls that affect two consecutive leads, as
+are encountered in doubles variations. One or more of the @var{calls} may be @code{nil},
+in which case they are ignored, just as if they had not been supplied. If no non-nil
+@var{calls} are supplied returns a list of the changes constituting a plain lead of
+@var{method}.
+
+When multiple @var{calls} are supplied the indices of all are computed relative to the
+length and position within the plain lead, before the application of any others of the
+calls. For example, a half-lead call that replaces the 7th's in Cambridge Major continues
+to replace that change even if an earlier call removes or adds several changes.
+
+Signals a @code{type-error} if @var{method} is not a @code{method} or if any of the
+@var{calls} are neither a @code{call} nor @code{nil}. Signals a @code{parse-error} if
+@var{method} does not have its stage or place-notation defined. Signals a
+@code{call-application-error} in any of the following circumstances: if the stage of
+@var{method} is such that the place notation or following place notation of one or more of
+the @var{calls} is inapplicable; if an attempt is made to apply a fractional lead
+@code{call} where the denominator of the fraction does not evenly divide the lead length;
+if the @code{call} would be positioned, or replace changes, that lie outside the lead; if
+a @code{call} with following changes does not replace changes up to the end of the first
+lead, or an attempt is made to applly two or more @code{call}s with following place
+notation to the same lead."
+  (let* ((stage (method-stage method))
+         (result (cons nil (method-changes method)))
+         (p result)
+         (i 0)
+         (end (method-lead-length method)))
+    (labels ((err (call message &rest args)
+               (apply #'call-application-error call method message args))
+             (start (call)
+               (+ (cond ((call-fraction call)
+                         (let ((result (* (method-lead-length method) (call-fraction call))))
+                           (if (integerp result)
+                               result
+                               (err call "can't have a call at ~A of a lead length of ~A"
+                                    (call-fraction call) (method-lead-length method)))))
+                        ((call-from-end call) (method-lead-length method))
+                        (t 0))
+                  (funcall (if (call-from-end call) #'- #'identity) (call-offset call))))
+             (capply (start call)
+               (cond ((< start i) (err call "overlapping calls"))
+                     ((> start end) (err call "call does not start within lead")))
+               (setf p (nthcdr (- start i) p))
+               (setf i start)
+               (let* ((e (+ i (call-replace call)))
+                      (changes (copy-list (get-call-changes call stage)))
+                      (q (last changes)))
+                 (when (> e end)
+                   (err call "can't replace changes past the end of the lead"))
+                 (setf (rest p) (nconc changes (rest (nthcdr (call-replace call) p))))
+                 (setf p q)
+                 (setf i e)
+                 (= e end))))
+      (unless result
+        (err nil "method is insufficiently defined to apply calls to"))
+      (iter (for c :in calls)
+            (when c
+              (when (or (and (call-place-notation c)
+                             (null (get-call-changes c stage)))
+                        (when-let ((sub-call (call-following c)))
+                          (and (call-place-notation sub-call)
+                               (null (get-call-changes sub-call stage)))))
+                (err c "call is not applicable to ~A methods" (stage-name stage)))
+              (collect (cons (start c) c) :into alist))
+            (finally (iter (with following := nil)
+                           (for (s . c) :in (sort alist #'< :key #'car))
+                           (for e := (capply s c))
+                           (when following
+                             (err c "can't have multiple calls with following changes"))
+                           (setf following (call-following c))
+                           (when (and following (not e))
+                             (err c "following changes found where call does not replace to end of lead"))
+                           (finally (return-from call-apply (values (rest result)
+                                                                    following)))))))))
+
+
+;;; Method lookup
+
+(define-constant +method-library-magic-string+ "067F9B80-A01E-11E9-9AA9-C48E8FF8F245"
+  ;; used to confirm a method library file is such
+  :test #'equal)
+
+(defconstant +default-method-libary-size+ 22000)
+
+(define-constant +method-source+
+    "https://cccbr.github.io/methods-library/xml/CCCBR_methods.xml.zip"
+  :test #'equal)
+
+(define-constant +method-source-entry+ "CCCBR_methods.xml" :test #'equal)
+
+(define-constant +method-library-path+
+    (merge-pathnames (make-pathname :name "method-library" :type "data")
+                     (asdf:system-source-directory :roan))
+  :test #'equal)
+
+(defparameter *method-library* nil)
+
+(defstruct method-library
+  metadata
+  (methods (make-array +default-method-libary-size+ :adjustable t :fill-pointer 0))
+  (rotation-keys nil)     ; if non-nil, a hash-table from canonical-rotation-keys to methods
+  (additional-data nil))  ; if non-nil a hash-table from methods to property-lists
+
+(defun lookup-methods (&key (name nil name-supplied)
+                         (jump nil jump-supplied)
+                         (differential nil differential-supplied)
+                         (little nil little-supplied)
+                         (class nil class-supplied)
+                         (stage nil stage-supplied)
+                         (wildcards t))
+  "===summary===
+Roan provides a library of method definitions, derived from the
+@url{https://cccbr.github.io/methods-library/index.html,Central Council of Church Bell
+Ringers Methods Library}. As delivered with Roan this library is only up to date as of
+the date a version of Roan was released. However, if a network connection is available,
+the library can be updated to the most recent version made available by the Council by
+using @code{update-method-library}. The Council typically updates their library weekly.
+
+The library can be interrogated with the @code{lookup-methods},
+@code{lookup-method-by-title} and @code{lookup-methods-by-notation} functions.
+Additional information such as dates and places of first peals containing the methods
+is available for some of the methods using @code{lookup-method-info}.
+===endsummary===
+The @code{lookup-methods} function returns a list of named @code{method}s whose name,
+classification and/or stage match those provided. If only a subset of these properties
+are provided, the return list will contain all known methods that have the provided
+ones.
+
+If @var{name} is provided, it should be a string or @code{nil}, and all the methods
+returned will have that name. If the generalized boolean @var{wildcards} is true, which is
+the default, the wildcard characters @samp{*} and @samp{?} can be included in @var{name},
+where @samp{*} matches a series of any zero or more consecutive characters, and @samp{?}
+matches any one character. In this case, to include a literal asterisk or question mark in
+@var{name}, precede it by a backslash (@samp{\\}). Note, however, that including a
+backslash in a Common Lisp string literal requires escaping it with backslash, too, that
+will be four backslashes, total. When @var{wildcards} is true no other characters besides
+@samp{*}, @samp{?} and @samp{\\} may be preceded by a backslash. If @var{wildcards} is
+@code{nil} no wildcards are used, and any of @samp{*}, @samp{?} and @samp{\\} may be
+included in @var{name} without special meaning or restriction. Matching of names, either
+with or without wildcards, is done ignoring case differences. The FMR provides a complex
+mechanism for determining the uniqueness of method names that contain unusual characters;
+for example, accents and punctuation are removed when comparing method names. Such issues
+are not addressed by @code{lookup-methods}, which, apart from case differences, treats
+distinct strings as distinct names. Since all the methods in the library have names that
+have already been vetted for uniqueness this should cause no difficulty, though when
+looking up a method its canonical name must be used. Wildcards are applicable only to
+@var{name}, and not to any of the other arguments to @code{lookup-methods}.
+
+If @var{stage} is provided, it should be a @code{stage}, that is a small integer. All the
+methods that are returned will have that stage. While a @code{method} object can have
+an indeterminate stage, represented by @code{nil}, all the methods returned by
+@code{lookup-methods} will have a definite stage, and @code{nil} is not an allowed
+value for the @var{stage} argument.
+
+If @var{class} is provided, it should @code{nil} or one of the keywords @code{:bob},
+@code{:place}, @code{:surprise}, @code{:delight}, @code{:treble-bob},
+@code{:treble-place}, @code{:alliance}, @code{:hybrid} or @code{:blank}. With the
+exception of @code{:blank}, all the methods returned will have the specified class. The
+value @code{:blank} matches either @code{nil}, meaning no explicit class, or
+@code{:hybrid}; when writing a method's title according to the FMR the hybrid class and no
+class are indistinguishable, since ``hybrid'' is not included in the title.
+
+If supplied, the generalized booleans @var{little}, @var{differential} and @var{jump}
+indicate that the returned methods should or should not have these properties. If these
+parameters are not supplied all otherwise matching methods in the library will be returned
+without regard to whether or not they have these properties.
+
+If the title of a method is known, it can be found in the library by using
+@code{lookup-method-by-title}. The @var{title} should be a string. If a
+@code{method} with that title is in the library, it is returned; otherwise @code{nil} is
+returned. In general there should never be two or more different methods in the library
+with the same title. Matching on the title is done ignoring case.
+
+If the place notation of a method is known, and its name in the library is sought,
+@code{lookup-method-by-notation} is available. The @var{place-notation-or-changes} should
+be either a string, in which case it viewed as place notation, or a list of @code{rows},
+representing changes all of the same stage. The @var{stage} should be a @code{stage}; if
+not provided or @code{nil} the current value of @code{*default-stage*} is used. If
+@var{place-notation-or-changes} is a list of changes, the value of @var{stage} is ignored,
+the stage of those changes being used instead. Two lists are returned. The first is of
+methods that have the provided place notation (or corresponding changes). The second is of
+methods that are rotations of methods with the given place notation. Either or both lists
+may be empty if no suitable methods are found in the library.
+
+There is no guarantee of what order methods are in the lists returned by
+@code{lookup-methods} or @code{lookup-methods-by-notation}. Instances of the ``same''
+method returned by different invocations of these functions will typically not be
+@code{eq}.
+
+A @code{type-error} is signaled if @var{stage} is not a @code{stage} (or, in the case of
+@code{lookup-methods-by-notation}, @code{nil}); @var{name} is not a string;
+@var{place-notation-or-changes} is neither a string nor a non-empty list of @code{row}s;
+@var{changes} is not a non-empty list of @code{row}s; or if @var{class} is not one the
+allowed values. A @code{parse-error} is signaled if @var{place-notation-or-changes} is a
+string and is not parseable as place notation at @var{stage}; or if @var{wildcards} is
+true and @var{name} contains a @samp{\\} followed by anything other than @samp{?},
+@samp{*} or @samp{\\}. An @code{error} is signaled if @var{changes} is a list of
+@code{row}s, but they are not all of stage @var{stage} (or of @code{*default-stage*} if
+@var{stage} is @code{nil}).
+@example
+@group
+ (mapcar #'method-place-notation
+         (lookup-methods :name \"Advent\"
+                         :class :surprise
+                         :stage 8))
+     @result{} (\"36x56.4.5x5.6x4x5x4x7,8\")
+ (mapcar #'method-title
+         (lookup-methods :name \"aDvEnT\"
+                         :class :surprise
+                         :stage 8))
+     @result{} (\"Advent Surprise Major\")
+ (method-place-notation
+   (lookup-method-by-title \"Advent Surprise Major\"))
+     @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
+ (lookup-methods :name \"No such method\")
+     @result{} nil
+@end group
+@group
+ (mapcar #'method-title
+         (lookup-methods :name \"Cambridge*\"
+                         :class :surprise
+                         :stage 8))
+     @result{} (\"Cambridge Blue Surprise Major\"
+                \"Cambridge Surprise Major\"
+                \"Cambridgeshire Surprise Major\")
+@end group
+@group
+ (multiple-value-bind (n r)
+     (lookup-methods-by-notation \"36x56.4.5x5.6x4x5x4x7,8\" 8)
+       (list
+         (mapcar #'method-title n)
+         (mapcar #'method-title r)))
+     @result{} ((\"Advent Surprise Major\") nil)
+ (multiple-value-bind (n r)
+     (lookup-methods-by-notation \"1.3\" 3)
+       (list
+         (mapcar #'method-title n)
+         (mapcar #'method-title r)))
+     @result{} ((\"Reverse Original Singles\")
+                (\"Original Singles\"))
+ (method-place-notation
+   (lookup-method-by-title \"Original Singles\"))
+     @result{} \"3.1\"
+@end group
+@end example"
+  (check-type* name (or string null))
+  (check-type* class (member nil :blank :bob :place :surprise :delight :treble-bob
+                             :treble-place :alliance :hybrid))
+  (check-type* stage (or stage null))
+  ;; The inscrutable regex string below matches backslash followed by anything but
+  ;; another backslash, an asterisk or a question mark.
+  (when (equal name "")
+    (setf name nil))
+  (when-let ((bad (and name wildcards (ppcre:all-matches-as-strings "\\\\[^\\\\*?]" name))))
+    (simple-parse-error "The name pattern contains unsupported backslash pairings: ~{~S~^, ~}"
+                        ;; remove duplicates
+                        (reduce #'(lambda (set elem)
+                                    (adjoin elem set :test #'equal))
+                                bad
+                                :initial-value nil)))
+  (when (and stage-supplied (null stage))
+    (simple-parse-error "If :stage is supplied to methods-lookup, it must be non-nil"))
+  (read-method-library)
+  (when-let ((methods (method-library-methods *method-library*)))
+    (multiple-value-bind (prefix name-scanner)
+        (if wildcards (name-recognizers name) name)
+      (labels ((matchp (method)
+                 (and (or (not name-supplied)
+                          (if name-scanner
+                              (ppcre:scan name-scanner (method-name method))
+                              (string-equal prefix (method-name method))))
+                      (or (null stage)
+                          (eql (method-stage method) stage))
+                      (or (not class-supplied)
+                          (if (eq class :blank)
+                              (member (method-class method) '(nil :hybrid))
+                              (eq  (method-class method) class)))
+                      (or (not little-supplied)
+                          (if (method-little-p method) little (not little)))
+                      (or (not differential-supplied)
+                          (if (method-differential-p method) differential (not differential)))
+                      (or (not jump-supplied)
+                          (if (method-jump-p method) jump (not jump))))))
+        (unless prefix
+          (return-from lookup-methods
+            (iter (for m :in-vector methods)
+                  (when (matchp m)
+                    (collect (copy-method m))))))
+        (when-let ((mid (find-name-prefix prefix methods)))
+          (nconc (iter (for i :from (- mid 1) :downto 0)
+                       (for m := (aref methods i))
+                       (while (starts-with-subseq prefix (method-name m) :test #'string-equal))
+                       (when (matchp m)
+                         (collect (copy-method m))))
+                 (iter (for i :from mid :below (length methods))
+                       (for m := (aref methods i))
+                       (while (starts-with-subseq prefix (method-name m) :test #'string-equal))
+                       (when (matchp m)
+                         (collect (copy-method m))))))))))
+
+(defun name-recognizers (pattern)
+  ;; The horrifically inscrutable regex string below matches a run of non-asterisk/question
+  ;; characters, including backslash escaped asterisks/questions/backslashes, or a single,
+  ;; unescaped asterisk/question.
+ (when-let ((fragments (and pattern (ppcre:all-matches-as-strings "[*?]|(?:[^*?\\\\]|\\\\[\\\\*?])+" pattern))))
+   (let ((prefix (and (not (member (first fragments) '("*" "?") :test #'equal)) (first fragments))))
+     (cond ((and prefix (null (rest fragments))) prefix)
+           (t (setf fragments (nsubstitute ".*" "*" fragments :test #'equal))
+              (setf fragments (nsubstitute "." "?" fragments :test #'equal))
+              (let ((regex (apply #'concatenate 'string `("^" ,@fragments "$"))))
+                (values prefix (ppcre:create-scanner regex :case-insensitive-mode t))))))))
+
+(defun find-name-prefix (prefix methods)
+  (iter (with start := 0)
+        (with end := (length methods))
+        (while (> end start))
+        (for i := (+ start (floor (- end start) 2)))
+        (for m := (aref methods i))
+        (cond ((starts-with-subseq prefix (method-name m) :test #'string-equal)
+               (return i))
+              ((string-lessp prefix (method-name m))
+               (setf end i))
+              (t (setf start (+ i 1))))))
+
+(defun lookup-method-by-title (title)
+  "===merge: lookup-methods 1"
+  (multiple-value-bind (name jump differential little class stage)
+      (parse-method-title title)
+    (let ((result (lookup-methods :name name :jump jump :differential differential
+                                  :little little :class class :stage stage
+                                  :wildcards nil)))
+      (unless class
+        (unionf result (lookup-methods :name name :jump jump :differential differential
+                                       :class :hybrid :stage stage
+                                       :wildcards nil)))
+      (when (rest result)
+        (warn "Multiple methods found by lookup-method-by-title, only returning one of them (~{~A~^, ~})"
+              (mapcar #'method-title result)))
+      (first result))))
+
+(defun lookup-methods-by-notation (place-notation-or-changes &optional (stage *default-stage*))
+  "===merge: lookup-methods 2"
+  (when (listp place-notation-or-changes)
+    (check-type* (first place-notation-or-changes) row)
+    (setf stage (stage (first place-notation-or-changes))))
+  (let* ((canonical-place-notation (canonicalize-place-notation place-notation-or-changes :stage stage))
+         (canonical-rotation-key (canonical-rotation-key (if (stringp place-notation-or-changes)
+                                                             (parse-place-notation canonical-place-notation :stage stage)
+                                                             place-notation-or-changes))))
+    (read-method-library :load-rotations t)
+    (iter (for m :in (gethash canonical-rotation-key (method-library-rotation-keys *method-library*)))
+          (if (equal (method-place-notation m) canonical-place-notation)
+              (collect (copy-method m) :into non-rotated)
+              (collect (copy-method m) :into rotated))
+          (finally (return (values non-rotated rotated))))))
+
+(defun lookup-method-info (title-or-method key)
+  "Roan's method library also stores metadata about many of the methods it contains. Each
+kind of such metadata is described by a keyword, which is passed to this function as
+@var{key}. The @var{title-or-method} may be a string or a @code{method}. If a string, it
+is the title of the method about which the metadata is sought. If the metadata indicated
+by @var{key} is available for the method it is returned; the type of the return value
+dependings up the kind of metadata sought. If no such metadata is available, including
+if @var{key} is a not yet supported type of metadata or if @code{title-or-method} does
+not correspond to any method in the library, @code{nil} is returned.
+
+Currently supported values for @var{key} are
+@table @code
+@item :first-towerbell-peal
+Returns a string describing the first performance of the method on tower bells. No
+distinction if made between ringing the method on its own or ringing it in spliced.
+
+@item :first-handbell-peal
+Returns a string describing the first performance of the method on hand bells. No
+distinction if made between ringing the method on its own or ringing it in spliced.
+
+@item :complib-id
+Returns an integer, which is used to index information about the method on
+@url{https://complib.org/,Composition Library}.
+@end table
+Others may be added in future versions of Roan.
+
+Signals a @code{type-error} if @var{title-or-method} is neither a string nor a
+@code{method}, or if @var{key} is not a keyword.
+@example
+@group
+ (lookup-method-info \"Advent Surprise Major\"
+                     :first-towerbell-peal)
+     @result{} \"1988-07-31 Boston, MA (Advent)\"
+ (lookup-method-info
+   (first (lookup-methods-by-notation \"36x56.4.5x5.6x4x5x4x7,8\"))
+   :complib-id)
+     @result{} 20042
+ (lookup-method-info \"Advent Surprise Major\"
+                     :no-such-info)
+     @result{} nil
+@end group
+@end example"
+  (check-type* title-or-method (or string method))
+  (check-type* key keyword)
+  (read-method-library :load-additional-data t)
+  (let ((result (getf (gethash (if (stringp title-or-method)
+                                   title-or-method
+                                   (method-title title-or-method))
+                               (method-library-additional-data *method-library*))
+                      key)))
+    (if (stringp result)
+        (copy-sequence 'string result)
+        result)))
+
+(defun update-method-library (&optional force)
+  "Queries the remote server containing the CCCBR's Methods Library. If that remote
+file has changed since the one Roan's library was built from was downloaded, it fetches
+the new one and uses it to build an updated Roan method library. If the generalized
+boolean @var{force} is true it fetches the remote file and rebuilds Roan's library
+without regard to whether the remote one has changed. If the library is updated, returns
+an integer, the number of methods the updated library contains; if the library is not
+updated because the remote version hasn't changed returns @code{nil}.
+
+Unfortunately some of the libraries (Drakma, usocket and zip) required to download and
+unzip the updated database either don't install or no longer work in CLISP and LispWorks,
+as of July 2019. On these implementations a call to @code{update-methods-database} will
+result in an error. However, if you use a different Lisp implementation, such as SBCL
+or Clozure CL, to update the library, Roan in CLISP and LispWorks will see the updated
+version.
+
+May signal any of a variety of file system or network errors if network access is not
+available, or unreliable, or if there are other difficulties downloading and processing
+the remote file."
+  #+(or clisp lispworks6 lispworks7)
+  (error "The update-method-library function is not currently supported on ~A"
+         (lisp-implementation-type))
+  #-(or clisp lispworks6 lispworks7)
+  (when (or force
+            (null (probe-file +method-library-path+))
+            (not (equal (method-library-etag +method-library-path+)
+                        (get-headers +method-source+))))
+    (multiple-value-bind (zip-file etag last-modified)
+        (download-zipped-methods +method-source+)
+      (unwind-protect
+           (let ((xml-file (unzip-xml-file zip-file)))
+             (unwind-protect
+                  (progn
+                    (convert-xml-method-file xml-file +method-library-path+ +method-source+ etag last-modified)
+                    (read-method-library :force t)
+                    (length (method-library-methods *method-library*)))
+               (delete-file xml-file)))
+        (delete-file zip-file)))))
+
+(defun method-library-details ()
+  "Returns eight values describing the current Roan method libary. All are strings. They
+are:
+@enumerate
+@item
+A description of the CCCBR Method Library, extracted from the file from which the Roan
+library was constructed
+
+@item
+The date and time the file on the remote server was last modified, according to that
+server.
+
+@item
+The ``entity tag'' (ETag) of the remote file, as provided by the server. This is an opaque
+identifier that change for each version of the remote file. Querying the current Etag is
+how @code{update-method-library} decides whether or not the Roan method library needs
+updating.
+
+@item
+The URL used to fetch the remote file from which the Roan library was built.
+
+@item
+The @var{source-id} provided in the remote file, that is a CCCBR version stamp.
+
+@item
+The date the CCCBR library was built, according to the contents of the file downloaded
+from the remote server. This may or may not be the same as the date the file on the
+remote server was last modified.
+
+@item
+A unique identifier for the current version of the Roan library. This will change
+whenever the Roan library is rebuilt, even if the resulting contents are unchanged.
+
+@item
+The date and time the current version of the Roan library was built.
+@end enumerate"
+  (read-method-libary)
+  (let ((data (method-library-metadata *method-library*)))
+    (apply #'values (mapcar #'(lambda (k) (copy-sequence 'string (getf data k)))
+                            '(:description :last-modified :etag :source :source-id
+                              :source-date :local-uuid :local-modified)))))
+
+(defconstant +method-library-format-version+ 1)
+
+(defun read-method-library (&key load-rotations load-additional-data force)
+  ;; load-rotations and load-additional-data only apply if they are not already loaded
+  (when (or force
+            (null *method-library*)
+            (and load-rotations (null (method-library-rotation-keys *method-library*)))
+            (and load-additional-data (null (method-library-additional-data *method-library*))))
+    (let ((path (probe-file +method-library-path+)))
+      (cond ((null path) (error "Can't find method library file ~S" +method-library-path+))
+            ((null *method-library*) (setf force t))
+            (force (setf *method-library* nil))
+            (t (when (method-library-rotation-keys *method-library*)
+                 (setf load-rotations nil))
+               (when (method-library-additional-data *method-library*)
+                 (setf load-additional-data nil))))
+      (with-open-file (in path)
+        (let ((metadata (read in)))
+          (check-type* metadata cons)
+          (unless (equal (pop metadata) +method-library-magic-string+)
+            (error "~S does not appear to be a method library" +method-library-path+))
+          (let ((format-version (getf metadata :format-version)))
+            (cond ((or (not format-version) (< format-version +method-library-format-version+))
+                   (error "~S is in an older, no longer supported format (~S, ~S)"
+                          +method-library-path+ method-version +method-library-format-version+))
+                  ((> format-version +method-library-format-version+)
+                   (error "~S is in a newer format than that supported by this version of roan (~S, ~S)"
+                          +method-library-path+ method-version +method-library-format-version+))))
+          (when (and *method-library*
+                     (not (equal (getf metadata :local-uuid)
+                                 (getf (method-library-metadata *method-library*) :local-uuid))))
+            (setf *method-library* nil)
+            (setf force t))
+          (let ((lib (or *method-library* (make-method-library :metadata metadata))))
+            (when load-rotations
+              (setf (method-library-rotation-keys lib)
+                    (make-hash-table :test #'equal
+                                     :size (array-dimension (method-library-methods lib) 0))))
+            (when load-additional-data
+              (setf (method-library-additional-data lib)
+                    (make-hash-table :test #'equalp
+                                     :size (array-dimension (method-library-methods lib) 0))))
+            (iter (for (name classification notation rotation-key title . additional-data)
+                       := (read in nil))
+                  (for i :from 0)
+                  (while classification) ; name can be nil
+                  (for m := (if force
+                                (let ((new (make-instance 'method
+                                                          :name name
+                                                          :classification classification
+                                                          :place-notation notation)))
+                                  (vector-push-extend new (method-library-methods lib))
+                                  new)
+                                (aref (method-library-methods lib) i)))
+                  (when load-rotations
+                    (push m (gethash rotation-key (method-library-rotation-keys lib))))
+                  (when load-additional-data
+                    (setf (gethash title (method-library-additional-data lib)) additional-data)))
+            (setf *method-library* lib))))))
+  *method-library*)
+
+(defun method-library-etag (file)
+  (if *method-library*
+      (getf (method-library-metadata *method-library*) :etag)
+      (let ((path (probe-file file)))
+        (if (null path)
+            (error "Can't find method library file ~S" file)
+            (with-open-file (in path)
+              (let ((metadata (read in)))
+                (check-type* metadata cons)
+                (unless (equal (pop metadata) +method-library-magic-string+)
+                  (error "~S does not appear to be a method library" file))
+                (getf metadata :etag)))))))
+
+(defconstant +status-ok+ 200)
+
+#-(or clisp lispworks6 lispworks7)
+(defun download-zipped-methods (url)
+  (multiple-value-bind (stream status headers uri socket-stream must-close reason)
+      (drakma:http-request url :method :get :want-stream t)
+    (declare (ignore uri socket-stream must-close))
+    (unless (eql status +status-ok+)
+      (error "Unexpected status of GET request on ~A: ~A (~D)." url reason status))
+    (apply #'values
+           (fad:with-output-to-temporary-file
+               (out :element-type '(unsigned-byte 8)
+                    :template (namestring (make-pathname :device "TEMPORARY-FILES"
+                                                         :name "roan-methods-temp-%"
+                                                         :type "zip")))
+             (let ((in (flex:flexi-stream-stream stream)))
+               (iter (for b := (read-byte in nil))
+                     (while b)
+                     (write-byte b out))))
+           (multiple-value-list (headers-extract headers)))))
+
+#-(or clisp lispworks6 lispworks7)
+(defun unzip-xml-file (zipfile)
+  (fad:with-output-to-temporary-file
+      (out :element-type '(unsigned-byte 8)
+           :template (namestring (make-pathname :device "TEMPORARY-FILES"
+                                                :name "roan-methods-temp-%"
+                                                :type "xml")))
+    (zip:with-zipfile (z zipfile)
+      (zip:zipfile-entry-contents
+       (zip:get-zipfile-entry +method-source-entry+ z)
+       out))))
+
+#-(or clisp lispworks6 lispworks7)
+(defun get-headers (url)
+  (multiple-value-bind (reply status headers uri socket-stream must-close reason)
+      (drakma:http-request url :method :head)
+    (declare (ignore reply uri socket-stream must-close))
+    (unless (eql status +status-ok+)
+      (error "Unexpected status of HEAD request on ~A: ~A (~D)." url reason status))
+    (headers-extract headers)))
+
+#-(or clisp lispworks6 lispworks7)
+(defun headers-extract (headers)
+  (values (string-trim " \"" (drakma:header-value :etag headers))
+          (drakma:header-value :last-modified headers)))
+
+(defvar *xml-file*)
+
+(defun convert-xml-method-file (xml-file library-file url etag last-modified)
+  (check-type* url string)
+  (let* ((*xml-file* (merge-pathnames xml-file))
+         (dom (get-single-element-by-tag-name (plump:parse *xml-file*) "collection"))
+         (methods (make-array +default-method-libary-size+ :adjustable t :fill-pointer 0)))
+    (dolist (method-set (plump:get-elements-by-tag-name dom "methodSet"))
+      (let* ((properties (get-single-element-by-tag-name method-set "properties"))
+             (stage (or (parse-integer (text (get-single-element-by-tag-name properties "stage"))
+                                       :junk-allowed t)
+                        (method-library-parse-error "non-numeric stage")))
+             (prototype (parse-prototype stage properties)))
+        (dolist (method (plump:get-elements-by-tag-name method-set "method"))
+          (let* ((changes (parse-place-notation (text (get-single-element-by-tag-name method "notation"))
+                                                :stage stage))
+                 (name (text (get-single-element-by-tag-name method "name"))))
+            (when (equal name "")
+              (setf name nil))
+            (setf (method-name prototype) name)
+            (vector-push-extend
+             `(,name
+               ,(%method-classification prototype)
+               ,(canonicalize-place-notation changes)
+               ,(canonical-rotation-key changes)
+               ,(method-title prototype)
+               :complib-id ,(parse-method-id method)
+               ,@(when-let ((p (parse-peal method "firstTowerbellPeal")))
+                   `(:first-towerbell-peal ,p))
+               ,@(when-let ((p (parse-peal method "firstHandbellPeal")))
+                   `(:first-handbell-peal ,p)))
+             methods)))))
+     (with-open-file (out library-file :direction :output :if-exists :supersede)
+      (let ((*print-array* t)
+            (*print-base* 10)
+            (*print-length* nil)
+            (*print-level* nil)
+            (*print-pretty* nil)
+            (*print-radix* nil)
+            (*print-readably* nil))
+        (format out ";;; Roan method library~%~S~%"
+                `(,+method-library-magic-string+
+                  :format-version ,+method-library-format-version+
+                  :description ,(parse-method-library-description dom)
+                  :local-uuid ,(uuid:make-v1-uuid)
+                  :source-id ,(plump:attribute dom "uuid")
+                  :etag ,etag
+                  :last-modified ,last-modified
+                  :source ,url
+                  :source-date ,(plump:attribute dom "date")
+                  :local-modified ,(local-time:format-timestring nil (local-time:now))))
+        (iter (for m :in-vector (sort methods #'string-lessp :key #'first))
+              (prin1 m out)
+              (terpri out))))))
+
+(defun method-library-parse-error (&optional msg &rest args)
+  (simple-parse-error "Error reading method libary ~S, ~:[is it perhaps the wrong format?~;~:*~?~]"
+                      *xml-file* msg args))
+
+(defun get-single-element-by-tag-name (node tag &optional (error-if-absent t))
+  (unless node
+    (method-library-parse-error))
+  (let ((elements (plump:get-elements-by-tag-name node tag)))
+    (when (or (rest elements) (and error-if-absent (not (first elements))))
+      (method-library-parse-error))
+    (first elements)))
+
+(defun text (node)
+  (if (plump:element-p node)
+      (plump:text node)
+      (method-library-parse-error)))
+
+(defun parse-prototype (stage properties)
+  (let ((classification (get-single-element-by-tag-name properties "classification")))
+    (method :stage stage
+            :little (plump:attribute classification "little")
+            :differential (plump:attribute classification "differential")
+            :jump (plump:attribute classification "jump")
+            :class (class-from-name (text classification)))))
+
+(defun parse-method-library-description (dom)
+  (let* ((collection-name (get-single-element-by-tag-name dom "collectionName"))
+         (notes (plump:next-element collection-name)))
+    (or (and (string-equal (plump:tag-name notes) "notes")
+             (format nil "~A. ~A" (text collection-name) (text notes)))
+        (method-library-parse-error "unexpected format, bad description"))))
+
+(defun parse-method-id (method)
+  (or (ppcre:register-groups-bind (s) ("m(\\d+)" (plump:attribute method "id"))
+        (and s (parse-integer s)))
+      (method-library-parse-error "unknown id format (~S)" (plump:attribute method "id"))))
+
+(defun parse-peal (xml tag)
+  (when-let ((peal (first (last (plump:get-elements-by-tag-name xml tag)))))
+    (let ((date (text (get-single-element-by-tag-name peal "date")))
+          (town (get-single-element-by-tag-name peal "town" nil))
+          (county (get-single-element-by-tag-name peal "county" nil))
+          (region (get-single-element-by-tag-name peal "region" nil))
+          (building (get-single-element-by-tag-name peal "building" nil))
+          (address (get-single-element-by-tag-name peal "address" nil)))
+      (labels ((text-list (&rest args)
+                 (iter (for a :in args)
+                       (when a
+                         (collect (text a))))))
+        (format nil "~A ~{~A~^, ~}~@[ (~{~A~^, ~})~]"
+                date
+                (text-list town county region)
+                (text-list building address))))))
