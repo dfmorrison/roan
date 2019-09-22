@@ -28,37 +28,30 @@
 
 ;; The classification slot of a method encodes its stage and classification.
 
-(define-constant +stage-field+ (byte (ceiling (log +maximum-stage+ 2)) 0)
-  :test #'equal-byte-specifiers)
-
-(define-constant +classes+
-    ;; important that nil comes first, so it's zero
-    #(nil :surprise :delight :treble-bob :bob :place :alliance :treble-place :hybrid)
-  :test #'equalp)
-
-(define-constant +class-names+
-    (iter (for k :in-vector +classes+)
-          (when k
-            (collect (cons k (string-capitalize (substitute #\Space #\- (string k)))))))
-  :test #'equalp)
-
-(deftype class () `(member ,@(coerce +classes+ 'list)))
-
-(define-constant +class-field+
-    (byte (ceiling (log (length +classes+) 2)) (byte-size +stage-field+))
-  :test #'equal-byte-specifiers)
-
-(define-constant +little-field+ (byte 1 (byte-left +class-field+))
-  :test #'equal-byte-specifiers)
-
-(define-constant +differential-field+ (byte 1 (byte-left +little-field+))
-  :test #'equal-byte-specifiers)
-
-(define-constant +jump-field+ (byte 1 (byte-left +differential-field+))
-  :test #'equal-byte-specifiers)
-
-(deftype encoded-classification ()
-  `(integer 0 ,(dpb -1 (byte (1+ (byte-position roan::+jump-field+)) 0) 0)))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (define-constant +stage-field+ (byte (ceiling (log +maximum-stage+ 2)) 0)
+    :test #'equal-byte-specifiers)
+  (define-constant +classes+
+      ;; important that nil comes first, so it's zero
+      #(nil :surprise :delight :treble-bob :bob :place :alliance :treble-place :hybrid)
+    :test #'equalp)
+  (define-constant +class-names+
+      (iter (for k :in-vector +classes+)
+            (when k
+              (collect (cons k (string-capitalize (substitute #\Space #\- (string k)))))))
+    :test #'equalp)
+  (deftype class () `(member ,@(coerce +classes+ 'list)))
+  (define-constant +class-field+
+      (byte (ceiling (log (length +classes+) 2)) (byte-size +stage-field+))
+    :test #'equal-byte-specifiers)
+  (define-constant +little-field+ (byte 1 (byte-left +class-field+))
+    :test #'equal-byte-specifiers)
+  (define-constant +differential-field+ (byte 1 (byte-left +little-field+))
+    :test #'equal-byte-specifiers)
+  (define-constant +jump-field+ (byte 1 (byte-left +differential-field+))
+    :test #'equal-byte-specifiers)
+  (deftype encoded-classification ()
+    `(integer 0 ,(dpb -1 (byte (1+ (byte-position roan::+jump-field+)) 0) 0))))
 
 (defclass method ()
   ((name :type (or string null) :initform nil :accessor method-name :initarg :name)
@@ -95,7 +88,7 @@ is known, unless the @code{method} has been looked up from a suitable library. S
 
 Because ringing methods and their classes are unrelated to CLOS methods and classes, the
 @code{roan} package shadows the symbols @code{common-lisp:method},
-@code{common-lisp:method-name},@code{common-lisp:class} and @code{common-lisp:class-name}.
+@code{common-lisp:method-name} and @code{common-lisp:class-name}.
 ===endsummary===
 Describes a change ringing method, typically including its name, stage, classificaiton and
 place notation."))
@@ -330,6 +323,9 @@ consulted.
   (check-type* title string)
   (ppcre:register-groups-bind (name jump differential little class stage)
       (+method-title-scanner+ title)
+    ;; In obscure cases I don't understand, but that seem to involve "unusual" Unicode
+    ;; characters in a name, a trailing space is coming out as part of the name; zap it.
+    (setf name (string-right-trim " " name))
     (setf stage (stage-from-name stage))
     (setf class (class-from-name class))
     (when (and little (null class))
@@ -421,6 +417,7 @@ is neither a string nor @code{nil}.
 ;;                     (cons (not (null (alphanp c))) (coerce result 'list)))))
 ;;       (iter (for (c (b . r)) :in-hashtable character-data)
 ;;             (collect (list* (char-code c) b (mapcar #'char-code r)))))))
+;; UPDATE: added  Latin small letter R with line below by hand
 
 (define-constant +method-name-character-data+
     (iter (with data := '((48 T 48) (49 T 49) (50 T 50) (51 T 51) (52 T 52) (53 T 53) (54 T 54)
@@ -506,7 +503,8 @@ is neither a string nor @code{nil}.
                           (8308 NIL 52) (8309 NIL 53) (8310 NIL 54) (8311 NIL 55) (8312 NIL 56)
                           (8313 NIL 57) (8320 NIL 48) (8321 NIL 49) (8322 NIL 50) (8323 NIL 51)
                           (8324 NIL 52) (8325 NIL 53) (8326 NIL 54) (8327 NIL 55) (8328 NIL 56)
-                          (8329 NIL 57)))
+                          (8329 NIL 57)
+                          (7775 T 114))) ; Latin small letter R with line below
           (with result := (make-hash-table :size (length data)))
           (for (c p . s) :in data)
           (setf (gethash (code-char c) result) (cons p (mapcar #'code-char s)))
@@ -542,20 +540,26 @@ Signals a @code{type-error} if @var{string} is not a string.
 @end group
 @end example"
   (check-type* string string)
-  (and (<= 1 (length string) 120)
-       (not (ppcre:scan "^ |  | $" string))
-       (iter (with result := (make-array (* 2 (length string))
+  (and (name-spaces-p string)
+       (multiple-value-bind (result alphanum) (comparableize-string string)
+         (and alphanum result (string-trim " " result)))))
+
+(defun name-spaces-p (s)
+  (not (ppcre:scan "^ |  | $" s)))
+
+(defun comparableize-string (s)
+  (and (<= 1 (length s) 120)
+       (iter (with result := (make-array (* 2 (length s))
                                          :element-type 'character
                                          :fill-pointer 0))
-             (for c :in-string string)
+             (for c :in-string s)
              (for d := (gethash c +method-name-character-data+))
+             (for (alphanum . replacements) := d)
              (always d)
-             (counting (first d) :into n)
-             (mapc (rcurry #'vector-push result) (rest d))
-             (finally (return (and (> n 0)
-                                   (values (ppcre:regex-replace-all "  +"
-                                                                    (string-trim " " result)
-                                                                    " "))))))))
+             (counting alphanum :into n)
+             (mapc (rcurry #'vector-push result) replacements)
+             (finally (return (values (ppcre:regex-replace-all "  +" result " ")
+                                      (> n 0)))))))
 
 
 ;;; Method traits
@@ -2555,8 +2559,8 @@ notation to the same lead."
                  (setf p q)
                  (setf i e)
                  (= e end))))
-      (unless result
-        (err nil "method is insufficiently defined to apply calls to"))
+      ;; (unless result
+      ;;   (err nil "method is insufficiently defined to apply calls to"))
       (iter (for c :in calls)
             (when c
               (when (or (and (call-place-notation c)
@@ -2580,6 +2584,10 @@ notation to the same lead."
 
 ;;; Method lookup
 
+;; TODO regularize use of named-readtables for all of Roan
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (named-readtables:in-readtable :interpol-syntax))
+
 (define-constant +method-library-magic-string+ "067F9B80-A01E-11E9-9AA9-C48E8FF8F245"
   ;; used to confirm a method library file is such
   :test #'equal)
@@ -2592,15 +2600,15 @@ notation to the same lead."
 
 (define-constant +method-source-entry+ "CCCBR_methods.xml" :test #'equal)
 
-(define-constant +method-library-path+
+(defparameter *method-library-path*
     (merge-pathnames (make-pathname :name "method-library" :type "data")
-                     (asdf:system-source-directory :roan))
-  :test #'equal)
+                     (asdf:system-source-directory :roan)))
 
 (defparameter *method-library* nil)
 
 (defstruct method-library
   metadata
+  no-name-count
   (methods (make-array +default-method-libary-size+ :adjustable t :fill-pointer 0))
   (rotation-keys nil)     ; if non-nil, a hash-table from canonical-rotation-keys to methods
   (additional-data nil))  ; if non-nil a hash-table from methods to property-lists
@@ -2610,8 +2618,7 @@ notation to the same lead."
                          (differential nil differential-supplied)
                          (little nil little-supplied)
                          (class nil class-supplied)
-                         (stage nil stage-supplied)
-                         (wildcards t))
+                         (stage nil stage-supplied))
   "===summary===
 Roan provides a library of method definitions, derived from the
 @url{https://cccbr.github.io/methods-library/index.html,Central Council of Church Bell
@@ -2631,24 +2638,18 @@ are provided, the return list will contain all known methods that have the provi
 ones.
 
 If @var{name} is provided, it should be a string or @code{nil}, and all the methods
-returned will have that name. If the generalized boolean @var{wildcards} is true, which is
-the default, the wildcard characters @samp{*} and @samp{?} can be included in @var{name},
-where @samp{*} matches a series of any zero or more consecutive characters, and @samp{?}
-matches any one character. In this case, to include a literal asterisk or question mark in
-@var{name}, precede it by a backslash (@samp{\\}). Note, however, that including a
-backslash in a Common Lisp string literal requires escaping it with backslash, too, that
-will be four backslashes, total. When @var{wildcards} is true no other characters besides
-@samp{*}, @samp{?} and @samp{\\} may be preceded by a backslash. If @var{wildcards} is
-@code{nil} no wildcards are used, and any of @samp{*}, @samp{?} and @samp{\\} may be
-included in @var{name} without special meaning or restriction. Matching of names, either
-with or without wildcards, is done ignoring case differences. The FMR provides a complex
-mechanism for determining the uniqueness of method names that contain unusual characters;
-for example, accents and punctuation are removed when comparing method names. Such issues
-are not addressed by @code{lookup-methods}, which, apart from case differences, treats
-distinct strings as distinct names. Since all the methods in the library have names that
-have already been vetted for uniqueness this should cause no difficulty, though when
-looking up a method its canonical name must be used. Wildcards are applicable only to
-@var{name}, and not to any of the other arguments to @code{lookup-methods}.
+returned will have that name. The Central Council of Church Bell Ringers
+@url{https://cccbr.github.io/method_ringing_framework/, Framework for Method
+Ringing} (FMR), appendix C defines the form method names may take, and a mechanism for
+comparing them that is more complex than simply comparing strings for equality. For
+example, @code{\"London No.3\"} and @code{\"London no 3\"} are considered the same names.
+The @code{lookup-methods} function uses this mechanism. @xref{comparable-method-name}.
+
+The @var{name} may also contain @samp{*} wildcard characters. Such a wildcard matches a
+series of zero or more consecutive characters. Since the @samp{*} is not a character
+allowed in method names by the FMR there is no ambiguity: occurrences of @samp{*} in
+@var{name} are always wildcard characters. Wildcards are applicable only to @var{name},
+and not to any of the other arguments to @code{lookup-methods}.
 
 If @var{stage} is provided, it should be a @code{stage}, that is a small integer. All the
 methods that are returned will have that stage. While a @code{method} object can have
@@ -2656,7 +2657,7 @@ an indeterminate stage, represented by @code{nil}, all the methods returned by
 @code{lookup-methods} will have a definite stage, and @code{nil} is not an allowed
 value for the @var{stage} argument.
 
-If @var{class} is provided, it should @code{nil} or one of the keywords @code{:bob},
+If @var{class} is provided, it should be @code{nil} or one of the keywords @code{:bob},
 @code{:place}, @code{:surprise}, @code{:delight}, @code{:treble-bob},
 @code{:treble-place}, @code{:alliance}, @code{:hybrid} or @code{:blank}. With the
 exception of @code{:blank}, all the methods returned will have the specified class. The
@@ -2673,14 +2674,15 @@ If the title of a method is known, it can be found in the library by using
 @code{lookup-method-by-title}. The @var{title} should be a string. If a
 @code{method} with that title is in the library, it is returned; otherwise @code{nil} is
 returned. In general there should never be two or more different methods in the library
-with the same title. Matching on the title is done ignoring case.
+with the same title. Matching on the title is done using the FMR's mechanism for comparing
+names. Wildcards cannot be used with @code{lookup-method-by-title}.
 
 If the place notation of a method is known, and its name in the library is sought,
-@code{lookup-method-by-notation} is available. The @var{place-notation-or-changes} should
+@code{lookup-methods-by-notation} is available. The @var{notation-or-changes} should
 be either a string, in which case it viewed as place notation, or a list of @code{rows},
 representing changes all of the same stage. The @var{stage} should be a @code{stage}; if
 not provided or @code{nil} the current value of @code{*default-stage*} is used. If
-@var{place-notation-or-changes} is a list of changes, the value of @var{stage} is ignored,
+@var{notation-or-changes} is a list of changes, the value of @var{stage} is ignored,
 the stage of those changes being used instead. Two lists are returned. The first is of
 methods that have the provided place notation (or corresponding changes). The second is of
 methods that are rotations of methods with the given place notation. Either or both lists
@@ -2692,15 +2694,14 @@ method returned by different invocations of these functions will typically not b
 @code{eq}.
 
 A @code{type-error} is signaled if @var{stage} is not a @code{stage} (or, in the case of
-@code{lookup-methods-by-notation}, @code{nil}); @var{name} is not a string;
-@var{place-notation-or-changes} is neither a string nor a non-empty list of @code{row}s;
+@code{lookup-methods-by-notation}, @code{nil}); @var{name} is not a string or @code{nil};
+@var{notation-or-changes} is neither a string nor a non-empty list of @code{row}s;
 @var{changes} is not a non-empty list of @code{row}s; or if @var{class} is not one the
-allowed values. A @code{parse-error} is signaled if @var{place-notation-or-changes} is a
-string and is not parseable as place notation at @var{stage}; or if @var{wildcards} is
-true and @var{name} contains a @samp{\\} followed by anything other than @samp{?},
-@samp{*} or @samp{\\}. An @code{error} is signaled if @var{changes} is a list of
-@code{row}s, but they are not all of stage @var{stage} (or of @code{*default-stage*} if
-@var{stage} is @code{nil}).
+allowed values. A @code{parse-error} is signaled if @var{notation-or-changes} is a string
+and is not parseable as place notation at @var{stage}. An @code{error} is signaled if
+@var{changes} is a list of @code{row}s, but they are not all of stage @var{stage} (or of
+@code{*default-stage*} if @var{stage} is @code{nil}). A @code{method-library-error} is
+signaled if the method library file cannot be read or is of the wrong format.
 @example
 @group
  (mapcar #'method-place-notation
@@ -2709,10 +2710,10 @@ true and @var{name} contains a @samp{\\} followed by anything other than @samp{?
                          :stage 8))
      @result{} (\"36x56.4.5x5.6x4x5x4x7,8\")
  (mapcar #'method-title
-         (lookup-methods :name \"aDvEnT\"
+         (lookup-methods :name \"london no 3\"
                          :class :surprise
-                         :stage 8))
-     @result{} (\"Advent Surprise Major\")
+                         :stage 10))
+     @result{} (\"London No.3 Surprise Royal\")
  (method-place-notation
    (lookup-method-by-title \"Advent Surprise Major\"))
      @result{} \"36x56.4.5x5.6x4x5x4x7,8\"
@@ -2751,106 +2752,115 @@ true and @var{name} contains a @samp{\\} followed by anything other than @samp{?
   (check-type* class (member nil :blank :bob :place :surprise :delight :treble-bob
                              :treble-place :alliance :hybrid))
   (check-type* stage (or stage null))
-  ;; The inscrutable regex string below matches backslash followed by anything but
-  ;; another backslash, an asterisk or a question mark.
-  (when (equal name "")
-    (setf name nil))
-  (when-let ((bad (and name wildcards (ppcre:all-matches-as-strings "\\\\[^\\\\*?]" name))))
-    (simple-parse-error "The name pattern contains unsupported backslash pairings: ~{~S~^, ~}"
-                        ;; remove duplicates
-                        (reduce #'(lambda (set elem)
-                                    (adjoin elem set :test #'equal))
-                                bad
-                                :initial-value nil)))
   (when (and stage-supplied (null stage))
-    (simple-parse-error "If :stage is supplied to methods-lookup, it must be non-nil"))
+    (error 'type-error :format-control "If :stage is supplied to methods-lookup, it must be non-nil"))
   (read-method-library)
-  (when-let ((methods (method-library-methods *method-library*)))
-    (multiple-value-bind (prefix name-scanner)
-        (if wildcards (name-recognizers name) name)
-      (labels ((matchp (method)
-                 (and (or (not name-supplied)
-                          (if name-scanner
-                              (ppcre:scan name-scanner (method-name method))
-                              (string-equal prefix (method-name method))))
-                      (or (null stage)
-                          (eql (method-stage method) stage))
-                      (or (not class-supplied)
-                          (if (eq class :blank)
-                              (member (method-class method) '(nil :hybrid))
-                              (eq  (method-class method) class)))
-                      (or (not little-supplied)
-                          (if (method-little-p method) little (not little)))
-                      (or (not differential-supplied)
-                          (if (method-differential-p method) differential (not differential)))
-                      (or (not jump-supplied)
-                          (if (method-jump-p method) jump (not jump))))))
-        (unless prefix
-          (return-from lookup-methods
-            (iter (for m :in-vector methods)
-                  (when (matchp m)
-                    (collect (copy-method m))))))
-        (when-let ((mid (find-name-prefix prefix methods)))
-          (nconc (iter (for i :from (- mid 1) :downto 0)
-                       (for m := (aref methods i))
-                       (while (starts-with-subseq prefix (method-name m) :test #'string-equal))
-                       (when (matchp m)
-                         (collect (copy-method m))))
-                 (iter (for i :from mid :below (length methods))
-                       (for m := (aref methods i))
-                       (while (starts-with-subseq prefix (method-name m) :test #'string-equal))
-                       (when (matchp m)
-                         (collect (copy-method m))))))))))
+  (let ((methods (method-library-methods *method-library*))
+        (has-name-start (method-library-no-name-count *method-library*)))
+    (multiple-value-bind (prefix name-scanner impossible) (name-recognizers name)
+      (unless impossible
+        (labels ((matchp (comparable-name method)
+                   (and (or (not name-supplied)
+                            (if name-scanner
+                                (ppcre:scan name-scanner comparable-name)
+                                (equal prefix comparable-name)))
+                        (or (null stage)
+                            (eql (method-stage method) stage))
+                        (or (not class-supplied)
+                            (if (eq class :blank)
+                                (member (method-class method) '(nil :hybrid))
+                                (eq  (method-class method) class)))
+                        (or (not little-supplied)
+                            (if (method-little-p method) little (not little)))
+                        (or (not differential-supplied)
+                            (if (method-differential-p method) differential (not differential)))
+                        (or (not jump-supplied)
+                            (if (method-jump-p method) jump (not jump))))))
+          (cond ((not name-supplied)
+                 (iter (for (cn . m) :in-vector methods)
+                       (when (matchp cn m)
+                         (collect (copy-method m)))))
+                ((null name)
+                 (iter (for (cn . m) :in-vector methods :below has-name-start)
+                       (when (matchp cn m)
+                         (collect (copy-method m)))))
+                ((null prefix)
+                 (iter (for (cn . m) :in-vector methods :from has-name-start)
+                       (when (matchp cn m)
+                         (collect (copy-method m)))))
+                (t (when-let ((mid (find-name-prefix prefix methods)))
+                     (nconc (iter (for i :from (- mid 1) :downto 0)
+                                  (for (cn . m) := (aref methods i))
+                                  (while (starts-with-subseq prefix cn :test #'string-equal))
+                                  (when (matchp cn m)
+                                    (collect (copy-method m))))
+                            (iter (for i :from mid :below (length methods))
+                                  (for (cn . m) := (aref methods i))
+                                  (while (starts-with-subseq prefix cn :test #'string-equal))
+                                  (when (matchp cn m)
+                                    (collect (copy-method m)))))))))))))
 
-(defun name-recognizers (pattern)
-  ;; The horrifically inscrutable regex string below matches a run of non-asterisk/question
-  ;; characters, including backslash escaped asterisks/questions/backslashes, or a single,
-  ;; unescaped asterisk/question.
- (when-let ((fragments (and pattern (ppcre:all-matches-as-strings "[*?]|(?:[^*?\\\\]|\\\\[\\\\*?])+" pattern))))
-   (let ((prefix (and (not (member (first fragments) '("*" "?") :test #'equal)) (first fragments))))
-     (cond ((and prefix (null (rest fragments))) prefix)
-           (t (setf fragments (nsubstitute ".*" "*" fragments :test #'equal))
-              (setf fragments (nsubstitute "." "?" fragments :test #'equal))
-              (let ((regex (apply #'concatenate 'string `("^" ,@fragments "$"))))
-                (values prefix (ppcre:create-scanner regex :case-insensitive-mode t))))))))
+(defun name-recognizers (s)
+  (cond ((null s) nil)
+        ((zerop (length s)) (values nil nil t))
+        ((not (find #\* s)) (or (comparable-method-name s) (values nil nil t)))
+        ((ppcre:scan "^ |  | $" s) (values nil nil t))
+        (t (let ((items nil) (first-time-p t) (prefix nil))
+             (when (eql (char s 0) #\*)
+               (push '(:greedy-repetition 0 nil :everything) items)
+               (setf first-time-p nil))
+             (ppcre:do-register-groups (content stars) ("([^*]+?)(\\*+|$)" s)
+               (let ((fragment (comparableize-string content)))
+                 (unless fragment
+                   (return-from name-recognizers (values nil nil t)))
+                 (when first-time-p
+                   (setf prefix fragment)
+                   (setf first-time-p nil))
+                 (push fragment items)
+                 (when (not (zerop (length stars)))
+                   (push '(:greedy-repetition 0 nil :everything) items))))
+             (values prefix (ppcre:create-scanner `(:sequence :start-anchor
+                                                              ,@(nreverse items)
+                                                              :end-anchor)))))))
 
 (defun find-name-prefix (prefix methods)
   (iter (with start := 0)
         (with end := (length methods))
         (while (> end start))
         (for i := (+ start (floor (- end start) 2)))
-        (for m := (aref methods i))
-        (cond ((starts-with-subseq prefix (method-name m) :test #'string-equal)
+        (for comparable-name := (car (aref methods i)))
+        (cond ((starts-with-subseq prefix comparable-name :test #'string-equal)
                (return i))
-              ((string-lessp prefix (method-name m))
+              ((string-lessp prefix comparable-name)
                (setf end i))
               (t (setf start (+ i 1))))))
 
 (defun lookup-method-by-title (title)
   "===merge: lookup-methods 1"
+  (check-type* title string)
+  (when (find #\* title)
+    (error "Wildcards cannot be used when looking up a method by title (~S)" title))
   (multiple-value-bind (name jump differential little class stage)
       (parse-method-title title)
     (let ((result (lookup-methods :name name :jump jump :differential differential
-                                  :little little :class class :stage stage
-                                  :wildcards nil)))
+                                  :little little :class class :stage stage)))
       (unless class
         (unionf result (lookup-methods :name name :jump jump :differential differential
-                                       :class :hybrid :stage stage
-                                       :wildcards nil)))
+                                       :class :hybrid :stage stage)))
       (when (rest result)
         (warn "Multiple methods found by lookup-method-by-title, only returning one of them (~{~A~^, ~})"
               (mapcar #'method-title result)))
       (first result))))
 
-(defun lookup-methods-by-notation (place-notation-or-changes &optional (stage *default-stage*))
+(defun lookup-methods-by-notation (notation-or-changes &optional (stage *default-stage*))
   "===merge: lookup-methods 2"
-  (when (listp place-notation-or-changes)
-    (check-type* (first place-notation-or-changes) row)
-    (setf stage (stage (first place-notation-or-changes))))
-  (let* ((canonical-place-notation (canonicalize-place-notation place-notation-or-changes :stage stage))
-         (canonical-rotation-key (canonical-rotation-key (if (stringp place-notation-or-changes)
+  (when (listp notation-or-changes)
+    (check-type* (first notation-or-changes) row)
+    (setf stage (stage (first notation-or-changes))))
+  (let* ((canonical-place-notation (canonicalize-place-notation notation-or-changes :stage stage))
+         (canonical-rotation-key (canonical-rotation-key (if (stringp notation-or-changes)
                                                              (parse-place-notation canonical-place-notation :stage stage)
-                                                             place-notation-or-changes))))
+                                                             notation-or-changes))))
     (read-method-library :load-rotations t)
     (iter (for m :in (gethash canonical-rotation-key (method-library-rotation-keys *method-library*)))
           (if (equal (method-place-notation m) canonical-place-notation)
@@ -2864,7 +2874,7 @@ kind of such metadata is described by a keyword, which is passed to this functio
 @var{key}. The @var{title-or-method} may be a string or a @code{method}. If a string, it
 is the title of the method about which the metadata is sought. If the metadata indicated
 by @var{key} is available for the method it is returned; the type of the return value
-dependings up the kind of metadata sought. If no such metadata is available, including
+depends upon the kind of metadata sought. If no such metadata is available, including
 if @var{key} is a not yet supported type of metadata or if @code{title-or-method} does
 not correspond to any method in the library, @code{nil} is returned.
 
@@ -2921,23 +2931,12 @@ without regard to whether the remote one has changed. If the library is updated,
 an integer, the number of methods the updated library contains; if the library is not
 updated because the remote version hasn't changed returns @code{nil}.
 
-Unfortunately some of the libraries (Drakma, usocket and zip) required to download and
-unzip the updated database either don't install or no longer work in CLISP and LispWorks,
-as of July 2019. On these implementations a call to @code{update-methods-database} will
-result in an error. However, if you use a different Lisp implementation, such as SBCL
-or Clozure CL, to update the library, Roan in CLISP and LispWorks will see the updated
-version.
-
 May signal any of a variety of file system or network errors if network access is not
 available, or unreliable, or if there are other difficulties downloading and processing
 the remote file."
-  #+(or clisp lispworks6 lispworks7)
-  (error "The update-method-library function is not currently supported on ~A"
-         (lisp-implementation-type))
-  #-(or clisp lispworks6 lispworks7)
   (when (or force
-            (null (probe-file +method-library-path+))
-            (not (equal (method-library-etag +method-library-path+)
+            (null (probe-file *method-library-path*))
+            (not (equal (method-library-etag *method-library-path*)
                         (get-headers +method-source+))))
     (multiple-value-bind (zip-file etag last-modified)
         (download-zipped-methods +method-source+)
@@ -2945,7 +2944,7 @@ the remote file."
            (let ((xml-file (unzip-xml-file zip-file)))
              (unwind-protect
                   (progn
-                    (convert-xml-method-file xml-file +method-library-path+ +method-source+ etag last-modified)
+                    (convert-xml-method-file xml-file *method-library-path* +method-source+ etag last-modified)
                     (read-method-library :force t)
                     (length (method-library-methods *method-library*)))
                (delete-file xml-file)))
@@ -2987,13 +2986,23 @@ whenever the Roan library is rebuilt, even if the resulting contents are unchang
 @item
 The date and time the current version of the Roan library was built.
 @end enumerate"
-  (read-method-libary)
+  (read-method-library)
   (let ((data (method-library-metadata *method-library*)))
     (apply #'values (mapcar #'(lambda (k) (copy-sequence 'string (getf data k)))
                             '(:description :last-modified :etag :source :source-id
                               :source-date :local-uuid :local-modified)))))
 
-(defconstant +method-library-format-version+ 1)
+(defconstant +method-library-format-version+ 2)
+
+(define-condition method-library-error (file-error)
+  ((description :reader method-library-error-description :initarg :description))
+  (:documentation "Signaled when a method library file cannot be read. Contains two
+potentially useful slots accessible with @code{file-error-pathname} and
+@code{method-library-error-description}.")
+  (:report (lambda (condition stream)
+             (format stream "Method library file ~S ~A"
+                     (file-error-pathname condition)
+                     (method-library-error-description condition)))))
 
 (defun read-method-library (&key load-rotations load-additional-data force)
   ;; load-rotations and load-additional-data only apply if they are not already loaded
@@ -3001,75 +3010,81 @@ The date and time the current version of the Roan library was built.
             (null *method-library*)
             (and load-rotations (null (method-library-rotation-keys *method-library*)))
             (and load-additional-data (null (method-library-additional-data *method-library*))))
-    (let ((path (probe-file +method-library-path+)))
-      (cond ((null path) (error "Can't find method library file ~S" +method-library-path+))
-            ((null *method-library*) (setf force t))
-            (force (setf *method-library* nil))
-            (t (when (method-library-rotation-keys *method-library*)
-                 (setf load-rotations nil))
-               (when (method-library-additional-data *method-library*)
-                 (setf load-additional-data nil))))
-      (with-open-file (in path)
-        (let ((metadata (read in)))
-          (check-type* metadata cons)
-          (unless (equal (pop metadata) +method-library-magic-string+)
-            (error "~S does not appear to be a method library" +method-library-path+))
-          (let ((format-version (getf metadata :format-version)))
-            (cond ((or (not format-version) (< format-version +method-library-format-version+))
-                   (error "~S is in an older, no longer supported format (~S, ~S)"
-                          +method-library-path+ method-version +method-library-format-version+))
-                  ((> format-version +method-library-format-version+)
-                   (error "~S is in a newer format than that supported by this version of roan (~S, ~S)"
-                          +method-library-path+ method-version +method-library-format-version+))))
-          (when (and *method-library*
-                     (not (equal (getf metadata :local-uuid)
-                                 (getf (method-library-metadata *method-library*) :local-uuid))))
-            (setf *method-library* nil)
-            (setf force t))
-          (let ((lib (or *method-library* (make-method-library :metadata metadata))))
-            (when load-rotations
-              (setf (method-library-rotation-keys lib)
-                    (make-hash-table :test #'equal
-                                     :size (array-dimension (method-library-methods lib) 0))))
-            (when load-additional-data
-              (setf (method-library-additional-data lib)
-                    (make-hash-table :test #'equalp
-                                     :size (array-dimension (method-library-methods lib) 0))))
-            (iter (for (name classification notation rotation-key title . additional-data)
-                       := (read in nil))
-                  (for i :from 0)
-                  (while classification) ; name can be nil
-                  (for m := (if force
-                                (let ((new (make-instance 'method
-                                                          :name name
-                                                          :classification classification
-                                                          :place-notation notation)))
-                                  (vector-push-extend new (method-library-methods lib))
-                                  new)
-                                (aref (method-library-methods lib) i)))
-                  (when load-rotations
-                    (push m (gethash rotation-key (method-library-rotation-keys lib))))
-                  (when load-additional-data
-                    (setf (gethash title (method-library-additional-data lib)) additional-data)))
-            (setf *method-library* lib))))))
-  *method-library*)
+    (labels ((library-error (format &rest args)
+               (error 'method-library-error
+                      :pathname *method-library-path*
+                      :description (format nil "~?" format args))))
+      (let ((path (probe-file *method-library-path*)))
+        (cond ((null path) (library-error "can't be found"))
+              ((null *method-library*) (setf force t))
+              (force (setf *method-library* nil))
+              (t (when (method-library-rotation-keys *method-library*)
+                   (setf load-rotations nil))
+                 (when (method-library-additional-data *method-library*)
+                   (setf load-additional-data nil))))
+        (with-open-file (in path)
+          (let ((metadata (read in)))
+            (check-type* metadata cons)
+            (unless (equal (pop metadata) +method-library-magic-string+)
+              (library-error "does not appear to be formatted as a method library"))
+            (let ((format-version (getf metadata :format-version)))
+              (cond ((or (not format-version) (< format-version +method-library-format-version+))
+                     (library-error "is in an older, no longer supported format (~S, ~S)"
+                                    format-version +method-library-format-version+))
+                    ((> format-version +method-library-format-version+)
+                     (library-error "is in a newer format than that supported by this version of Roan (~S, ~S)"
+                                    format-version +method-library-format-version+))))
+            (when (and *method-library*
+                       (not (equal (getf metadata :local-uuid)
+                                   (getf (method-library-metadata *method-library*) :local-uuid))))
+              (setf *method-library* nil)
+              (setf force t))
+            (let ((lib (or *method-library* (make-method-library :metadata metadata))))
+              (when load-rotations
+                (setf (method-library-rotation-keys lib)
+                      (make-hash-table :test #'equal
+                                       :size (array-dimension (method-library-methods lib) 0))))
+              (when load-additional-data
+                (setf (method-library-additional-data lib)
+                      (make-hash-table :test #'equalp
+                                       :size (array-dimension (method-library-methods lib) 0))))
+              (iter (for (name comparable-name classification notation rotation-key title . additional-data)
+                         := (read in nil))
+                    (for i :from 0)
+                    (while classification) ; name can be nil
+                    (counting (null name) :into n)
+                    (for m := (if force
+                                  (let ((new (make-instance 'method
+                                                            :name name
+                                                            :classification classification
+                                                            :place-notation notation)))
+                                    (vector-push-extend (cons comparable-name new) (method-library-methods lib))
+                                    new)
+                                  (cdr (aref (method-library-methods lib) i))))
+                    (when load-rotations
+                      (push m (gethash rotation-key (method-library-rotation-keys lib))))
+                    (when load-additional-data
+                      (setf (gethash title (method-library-additional-data lib)) additional-data))
+                    (finally (setf (method-library-no-name-count lib) n)))
+              (setf *method-library* lib))))))))
 
 (defun method-library-etag (file)
   (if *method-library*
       (getf (method-library-metadata *method-library*) :etag)
       (let ((path (probe-file file)))
         (if (null path)
-            (error "Can't find method library file ~S" file)
+            (error 'method-library-error :pathname file :description "can't be found")
             (with-open-file (in path)
               (let ((metadata (read in)))
                 (check-type* metadata cons)
                 (unless (equal (pop metadata) +method-library-magic-string+)
-                  (error "~S does not appear to be a method library" file))
+                  (error 'method-library-error
+                         :pathname file
+                         :description "does not appear to be formatted as a method library"))
                 (getf metadata :etag)))))))
 
 (defconstant +status-ok+ 200)
 
-#-(or clisp lispworks6 lispworks7)
 (defun download-zipped-methods (url)
   (multiple-value-bind (stream status headers uri socket-stream must-close reason)
       (drakma:http-request url :method :get :want-stream t)
@@ -3079,28 +3094,22 @@ The date and time the current version of the Roan library was built.
     (apply #'values
            (fad:with-output-to-temporary-file
                (out :element-type '(unsigned-byte 8)
-                    :template (namestring (make-pathname :device "TEMPORARY-FILES"
-                                                         :name "roan-methods-temp-%"
-                                                         :type "zip")))
+                    :template (namestring (make-pathname :name "roan-methods-temp-%" :type "zip")))
              (let ((in (flex:flexi-stream-stream stream)))
                (iter (for b := (read-byte in nil))
                      (while b)
                      (write-byte b out))))
            (multiple-value-list (headers-extract headers)))))
 
-#-(or clisp lispworks6 lispworks7)
 (defun unzip-xml-file (zipfile)
   (fad:with-output-to-temporary-file
       (out :element-type '(unsigned-byte 8)
-           :template (namestring (make-pathname :device "TEMPORARY-FILES"
-                                                :name "roan-methods-temp-%"
-                                                :type "xml")))
+           :template (namestring (make-pathname :name "roan-methods-temp-%" :type "xml")))
     (zip:with-zipfile (z zipfile)
       (zip:zipfile-entry-contents
        (zip:get-zipfile-entry +method-source-entry+ z)
        out))))
 
-#-(or clisp lispworks6 lispworks7)
 (defun get-headers (url)
   (multiple-value-bind (reply status headers uri socket-stream must-close reason)
       (drakma:http-request url :method :head)
@@ -3109,7 +3118,6 @@ The date and time the current version of the Roan library was built.
       (error "Unexpected status of HEAD request on ~A: ~A (~D)." url reason status))
     (headers-extract headers)))
 
-#-(or clisp lispworks6 lispworks7)
 (defun headers-extract (headers)
   (values (string-trim " \"" (drakma:header-value :etag headers))
           (drakma:header-value :last-modified headers)))
@@ -3136,6 +3144,7 @@ The date and time the current version of the Roan library was built.
             (setf (method-name prototype) name)
             (vector-push-extend
              `(,name
+               ,(and name (comparable-method-name name))
                ,(%method-classification prototype)
                ,(canonicalize-place-notation changes)
                ,(canonical-rotation-key changes)
@@ -3158,14 +3167,20 @@ The date and time the current version of the Roan library was built.
                 `(,+method-library-magic-string+
                   :format-version ,+method-library-format-version+
                   :description ,(parse-method-library-description dom)
-                  :local-uuid ,(uuid:make-v1-uuid)
+                  :local-uuid ,(format nil "~A" (uuid:make-v1-uuid))
                   :source-id ,(plump:attribute dom "uuid")
                   :etag ,etag
                   :last-modified ,last-modified
                   :source ,url
                   :source-date ,(plump:attribute dom "date")
                   :local-modified ,(local-time:format-timestring nil (local-time:now))))
-        (iter (for m :in-vector (sort methods #'string-lessp :key #'first))
+        (iter (for m :in-vector (sort methods
+                                      (lambda (x y)
+                                        (declare (type (or string null) x y))
+                                        (cond ((null y) nil)
+                                              ((null x) t)
+                                              (t (string-lessp x y))))
+                                      :key #'second))
               (prin1 m out)
               (terpri out))))))
 

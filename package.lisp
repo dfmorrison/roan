@@ -111,6 +111,8 @@
            #:method-lead-head-code
            #:method-lead-length
            #:method-library-details
+           #:method-library-error
+           #:method-library-error-description
            #:method-little-p
            #:method-name
            #:method-place-notation
@@ -166,8 +168,6 @@
            #:stage-from-name
            #:stage-name
            #:tenors-fixed-p
-           #:too-many-methods-error
-           #:too-many-methods-error-count
            #:update-method-library
            #:use-roan-package
            #:which-grandsire-lead-head

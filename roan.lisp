@@ -22,9 +22,9 @@
 (defun use-roan-package (&optional (package *package*))
   "A convenience function for using the @code{roan} package. Causes @var{package},
 which defaults to the current value of @code{*package*}, to inherit all the external
-symbols of the @code{roan} package, and shadows @code{method} and @code{method-name}.
-Signals a @code{type-error} if @var{package} is not a package designator. Signals a
-@code{package-error} if @var{package} is the @code{keyword} package.
+symbols of the @code{roan} package, and shadows @code{method}, @code{method-name} and
+@code{class-name}. Signals a @code{type-error} if @var{package} is not a package
+designator. Signals a @code{package-error} if @var{package} is the @code{keyword} package.
 @example
 @group
  MY-PACKAGE> *package*
@@ -42,7 +42,7 @@ Signals a @code{type-error} if @var{package} is not a package designator. Signal
            :format-control "Can't import Roan symbols into the keyword package."
            :package package))
   (unless (member (find-package :roan) (package-use-list package))
-    (shadowing-import '(roan:method roan:method-name) package)
+    (shadowing-import '(roan:method roan:method-name roan:class-name) package)
     (use-package :roan package)
     t))
 
@@ -214,6 +214,8 @@ must have a stage specified. @xref{write-row,,@code{write-row}},
 ;; Make SBCL shut up about the forward reference.
 (declaim (ftype function prin1-row))
 
+;; TODO revamp this to use named-readtables
+
 ;; Rows are structures rather than instances of a subclass of standard-class because
 ;; equalp descends structures, allowing us to use rows as keys in CL hash-tables.
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -225,10 +227,10 @@ must have a stage specified. @xref{write-row,,@code{write-row}},
                                      (write-row row :stream stream))))
     "===summary===
 @cindex immutable
-The fundamental units of ringing are rows and changes, permutations of a fixed set of
-bells. A distinction between them is often made, where a row is a permutation of bells and
-a change is a permutation taking one row to the next. In Roan they are both represented by
-the same data type, @code{row}; @code{row}s should be treated as immutable.
+The fundamental units of change ringing are rows and changes, permutations of a fixed set
+of bells. A distinction between them is often made, where a row is a permutation of bells
+and a change is a permutation taking one row to the next. In Roan they are both
+represented by the same data type, @code{row}; @code{row}s should be treated as immutable.
 
 @cindex Lisp reader
 @cindex reader macro

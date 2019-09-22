@@ -24,9 +24,9 @@
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :description "A library to support change ringing applications"
-  :depends-on (:alexandria :iterate :cl-ppcre :plump :local-time :binascii :uuid :cl-fad :asdf
-                           #-(or clisp lispworks6 lispworks7) :drakma
-                           #-(or clisp lispworks6 lispworks7) :zip)
+  :depends-on (:alexandria :iterate :cl-interpol :cl-ppcre
+                           :plump :local-time :binascii :uuid
+                           :cl-fad :drakma :zip :asdf)
   :components ((:file "package")
                (:file "util" :depends-on ("package"))
                (:file "roan" :depends-on ("package" "util"))
@@ -54,5 +54,5 @@
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :description "Support for building the documentation for Roan"
-  :depends-on (roan :alexandria :iterate :trivial-documentation :cl-fad :cl-ppcre :asdf)
+  :depends-on (:roan :alexandria :iterate :trivial-documentation :cl-fad :cl-ppcre :asdf)
   :components ((:file "extract-documentation")))

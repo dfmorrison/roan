@@ -489,6 +489,7 @@ signals a @code{type-error}.
 @include inc/lookup-method-info-function.texi
 @include inc/update-method-library-function.texi
 @include inc/method-library-details-function.texi
+@include inc/method-library-error-class.texi
 
 @section Functions of the place notation of methods
 

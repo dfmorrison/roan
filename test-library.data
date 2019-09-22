@@ -1,0 +1,8 @@
+;;; Roan method library
+("067F9B80-A01E-11E9-9AA9-C48E8FF8F245" :FORMAT-VERSION 2 :DESCRIPTION "Fake library for esting" :LOCAL-UUID "1039A680-DCD1-11E9-8EC6-C48E8FF8F246" :SOURCE-ID "http://www.cccbr.org.uk/methods/uuid/7197" :ETAG "5d7e9c2c-e2141" :LAST-MODIFIED "Sat, 21 Sep 2019 20:16:44 GMT" :SOURCE "https://cccbr.github.io/methods-library/xml/CCCBR_methods.xml.zip" :SOURCE-DATE "2019-09-15" :LOCAL-MODIFIED "2019-09-21T20:36:49.188021-04:00")
+("Abbott" "abbott" 40 "x5x45x5x23x34x23x6x5,2" "D\"C\"c5.J.&O\\P" "Abbott Surprise Major" :COMPLIB-ID 19166 :FIRST-TOWERBELL-PEAL "2009-09-20 East Crompton, Lancashire (St James)")
+("Advent" "advent" 72 "x3x456x256x1x34x3.6x6.7,2" "Cu\\MXhNE7&S.>K(" "Advent Delight Major" :COMPLIB-ID 24802 :FIRST-TOWERBELL-PEAL "2004-11-29 Milton, Oxfordshire (St Blaise)")
+("Advent" "advent" 40 "36x56.4.5x5.6x4x5x4x7,8" "CrZW5-N7-B:B" "Advent Surprise Major" :COMPLIB-ID 20042 :FIRST-TOWERBELL-PEAL "1988-07-31 Boston, MA (Advent)")
+("Advent" "advent" 200 "x3x456x256x6x34x45x2.7,2" "Cu\\MXhNId==)%[;" "Advent Alliance Major" :COMPLIB-ID 28577 :FIRST-TOWERBELL-PEAL "2012-12-20 Sproxton, Leicestershire (St Bartholomew)")
+("Semiquincentenary" "semiquincentenary" 200 "x3x4x25x36x4x5x6.7,2" "C^]j#jPs@hT)" "Semiquincentenary Alliance Major" :COMPLIB-ID 26928 :FIRST-TOWERBELL-PEAL "1997-11-16 Boston, Massachusetts, United States of America (The Advent)")
+("Zulu" "zulu" 200 "x3x456x56x36x34x45x2.7,2" "D#6lrX+527'p!P?" "Zulu Alliance Major" :COMPLIB-ID 34885 :FIRST-TOWERBELL-PEAL "2018-12-05 Sproxton, Leicestershire (St Bartholomew)")

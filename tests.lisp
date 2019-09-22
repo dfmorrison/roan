@@ -27,6 +27,8 @@
                 #:%extreme-hash-set
                 #:*fch-groups-by-course-head*
                 #:*fch-groups-by-name*
+                #:*method-library*
+                #:*method-library-path*
                 #:*pattern-cache*
                 #:cache-count
                 #:call-following
