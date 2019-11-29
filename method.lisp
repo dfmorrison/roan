@@ -780,7 +780,6 @@ cannot be properly parsed as place notation at @var{method}'s stage.
             (apply #'place-notation-string changes :comma comma keys)))))
 
 (define-method-trait contains-jump-changes-p (%update-changes changes)
-  ;; TODO add another xref here once method classification is redone
   "If @var{method}'s stage and place-notation have been set and method contains one or
 more jump changes returns true, and otherwise returns @code{nil}. Note that even if the
 place notation is set and implies jump changes, if the stage is not set
