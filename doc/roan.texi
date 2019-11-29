@@ -81,7 +81,7 @@ a searchable library of method definitions, together with a mechanism for
 updating that library from the @url{https://cccbr.github.io/methods-library/,CCCBR Methods Library}
 
 @item
-a function for drawing blue lines of methods as Scalable Vector Graphics (SVG)
+a function for drawing blue lines of methods as Scalable Vector Graphics (SVG) images
 
 @item
 a function for extracting false course heads from common kinds of methods

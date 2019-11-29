@@ -88,7 +88,8 @@ correspond to the actual classification of the method described by the
 notation by calling @code{classify-method}.
 
 Similarly the name does not necessarily correspond to the name by which the place notation
-is known, unless the @code{method} has been looked up from a suitable library. See TBD.
+is known, unless the @code{method} has been looked up from a suitable library.
+@xref{Methods library}.
 
 Because ringing methods and their classes are unrelated to CLOS methods and classes, the
 @code{roan} package shadows the symbols @code{common-lisp:method},

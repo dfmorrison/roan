@@ -25,7 +25,7 @@ Roan provides
 * a searchable library of method definitions, together with a mechanism for
   updating that database from the [CCCBR Methods Library](https://cccbr.github.io/methods-library/)
 
-* a function for drawing blue lines of methods as Scalable Vector Graphics (SVG)
+* a function for drawing blue lines of methods as Scalable Vector Graphics (SVG) images
 
 * a function for extracting false course heads from common kinds of methods
 
