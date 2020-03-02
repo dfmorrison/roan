@@ -3162,7 +3162,7 @@ potentially useful slots accessible with @code{file-error-pathname} and
 ;;; Blueline drawing
 
 (define-constant +blueline-column-spacing+ 10)
-(define-constant +blueline-dot-size+ 2.8)
+(define-constant +blueline-dot-size+ 2.2)
 (define-constant +blueline-figures-size+ "14px" :test #'equal)
 (define-constant +blueline-first-hunt-bell-hue+ 0)
 (define-constant +blueline-first-hunt-bell-saturation+ "60%" :test #'equal)
@@ -3170,19 +3170,18 @@ potentially useful slots accessible with @code{file-error-pathname} and
 (define-constant +blueline-horizontal-increment+ 16)
 (define-constant +blueline-horizontal-margin+ 14)
 (define-constant +blueline-inter-cycle-gap+ 16)
-(define-constant +blueline-labels-circle-radius+ 11)
-(define-constant +blueline-labels-circle-x-offset+ 5)
-(define-constant +blueline-labels-circle-y-offset+ -5)
+(define-constant +blueline-labels-circle-radius+ 10)
+(define-constant +blueline-labels-circle-x-offset+ 4.5)
+(define-constant +blueline-labels-circle-y-offset+ -4.5)
 (define-constant +blueline-labels-left-margin+ 8)
 (define-constant +blueline-labels-right-margin+ 40)
-(define-constant +blueline-labels-size+ "15px" :test #'equal)
+(define-constant +blueline-labels-size+ "80%" :test #'equal)
 (define-constant +blueline-labels-vertical-offset+ 5)
 (define-constant +blueline-no-figure-ratio+ 0.5)
-(define-constant +blueline-place-bell-label-size+ "90%" :test #'equal)
 (define-constant +blueline-place-notation-character-width+ 6)
 (define-constant +blueline-place-notation-margin+ 9)
 (define-constant +blueline-place-notation-offset+ 10)
-(define-constant +blueline-place-notation-size+ "11px" :test #'equal)
+(define-constant +blueline-place-notation-size+ "75%" :test #'equal)
 (define-constant +blueline-plus-length+ 3.2)
 (define-constant +blueline-vertical-margin+ 16)
 (define-constant +blueline-vertical-offset+ 14)
@@ -3378,6 +3377,8 @@ stream or create a file."
       (setf figures :lead))
     (when (eq place-notation :half)
       (setf place-notation :lead)))
+  (when (and (eq layout :grid) (eq place-notation t))
+    (setf place-notation :lead))  
   (let* ((gridp (eq layout :grid))
          (*blueline-method* method)
          (*blueline-figures-lead-head* (rounds (method-stage method)))
@@ -3425,11 +3426,12 @@ stream or create a file."
         (format stream
                 "<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='~D' width='~D'>
 <style>.blueline{fill:none;stroke:hsl(~D,~A,60%);stroke-width:~D;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(~D,~A,60%);stroke-width:~D}
+.hunt{stroke:hsl(~D,~A,80%);stroke-width:~D;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:~A;}
-.notation{font-family:sans-serif;font-size:~A;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:~A;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:~A;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:~A;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
 ~A</svg>~%"
                 height
                 width
@@ -3497,7 +3499,7 @@ stream or create a file."
             (for p :in (append starts (list bell)))
             (for y := (+ +blueline-vertical-margin+ (* i lead-height)))
             (when (eq place-bells :label)
-              (maxf label-right (draw-label p label-left y)))
+              (maxf label-right (draw-label p label-left y figures)))
             (if-first-time (when figures (next-iteration)))
             (draw-dot (+ x (* p +blueline-horizontal-increment+)) y)))
     (values x label-right (+ (* 2 +blueline-vertical-margin+) (* leads lead-height)))))
@@ -3593,12 +3595,13 @@ stream or create a file."
 (defun draw-dot (x y)
   (blueline-format "<circle cx='~D' cy='~D' r='~D' class='dot'></circle>~%" x y +blueline-dot-size+))
 
-(defun draw-label (start x y)
+(defun draw-label (start x y figures)
   (blueline-format "<text class='label' x='~D' y='~D'>~A</text>~
-                    <circle cx='~D' cy='~D' r='~D' stroke='black' stroke-width='1.4' fill='none'></circle>~%"
+                    ~:[~;<circle cx='~D' cy='~D' r='~D' stroke='black' stroke-width='1.4' fill='none'></circle>~]~%"
                    x
                    (+ y +blueline-labels-vertical-offset+)
                    (bell-name start)
+                   figures
                    (+ x +blueline-labels-circle-x-offset+)
                    (+ y +blueline-labels-vertical-offset+ +blueline-labels-circle-y-offset+)
                    +blueline-labels-circle-radius+)
