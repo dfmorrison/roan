@@ -3499,7 +3499,7 @@ circle{stroke:slategray;}</style>
             (for p :in (append starts (list bell)))
             (for y := (+ +blueline-vertical-margin+ (* i lead-height)))
             (when (eq place-bells :label)
-              (maxf label-right (draw-label p label-left y figures)))
+              (maxf label-right (draw-label p label-left y)))
             (if-first-time (when figures (next-iteration)))
             (draw-dot (+ x (* p +blueline-horizontal-increment+)) y)))
     (values x label-right (+ (* 2 +blueline-vertical-margin+) (* leads lead-height)))))
@@ -3595,13 +3595,12 @@ circle{stroke:slategray;}</style>
 (defun draw-dot (x y)
   (blueline-format "<circle cx='~D' cy='~D' r='~D' class='dot'></circle>~%" x y +blueline-dot-size+))
 
-(defun draw-label (start x y figures)
+(defun draw-label (start x y)
   (blueline-format "<text class='label' x='~D' y='~D'>~A</text>~
-                    ~:[~;<circle cx='~D' cy='~D' r='~D' stroke='black' stroke-width='1.4' fill='none'></circle>~]~%"
+                    <circle cx='~D' cy='~D' r='~D' stroke='black' stroke-width='1.4' fill='none'></circle>~%"
                    x
                    (+ y +blueline-labels-vertical-offset+)
                    (bell-name start)
-                   figures
                    (+ x +blueline-labels-circle-x-offset+)
                    (+ y +blueline-labels-vertical-offset+ +blueline-labels-circle-y-offset+)
                    +blueline-labels-circle-radius+)
