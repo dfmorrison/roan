@@ -3446,7 +3446,7 @@ stream or create a file."
   stream)
 
 (defun partition-hunt-bells (target)
-  (let ((all (method-hunt-bells *blueline-method*)))
+  (when-let ((all (method-hunt-bells *blueline-method*)))
     (case target
       (:first (values (list (first all)) (rest all)))
       (:all (values all nil))

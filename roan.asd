@@ -24,7 +24,7 @@
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :description "A library to support change ringing applications"
-  :depends-on (:alexandria :iterate :cl-interpol :cl-ppcre
+  :depends-on (:alexandria :iterate :named-readtables :cl-interpol :cl-ppcre
                            :plump :local-time :binascii :uuid
                            :cl-fad :drakma :zip :asdf)
   :components ((:file "package")
