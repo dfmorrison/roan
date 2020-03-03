@@ -3427,7 +3427,7 @@ stream or create a file."
                 "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='~D' width='~D'>
 <style>.blueline{fill:none;stroke:hsl(~D,~A,60%);stroke-width:~D;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(~D,~A,80%);stroke-width:~D;}
+.hunt{stroke:hsl(~D,~A,~A);stroke-width:~D;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:~A;}
 .notation{font-family:sans-serif;font-size:~A;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -3442,6 +3442,7 @@ circle{stroke:slategray;}</style>
                 +blueline-working-bell-width+
                 +blueline-first-hunt-bell-hue+
                 (if gridp +blueline-working-bell-saturation+ +blueline-first-hunt-bell-saturation+)
+                (if figures "60%" "80%")
                 (if gridp +blueline-working-bell-width+ +blueline-first-hunt-bell-width+)
                 +blueline-figures-size+
                 +blueline-place-notation-size+
