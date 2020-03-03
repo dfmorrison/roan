@@ -3424,7 +3424,8 @@ stream or create a file."
                                (finally (incf width +blueline-horizontal-margin+))))
                           (incf x +blueline-inter-cycle-gap+))))
         (format stream
-                "<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='~D' width='~D'>
+                "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='~D' width='~D'>
 <style>.blueline{fill:none;stroke:hsl(~D,~A,60%);stroke-width:~D;stroke-linecap:round;stroke-linejoin:miter;}
 .hunt{stroke:hsl(~D,~A,80%);stroke-width:~D;}
 .dot{fill:black;stroke:none;}
@@ -3432,6 +3433,7 @@ stream or create a file."
 .notation{font-family:sans-serif;font-size:~A;font-weight:lighter;font-style:italic;fill:dimgray;}
 .label{font-family:sans-serif;font-size:~A;font-weight:bolder;fill:slategray;}
 circle{stroke:slategray;}</style>
+<rect height='~D' width='~D' fill='white'/>
 ~A</svg>~%"
                 height
                 width
@@ -3444,6 +3446,8 @@ circle{stroke:slategray;}</style>
                 +blueline-figures-size+
                 +blueline-place-notation-size+
                 +blueline-labels-size+
+                height
+                width
                 columns))))
   stream)
 
