@@ -2892,11 +2892,11 @@ potentially useful slots accessible with @code{file-error-pathname} and
       (let ((path (probe-file *method-library-path*)))
         (cond ((null path) (library-error "can't be found"))
               ((null *method-library*) (setf force t))
-              (force (setf *method-library* nil))
-              (t (when (method-library-rotation-keys *method-library*)
-                   (setf load-rotations nil))
-                 (when (method-library-additional-data *method-library*)
-                   (setf load-additional-data nil))))
+              ((not force)
+               (when (method-library-rotation-keys *method-library*)
+                 (setf load-rotations nil))
+               (when (method-library-additional-data *method-library*)
+                 (setf load-additional-data nil))))
         (with-open-file (in path)
           (let ((metadata (read in)))
             (check-type* metadata cons)
@@ -2912,9 +2912,9 @@ potentially useful slots accessible with @code{file-error-pathname} and
             (when (and *method-library*
                        (not (equal (getf metadata :local-uuid)
                                    (getf (method-library-metadata *method-library*) :local-uuid))))
-              (setf *method-library* nil)
               (setf force t))
-            (let ((lib (or *method-library* (make-method-library :metadata metadata))))
+            (let ((lib (or (and (not force) *method-library*)
+                           (make-method-library :metadata metadata))))
               (when load-rotations
                 (setf (method-library-rotation-keys lib)
                       (make-hash-table :test #'equal
