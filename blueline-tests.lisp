@@ -55,39 +55,42 @@
 (define-test test-blueline-destinations ()
   (labels ((run (d) (blueline d (lookup-method-by-title "Advent Surprise Major")))
            (compare (s) (assert-equal
-              "<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='704' width='576'>
+              "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='704' width='576'>
 <style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,60%);stroke-width:0.8}
+.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
-.notation{font-family:sans-serif;font-size:11px;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:15px;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='704' width='576' fill='white'/>
 <polyline class='blueline hunt' points='14,16 30,23 14,30 30,37 46,44 62,51 46,58 62,65 78,72 94,79 78,86 94,93 110,100 126,107 110,114 126,121 126,128 110,135 126,142 110,149 94,156 78,163 94,170 78,177 62,184 46,191 62,198 46,205 30,212 14,219 30,226 14,233 14,240 30,247 14,254 30,261 46,268 62,275 46,282 62,289 78,296 94,303 78,310 94,317 110,324 126,331 110,338 126,345 126,352 110,359 126,366 110,373 94,380 78,387 94,394 78,401 62,408 46,415 62,422 46,429 30,436 14,443 30,450 14,457 14,464 30,471 14,478 30,485 46,492 62,499 46,506 62,513 78,520 94,527 78,534 94,541 110,548 126,555 110,562 126,569 126,576 110,583 126,590 110,597 94,604 78,611 94,618 78,625 62,632 46,639 62,646 46,653 30,660 14,667 30,674 14,681 14,688'></polyline>
 <polyline class='blueline' points='126,16 110,23 126,30 110,37 126,44 126,51 110,58 94,65 94,72 78,79 94,86 78,93 78,100 94,107 78,114 94,121 78,128 94,135 78,142 94,149 110,156 126,163 110,170 126,177 110,184 94,191 78,198 78,205 94,212 94,219 78,226 62,233 78,240 62,247 46,254 62,261 62,268 46,275 62,282 46,289 30,296 14,303 14,310 30,317 14,324 30,331 46,338 62,345 46,352 62,359 62,366 46,373 62,380 46,387 30,394 14,401 14,408 30,415 14,422 30,429 46,436 62,443 46,450 46,457 30,464 14,471 30,478 14,485 14,492 30,499 14,506 30,513 46,520 62,527 62,534 46,541 62,548 46,555 30,562 14,569 30,576 14,583 14,590 30,597 14,604 30,611 46,618 62,625 78,632 78,639 94,646 110,653 126,660 110,667 126,674 110,681 94,688'></polyline>
-<text class='label' x='150' y='21'>8</text><circle cx='155' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='126' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='150' y='245'>5</text><circle cx='155' cy='240' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='78' cy='240' r='2.8' class='dot'></circle>
-<text class='label' x='150' y='469'>2</text><circle cx='155' cy='464' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='30' cy='464' r='2.8' class='dot'></circle>
-<text class='label' x='150' y='693'>6</text><circle cx='155' cy='688' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='94' cy='688' r='2.8' class='dot'></circle>
+<text class='label' x='150' y='21'>8</text><circle cx='154.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='126' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='150' y='245'>5</text><circle cx='154.5' cy='240.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='78' cy='240' r='2.2' class='dot'></circle>
+<text class='label' x='150' y='469'>2</text><circle cx='154.5' cy='464.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='30' cy='464' r='2.2' class='dot'></circle>
+<text class='label' x='150' y='693'>6</text><circle cx='154.5' cy='688.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='94' cy='688' r='2.2' class='dot'></circle>
 <polyline class='blueline hunt' points='200,16 216,23 200,30 216,37 232,44 248,51 232,58 248,65 264,72 280,79 264,86 280,93 296,100 312,107 296,114 312,121 312,128 296,135 312,142 296,149 280,156 264,163 280,170 264,177 248,184 232,191 248,198 232,205 216,212 200,219 216,226 200,233 200,240 216,247 200,254 216,261 232,268 248,275 232,282 248,289 264,296 280,303 264,310 280,317 296,324 312,331 296,338 312,345 312,352 296,359 312,366 296,373 280,380 264,387 280,394 264,401 248,408 232,415 248,422 232,429 216,436 200,443 216,450 200,457 200,464 216,471 200,478 216,485 232,492 248,499 232,506 248,513 264,520 280,527 264,534 280,541 296,548 312,555 296,562 312,569 312,576 296,583 312,590 296,597 280,604 264,611 280,618 264,625 248,632 232,639 248,646 232,653 216,660 200,667 216,674 200,681 200,688'></polyline>
 <polyline class='blueline' points='280,16 280,23 264,30 264,37 280,44 296,51 312,58 312,65 296,72 312,79 296,86 312,93 312,100 296,107 312,114 296,121 296,128 312,135 296,142 312,149 312,156 296,163 312,170 296,177 312,184 312,191 296,198 280,205 264,212 264,219 280,226 280,233 296,240 312,247 296,254 312,261 296,268 280,275 264,282 264,289 248,296 232,303 216,310 200,317 216,324 200,331 200,338 216,345 200,352 216,359 232,366 248,373 232,380 248,387 248,394 232,401 216,408 200,415 216,422 200,429 200,436 216,443 200,450 216,457 232,464 232,471 248,478 232,485 216,492 200,499 216,506 200,513 200,520 216,527 232,534 248,541 232,548 248,555 248,562 232,569 248,576 232,583 216,590 200,597 216,604 200,611 200,618 216,625 232,632 248,639 232,646 248,653 248,660 232,667 248,674 264,681 248,688'></polyline>
-<text class='label' x='336' y='21'>6</text><circle cx='341' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='280' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='336' y='245'>7</text><circle cx='341' cy='240' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='296' cy='240' r='2.8' class='dot'></circle>
-<text class='label' x='336' y='469'>3</text><circle cx='341' cy='464' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='232' cy='464' r='2.8' class='dot'></circle>
-<text class='label' x='336' y='693'>4</text><circle cx='341' cy='688' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='248' cy='688' r='2.8' class='dot'></circle>
+<text class='label' x='336' y='21'>6</text><circle cx='340.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='280' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='336' y='245'>7</text><circle cx='340.5' cy='240.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='296' cy='240' r='2.2' class='dot'></circle>
+<text class='label' x='336' y='469'>3</text><circle cx='340.5' cy='464.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='232' cy='464' r='2.2' class='dot'></circle>
+<text class='label' x='336' y='693'>4</text><circle cx='340.5' cy='688.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='248' cy='688' r='2.2' class='dot'></circle>
 <polyline class='blueline hunt' points='386,16 402,23 386,30 402,37 418,44 434,51 418,58 434,65 450,72 466,79 450,86 466,93 482,100 498,107 482,114 498,121 498,128 482,135 498,142 482,149 466,156 450,163 466,170 450,177 434,184 418,191 434,198 418,205 402,212 386,219 402,226 386,233 386,240'></polyline>
 <polyline class='blueline' points='434,16 450,23 466,30 466,37 450,44 450,51 466,58 482,65 498,72 482,79 498,86 482,93 466,100 450,107 466,114 450,121 466,128 450,135 466,142 450,149 450,156 466,163 450,170 466,177 466,184 482,191 498,198 498,205 482,212 498,219 482,226 498,233 498,240'></polyline>
-<text class='label' x='522' y='21'>4</text><circle cx='527' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='434' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='522' y='245'>8</text><circle cx='527' cy='240' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='498' cy='240' r='2.8' class='dot'></circle>
+<text class='label' x='522' y='21'>4</text><circle cx='526.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='434' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='522' y='245'>8</text><circle cx='526.5' cy='240.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='498' cy='240' r='2.2' class='dot'></circle>
 </svg>
 "
               s)))
@@ -115,13 +118,16 @@
            (assert-equal ',expected (blueline nil #0#)))))))
 
 (define-blueline-test "Advent Surprise Major" (:layout :grid)
-  "<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='256' width='164'>
+  "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='256' width='164'>
 <style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,100%,60%);stroke-width:1.4}
+.hunt{stroke:hsl(0,100%,80%);stroke-width:1.4;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
-.notation{font-family:sans-serif;font-size:11px;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:15px;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='256' width='164' fill='white'/>
 <polyline class='blueline hunt' points='14,16 30,23 14,30 30,37 46,44 62,51 46,58 62,65 78,72 94,79 78,86 94,93 110,100 126,107 110,114 126,121 126,128 110,135 126,142 110,149 94,156 78,163 94,170 78,177 62,184 46,191 62,198 46,205 30,212 14,219 30,226 14,233 14,240'></polyline>
 <polyline class='blueline' points='126,16 110,23 126,30 110,37 126,44 126,51 110,58 94,65 94,72 78,79 94,86 78,93 78,100 94,107 78,114 94,121 78,128 94,135 78,142 94,149 110,156 126,163 110,170 126,177 110,184 94,191 78,198 78,205 94,212 94,219 78,226 62,233 78,240'></polyline>
 <polyline class='blueline' points='78,16 62,23 46,30 62,37 62,44 46,51 62,58 46,65 30,72 14,79 14,86 30,93 14,100 30,107 46,114 62,121 46,128 62,135 62,142 46,149 62,156 46,163 30,170 14,177 14,184 30,191 14,198 30,205 46,212 62,219 46,226 46,233 30,240'></polyline>
@@ -134,13 +140,16 @@
 ")
 
 (define-blueline-test "Seven Stars Major" (:layout :grid :figures :head :place-notation :half)
-"<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='424' width='236'>
+"<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='424' width='236'>
 <style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,100%,60%);stroke-width:1.4}
+.hunt{stroke:hsl(0,100%,80%);stroke-width:1.4;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
-.notation{font-family:sans-serif;font-size:11px;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:15px;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='424' width='236' fill='white'/>
 <text class='notation' x='26' y='26' text-anchor='end'>x</text>
 <text class='notation' x='26' y='40' text-anchor='end'>5</text>
 <text class='notation' x='26' y='54' text-anchor='end'>x</text>
@@ -169,79 +178,85 @@
 ")
 
 (define-blueline-test "Bristol Surprise Maximus" (:layout 40 :hunt-bell nil)
-"<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='368' width='2768'>
+"<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='368' width='2768'>
 <style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,60%);stroke-width:0.8}
+.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
-.notation{font-family:sans-serif;font-size:11px;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:15px;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='368' width='2768' fill='white'/>
 <polyline class='blueline' points='190,16 174,23 158,30 142,37 158,44 174,51 190,58 190,65 174,72 190,79 174,86 158,93 142,100 158,107 142,114 142,121 126,128 126,135 110,142 94,149 78,156 94,163 110,170 126,177 142,184 158,191 142,198 158,205 174,212 190,219 174,226 190,233 174,240 158,247 142,254 158,261 142,268 126,275 110,282 126,289 110,296 94,303 78,310 78,317 94,324 78,331 78,338 94,345 110,352'></polyline>
-<text class='label' x='214' y='21'>T</text><circle cx='219' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='190' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='214' y='357'>7</text><circle cx='219' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='110' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='214' y='21'>T</text><circle cx='218.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='190' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='214' y='357'>7</text><circle cx='218.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='110' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='360,16 376,23 392,30 408,37 392,44 376,51 360,58 344,65 344,72 328,79 344,86 328,93 328,100 312,107 296,114 312,121 296,128 280,135 264,142 264,149 280,156 264,163 264,170 280,177 296,184 312,191 328,198 344,205 328,212 312,219 296,226 280,233 264,240 280,247 264,254 264,261 280,268 264,275 280,282 296,289 296,296 312,303 296,310 312,317 312,324 296,331 312,338 296,345 280,352'></polyline>
-<text class='label' x='464' y='21'>7</text><circle cx='469' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='360' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='464' y='357'>2</text><circle cx='469' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='280' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='464' y='21'>7</text><circle cx='468.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='360' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='464' y='357'>2</text><circle cx='468.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='280' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='530,16 514,23 530,30 514,37 514,44 530,51 514,58 530,65 514,72 514,79 530,86 514,93 530,100 546,107 562,114 546,121 562,128 578,135 594,142 610,149 626,156 610,163 594,170 578,177 562,184 546,191 530,198 514,205 530,212 546,219 562,226 578,233 594,240 578,247 594,254 594,261 610,268 610,275 626,282 610,289 626,296 642,303 658,310 674,317 690,324 674,331 658,338 642,345 626,352'></polyline>
-<text class='label' x='714' y='21'>2</text><circle cx='719' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='530' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='714' y='357'>8</text><circle cx='719' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='626' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='714' y='21'>2</text><circle cx='718.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='530' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='714' y='357'>8</text><circle cx='718.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='626' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='876,16 860,23 844,30 828,37 844,44 860,51 876,58 892,65 908,72 892,79 908,86 924,93 940,100 924,107 940,114 940,121 924,128 940,135 924,142 940,149 940,156 924,163 940,170 924,177 908,184 892,191 908,198 892,205 892,212 908,219 892,226 908,233 908,240 924,247 940,254 924,261 940,268 940,275 924,282 940,289 924,296 908,303 892,310 876,317 860,324 876,331 892,338 908,345 924,352'></polyline>
-<text class='label' x='964' y='21'>8</text><circle cx='969' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='876' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='964' y='357'>E</text><circle cx='969' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='924' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='964' y='21'>8</text><circle cx='968.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='876' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='964' y='357'>E</text><circle cx='968.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='924' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='1174,16 1190,23 1190,30 1174,37 1190,44 1190,51 1174,58 1158,65 1142,72 1158,79 1142,86 1126,93 1126,100 1110,107 1126,114 1110,121 1110,128 1094,135 1078,142 1062,149 1046,156 1062,163 1078,170 1094,177 1110,184 1126,191 1126,198 1110,205 1126,212 1126,219 1110,226 1094,233 1078,240 1094,247 1078,254 1062,261 1046,268 1062,275 1046,282 1030,289 1014,296 1030,303 1014,310 1030,317 1046,324 1062,331 1046,338 1062,345 1078,352'></polyline>
-<text class='label' x='1214' y='21'>E</text><circle cx='1219' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1174' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='1214' y='357'>5</text><circle cx='1219' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1078' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='1214' y='21'>E</text><circle cx='1218.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1174' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='1214' y='357'>5</text><circle cx='1218.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1078' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='1328,16 1344,23 1360,30 1376,37 1360,44 1344,51 1328,58 1328,65 1312,72 1312,79 1296,86 1312,93 1296,100 1280,107 1264,114 1280,121 1264,128 1264,135 1280,142 1296,149 1312,156 1296,163 1280,170 1264,177 1264,184 1280,191 1296,198 1312,205 1296,212 1280,219 1264,226 1264,233 1280,240 1264,247 1280,254 1296,261 1312,268 1296,275 1312,282 1312,289 1328,296 1328,303 1344,310 1360,317 1376,324 1360,331 1344,338 1328,345 1312,352'></polyline>
-<text class='label' x='1464' y='21'>5</text><circle cx='1469' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1328' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='1464' y='357'>4</text><circle cx='1469' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1312' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='1464' y='21'>5</text><circle cx='1468.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1328' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='1464' y='357'>4</text><circle cx='1468.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1312' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='1562,16 1546,23 1562,30 1546,37 1530,44 1514,51 1530,58 1514,65 1530,72 1546,79 1562,86 1546,93 1562,100 1578,107 1594,114 1578,121 1594,128 1610,135 1626,142 1626,149 1610,156 1626,163 1626,170 1610,177 1594,184 1578,191 1562,198 1546,205 1562,212 1578,219 1594,226 1610,233 1610,240 1626,247 1610,254 1626,261 1626,268 1642,275 1658,282 1642,289 1658,296 1674,303 1690,310 1690,317 1674,324 1690,331 1690,338 1674,345 1658,352'></polyline>
-<text class='label' x='1714' y='21'>4</text><circle cx='1719' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1562' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='1714' y='357'>0</text><circle cx='1719' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1658' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='1714' y='21'>4</text><circle cx='1718.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1562' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='1714' y='357'>0</text><circle cx='1718.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1658' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='1908,16 1892,23 1876,30 1860,37 1876,44 1892,51 1908,58 1924,65 1940,72 1924,79 1940,86 1940,93 1924,100 1940,107 1924,114 1908,121 1908,128 1892,135 1908,142 1892,149 1892,156 1908,163 1892,170 1908,177 1924,184 1940,191 1924,198 1940,205 1940,212 1924,219 1940,226 1924,233 1940,240 1940,247 1924,254 1940,261 1924,268 1908,275 1892,282 1908,289 1892,296 1876,303 1860,310 1844,317 1828,324 1844,331 1860,338 1876,345 1892,352'></polyline>
-<text class='label' x='1964' y='21'>0</text><circle cx='1969' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1908' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='1964' y='357'>9</text><circle cx='1969' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='1892' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='1964' y='21'>0</text><circle cx='1968.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1908' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='1964' y='357'>9</text><circle cx='1968.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='1892' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='2142,16 2158,23 2174,30 2190,37 2174,44 2158,51 2142,58 2126,65 2110,72 2126,79 2110,86 2110,93 2094,100 2094,107 2078,114 2094,121 2078,128 2062,135 2046,142 2030,149 2014,156 2030,163 2046,170 2062,177 2078,184 2094,191 2110,198 2126,205 2110,212 2094,219 2078,226 2062,233 2046,240 2062,247 2046,254 2030,261 2014,268 2030,275 2014,282 2014,289 2030,296 2014,303 2030,310 2014,317 2014,324 2030,331 2014,338 2030,345 2046,352'></polyline>
-<text class='label' x='2214' y='21'>9</text><circle cx='2219' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='2142' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='2214' y='357'>3</text><circle cx='2219' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='2046' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='2214' y='21'>9</text><circle cx='2218.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='2142' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='2214' y='357'>3</text><circle cx='2218.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='2046' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='2296,16 2312,23 2296,30 2312,37 2312,44 2296,51 2312,58 2296,65 2296,72 2280,79 2264,86 2280,93 2264,100 2264,107 2280,114 2264,121 2280,128 2296,135 2312,142 2328,149 2344,156 2328,163 2312,170 2296,177 2280,184 2264,191 2264,198 2280,205 2264,212 2264,219 2280,226 2296,233 2312,240 2296,247 2312,254 2328,261 2328,268 2344,275 2328,282 2344,289 2344,296 2360,303 2376,310 2392,317 2408,324 2392,331 2376,338 2360,345 2344,352'></polyline>
-<text class='label' x='2464' y='21'>3</text><circle cx='2469' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='2296' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='2464' y='357'>6</text><circle cx='2469' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='2344' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='2464' y='21'>3</text><circle cx='2468.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='2296' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='2464' y='357'>6</text><circle cx='2468.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='2344' cy='352' r='2.2' class='dot'></circle>
 <polyline class='blueline' points='2594,16 2578,23 2578,30 2594,37 2578,44 2578,51 2594,58 2610,65 2626,72 2610,79 2626,86 2642,93 2658,100 2642,107 2658,114 2674,121 2690,128 2674,135 2690,142 2674,149 2658,156 2642,163 2658,170 2642,177 2626,184 2610,191 2594,198 2578,205 2594,212 2610,219 2626,226 2626,233 2642,240 2642,247 2658,254 2642,261 2658,268 2674,275 2690,282 2674,289 2690,296 2690,303 2674,310 2658,317 2642,324 2658,331 2674,338 2690,345 2690,352'></polyline>
-<text class='label' x='2714' y='21'>6</text><circle cx='2719' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='2594' cy='16' r='2.8' class='dot'></circle>
-<text class='label' x='2714' y='357'>T</text><circle cx='2719' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='2690' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='2714' y='21'>6</text><circle cx='2718.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='2594' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='2714' y='357'>T</text><circle cx='2718.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='2690' cy='352' r='2.2' class='dot'></circle>
 </svg>
 ")
 
 (define-blueline-test "Grandsire Caters" (:hunt-bell 1 :working-bell 5 :layout nil :figures :lead :place-notation t :place-bells :dot)
-  "<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='1796' width='362'>
+  "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='1796' width='362'>
 <style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,60%);stroke-width:0.8}
+.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
-.notation{font-family:sans-serif;font-size:11px;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:15px;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='1796' width='362' fill='white'/>
 <text class='notation' x='20' y='26' text-anchor='end'>3</text>
 <text class='notation' x='20' y='40' text-anchor='end'>1</text>
 <text class='notation' x='20' y='54' text-anchor='end'>9</text>
@@ -281,7 +296,7 @@
 <text class='figure' x='66' y='272'>5</text><text class='figure' x='82' y='272'>3</text><text class='figure' x='98' y='272'>7</text><text class='figure' x='114' y='272'>4</text><text class='figure' x='130' y='272'>9</text><text class='figure' x='146' y='272'>6</text><text class='figure' x='162' y='272'>8</text>
 <polyline class='blueline hunt' points='54,16 38,30 38,44 54,58 70,72 86,86 102,100 118,114 134,128 150,142 166,156 166,170 150,184 134,198 118,212 102,226 86,240 70,254 54,268'></polyline>
 <polyline class='blueline' points='38,16 54,30 70,44 86,58 102,72 118,86 134,100 150,114 166,128 166,142 150,156 134,170 118,184 102,198 86,212 70,226 54,240 38,254 38,268'></polyline>
-<circle cx='38' cy='268' r='2.8' class='dot'></circle>
+<circle cx='38' cy='268' r='2.2' class='dot'></circle>
 <text class='notation' x='187' y='26' text-anchor='end'>3</text>
 <text class='notation' x='187' y='40' text-anchor='end'>1</text>
 <text class='notation' x='187' y='54' text-anchor='end'>9</text>
@@ -302,25 +317,28 @@
 <text class='notation' x='187' y='264' text-anchor='end'>1</text>
 <polyline class='blueline hunt' points='221,16 205,30 205,44 221,58 237,72 253,86 269,100 285,114 301,128 317,142 333,156 333,170 317,184 301,198 285,212 269,226 253,240 237,254 221,268 205,282 205,296 221,310 237,324 253,338 269,352 285,366 301,380 317,394 333,408 333,422 317,436 301,450 285,464 269,478 253,492 237,506 221,520 205,534 205,548 221,562 237,576 253,590 269,604 285,618 301,632 317,646 333,660 333,674 317,688 301,702 285,716 269,730 253,744 237,758 221,772 205,786 205,800 221,814 237,828 253,842 269,856 285,870 301,884 317,898 333,912 333,926 317,940 301,954 285,968 269,982 253,996 237,1010 221,1024 205,1038 205,1052 221,1066 237,1080 253,1094 269,1108 285,1122 301,1136 317,1150 333,1164 333,1178 317,1192 301,1206 285,1220 269,1234 253,1248 237,1262 221,1276 205,1290 205,1304 221,1318 237,1332 253,1346 269,1360 285,1374 301,1388 317,1402 333,1416 333,1430 317,1444 301,1458 285,1472 269,1486 253,1500 237,1514 221,1528 205,1542 205,1556 221,1570 237,1584 253,1598 269,1612 285,1626 301,1640 317,1654 333,1668 333,1682 317,1696 301,1710 285,1724 269,1738 253,1752 237,1766 221,1780'></polyline>
 <polyline class='blueline' points='285,16 301,30 285,44 269,58 253,72 237,86 221,100 205,114 205,128 221,142 237,156 253,170 269,184 285,198 301,212 317,226 333,240 333,254 317,268 333,282 317,296 301,310 285,324 269,338 253,352 237,366 221,380 205,394 205,408 221,422 237,436 253,450 269,464 285,478 301,492 317,506 333,520 317,534 333,548 333,562 317,576 301,590 285,604 269,618 253,632 237,646 221,660 205,674 205,688 221,702 237,716 253,730 269,744 285,758 301,772 285,786 301,800 317,814 333,828 333,842 317,856 301,870 285,884 269,898 253,912 237,926 221,940 205,954 205,968 221,982 237,996 253,1010 269,1024 253,1038 269,1052 285,1066 301,1080 317,1094 333,1108 333,1122 317,1136 301,1150 285,1164 269,1178 253,1192 237,1206 221,1220 205,1234 205,1248 221,1262 237,1276 237,1290 221,1304 205,1318 205,1332 221,1346 237,1360 253,1374 269,1388 285,1402 301,1416 317,1430 333,1444 333,1458 317,1472 301,1486 285,1500 269,1514 253,1528 269,1542 253,1556 237,1570 221,1584 205,1598 205,1612 221,1626 237,1640 253,1654 269,1668 285,1682 301,1696 317,1710 333,1724 333,1738 317,1752 301,1766 285,1780'></polyline>
-<circle cx='285' cy='16' r='2.8' class='dot'></circle>
-<circle cx='317' cy='268' r='2.8' class='dot'></circle>
-<circle cx='333' cy='520' r='2.8' class='dot'></circle>
-<circle cx='301' cy='772' r='2.8' class='dot'></circle>
-<circle cx='269' cy='1024' r='2.8' class='dot'></circle>
-<circle cx='237' cy='1276' r='2.8' class='dot'></circle>
-<circle cx='253' cy='1528' r='2.8' class='dot'></circle>
-<circle cx='285' cy='1780' r='2.8' class='dot'></circle>
+<circle cx='285' cy='16' r='2.2' class='dot'></circle>
+<circle cx='317' cy='268' r='2.2' class='dot'></circle>
+<circle cx='333' cy='520' r='2.2' class='dot'></circle>
+<circle cx='301' cy='772' r='2.2' class='dot'></circle>
+<circle cx='269' cy='1024' r='2.2' class='dot'></circle>
+<circle cx='237' cy='1276' r='2.2' class='dot'></circle>
+<circle cx='253' cy='1528' r='2.2' class='dot'></circle>
+<circle cx='285' cy='1780' r='2.2' class='dot'></circle>
 </svg>
 ")
 
 (define-blueline-test "Down Maximus" (:hunt-bell :all :working-bell :smallest :place-bells nil)
-  "<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='312' width='1028'>
+  "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='312' width='1028'>
 <style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,60%);stroke-width:0.8}
+.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
-.notation{font-family:sans-serif;font-size:11px;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:15px;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='312' width='1028' fill='white'/>
 <polyline class='blueline hunt' points='142,16 126,23 110,30 126,37 142,44 158,51 174,58 190,65 174,72 190,79 174,86 190,93 174,100 190,107 190,114 174,121 158,128 142,135 158,142 158,149 142,156 126,163 110,170 126,177 142,184 158,191 174,198 190,205 174,212 190,219 174,226 190,233 174,240 190,247 190,254 174,261 158,268 142,275 158,282 158,289 142,296'></polyline>
 <polyline class='blueline hunt' points='158,16 158,23 142,30 158,37 174,44 190,51 190,58 174,65 190,72 174,79 190,86 174,93 190,100 174,107 158,114 142,121 126,128 110,135 126,142 142,149 158,156 158,163 142,170 158,177 174,184 190,191 190,198 174,205 190,212 174,219 190,226 174,233 190,240 174,247 158,254 142,261 126,268 110,275 126,282 142,289 158,296'></polyline>
 <polyline class='blueline' points='14,16 14,23 30,30 14,37 14,44 30,51 14,58 14,65 30,72 46,79 62,86 78,93 94,100 110,107 126,114 110,121 94,128 78,135 94,142 110,149 126,156 142,163 158,170 142,177 126,184 110,191 126,198 126,205 110,212 94,219 78,226 62,233 46,240 30,247 14,254 30,261 46,268 62,275 46,282 30,289 14,296'></polyline>
@@ -340,13 +358,16 @@
 ")
 
 (define-blueline-test "Huntly Castle Surprise Minor" (:hunt-bell :working :figures t :place-notation :lead)
-  "<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='704' width='625'>
+  "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='704' width='625'>
 <style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,60%);stroke-width:0.8}
+.hunt{stroke:hsl(0,60%,60%);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
-.notation{font-family:sans-serif;font-size:11px;font-weight:lighter;font-style:italic;fill:dimgray}
-.label{font-family:sans-serif;font-size:15px;font-weight:bolder;}</style>
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='704' width='625' fill='white'/>
 <text class='notation' x='26' y='26' text-anchor='end'>x</text>
 <text class='notation' x='26' y='40' text-anchor='end'>34</text>
 <text class='notation' x='26' y='54' text-anchor='end'>x</text>
@@ -397,9 +418,9 @@
 <text class='figure' x='40' y='342'>1</text><text class='figure' x='56' y='342'>5</text><text class='figure' x='72' y='342'>4</text><text class='figure' x='88' y='342'>3</text><text class='figure' x='104' y='342'>2</text>
 <text class='figure' x='40' y='356'>1</text><text class='figure' x='56' y='356'>4</text><text class='figure' x='72' y='356'>5</text><text class='figure' x='88' y='356'>2</text><text class='figure' x='104' y='356'>3</text>
 <polyline class='blueline' points='124,16 108,30 124,44 108,58 124,72 108,86 108,100 124,114 124,128 108,142 124,156 108,170 108,184 124,198 108,212 124,226 124,240 108,254 108,268 124,282 108,296 124,310 108,324 124,338 124,352'></polyline>
-<text class='label' x='139' y='21'>6</text><circle cx='144' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<text class='label' x='139' y='357'>6</text><circle cx='144' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='124' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='139' y='21'>6</text><circle cx='143.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<text class='label' x='139' y='357'>6</text><circle cx='143.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='124' cy='352' r='2.2' class='dot'></circle>
 <text class='figure' x='175' y='20'>1</text><text class='figure' x='191' y='20'>4</text><text class='figure' x='207' y='20'>5</text><text class='figure' x='223' y='20'>2</text><text class='figure' x='239' y='20'>3</text><text class='figure' x='255' y='20'>6</text>
 <text class='figure' x='175' y='34'>4</text><text class='figure' x='191' y='34'>1</text><text class='figure' x='207' y='34'>2</text><text class='figure' x='239' y='34'>6</text><text class='figure' x='255' y='34'>3</text>
 <text class='figure' x='175' y='48'>1</text><text class='figure' x='191' y='48'>4</text><text class='figure' x='207' y='48'>2</text><text class='figure' x='239' y='48'>3</text><text class='figure' x='255' y='48'>6</text>
@@ -450,11 +471,11 @@
 <text class='figure' x='175' y='678'>1</text><text class='figure' x='207' y='678'>4</text><text class='figure' x='223' y='678'>3</text><text class='figure' x='239' y='678'>2</text><text class='figure' x='255' y='678'>6</text>
 <text class='figure' x='175' y='692'>1</text><text class='figure' x='191' y='692'>4</text><text class='figure' x='223' y='692'>2</text><text class='figure' x='239' y='692'>3</text><text class='figure' x='255' y='692'>6</text>
 <polyline class='blueline' points='243,16 259,30 243,44 259,58 243,72 259,86 259,100 243,114 227,128 227,142 211,156 211,170 227,184 227,198 211,212 195,226 179,240 195,254 195,268 179,282 179,296 195,310 179,324 195,338 211,352 227,366 227,380 211,394 195,408 179,422 179,436 195,450 179,464 179,478 195,492 179,506 195,520 179,534 195,548 211,562 211,576 227,590 211,604 227,618 227,632 211,646 211,660 227,674 243,688'></polyline>
-<text class='label' x='283' y='21'>5</text><circle cx='288' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<text class='label' x='283' y='357'>3</text><circle cx='288' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='211' cy='352' r='2.8' class='dot'></circle>
-<text class='label' x='283' y='693'>5</text><circle cx='288' cy='688' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='243' cy='688' r='2.8' class='dot'></circle>
+<text class='label' x='283' y='21'>5</text><circle cx='287.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<text class='label' x='283' y='357'>3</text><circle cx='287.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='211' cy='352' r='2.2' class='dot'></circle>
+<text class='label' x='283' y='693'>5</text><circle cx='287.5' cy='688.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='243' cy='688' r='2.2' class='dot'></circle>
 <text class='figure' x='319' y='20'>1</text><text class='figure' x='335' y='20'>4</text><text class='figure' x='351' y='20'>5</text><text class='figure' x='367' y='20'>2</text><text class='figure' x='383' y='20'>3</text><text class='figure' x='399' y='20'>6</text>
 <text class='figure' x='335' y='34'>1</text><text class='figure' x='351' y='34'>2</text><text class='figure' x='367' y='34'>5</text><text class='figure' x='383' y='34'>6</text><text class='figure' x='399' y='34'>3</text>
 <text class='figure' x='319' y='48'>1</text><text class='figure' x='351' y='48'>2</text><text class='figure' x='367' y='48'>5</text><text class='figure' x='383' y='48'>3</text><text class='figure' x='399' y='48'>6</text>
@@ -505,11 +526,11 @@
 <text class='figure' x='319' y='678'>1</text><text class='figure' x='335' y='678'>5</text><text class='figure' x='367' y='678'>3</text><text class='figure' x='383' y='678'>2</text><text class='figure' x='399' y='678'>6</text>
 <text class='figure' x='319' y='692'>1</text><text class='figure' x='351' y='692'>5</text><text class='figure' x='367' y='692'>2</text><text class='figure' x='383' y='692'>3</text><text class='figure' x='399' y='692'>6</text>
 <polyline class='blueline' points='371,16 355,30 355,44 371,58 371,72 355,86 371,100 355,114 355,128 339,142 323,156 339,170 323,184 339,198 323,212 323,226 339,240 323,254 323,268 339,282 355,296 371,310 371,324 355,338 339,352 323,366 339,380 323,394 323,408 339,422 339,436 323,450 339,464 355,478 371,492 371,506 355,520 355,534 371,548 371,562 387,576 403,590 403,604 387,618 403,632 387,646 403,660 387,674 371,688'></polyline>
-<text class='label' x='427' y='21'>4</text><circle cx='432' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<text class='label' x='427' y='357'>2</text><circle cx='432' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='339' cy='352' r='2.8' class='dot'></circle>
-<text class='label' x='427' y='693'>4</text><circle cx='432' cy='688' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='371' cy='688' r='2.8' class='dot'></circle>
+<text class='label' x='427' y='21'>4</text><circle cx='431.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<text class='label' x='427' y='357'>2</text><circle cx='431.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='339' cy='352' r='2.2' class='dot'></circle>
+<text class='label' x='427' y='693'>4</text><circle cx='431.5' cy='688.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='371' cy='688' r='2.2' class='dot'></circle>
 <text class='figure' x='463' y='20'>1</text><text class='figure' x='479' y='20'>4</text><text class='figure' x='495' y='20'>5</text><text class='figure' x='511' y='20'>2</text><text class='figure' x='527' y='20'>3</text><text class='figure' x='543' y='20'>6</text>
 <text class='figure' x='463' y='34'>4</text><text class='figure' x='495' y='34'>2</text><text class='figure' x='511' y='34'>5</text><text class='figure' x='527' y='34'>6</text><text class='figure' x='543' y='34'>3</text>
 <text class='figure' x='479' y='48'>4</text><text class='figure' x='495' y='48'>2</text><text class='figure' x='511' y='48'>5</text><text class='figure' x='527' y='48'>3</text><text class='figure' x='543' y='48'>6</text>
@@ -536,9 +557,9 @@
 <text class='figure' x='479' y='342'>3</text><text class='figure' x='495' y='342'>2</text><text class='figure' x='511' y='342'>5</text><text class='figure' x='527' y='342'>4</text><text class='figure' x='543' y='342'>6</text>
 <text class='figure' x='479' y='356'>2</text><text class='figure' x='495' y='356'>3</text><text class='figure' x='511' y='356'>4</text><text class='figure' x='527' y='356'>5</text><text class='figure' x='543' y='356'>6</text>
 <polyline class='blueline' points='467,16 483,30 467,44 483,58 499,72 515,86 499,100 515,114 531,128 547,142 531,156 547,170 547,184 531,198 547,212 531,226 515,240 499,254 515,268 499,282 483,296 467,310 483,324 467,338 467,352'></polyline>
-<text class='label' x='571' y='21'>1</text><circle cx='576' cy='16' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<text class='label' x='571' y='357'>1</text><circle cx='576' cy='352' r='11' stroke='black' stroke-width='1.4' fill='none'></circle>
-<circle cx='467' cy='352' r='2.8' class='dot'></circle>
+<text class='label' x='571' y='21'>1</text><circle cx='575.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<text class='label' x='571' y='357'>1</text><circle cx='575.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='467' cy='352' r='2.2' class='dot'></circle>
 </svg>
 ")
 
