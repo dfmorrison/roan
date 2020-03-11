@@ -2839,7 +2839,7 @@ server.
 
 @item
 The ``entity tag'' (ETag) of the remote file, as provided by the server. This is an opaque
-identifier that change for each version of the remote file. Querying the current Etag is
+identifier that changes for each version of the remote file. Querying the current Etag is
 how @code{update-method-library} decides whether or not the Roan method library needs
 updating.
 
