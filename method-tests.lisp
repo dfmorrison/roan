@@ -1093,6 +1093,7 @@
     (assert-true m)
     (assert-eq nil (method-class m ))
     (assert-equal "7,(13).(13).(13).(13).(13).7" (method-place-notation m)))
+  (assert-eq nil (lookup-method-by-title "Cambridge"))
   (assert-error 'type-error (lookup-methods :stage :major))
   (assert-error 'type-error (lookup-methods :stage 100))
   (assert-error 'type-error (lookup-methods :stage 0))

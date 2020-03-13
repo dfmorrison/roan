@@ -2714,6 +2714,8 @@ signaled if the method library file cannot be read or is of the wrong format.
     (error "Wildcards cannot be used when looking up a method by title (~S)" title))
   (multiple-value-bind (name jump differential little class stage)
       (parse-method-title title)
+    (unless stage
+      (return-from lookup-method-by-title nil))
     (let ((result (lookup-methods :name name :jump jump :differential differential
                                   :little little :class class :stage stage)))
       (unless class
