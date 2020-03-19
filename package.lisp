@@ -25,6 +25,7 @@
   (:export #:*blueline-default-parameters*
            #:*cross-character*
            #:*default-stage*
+           #:*method-library-path*
            #:*print-bells-upper-case*
            #:+maximum-stage+
            #:+minimum-stage+
