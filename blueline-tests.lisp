@@ -57,8 +57,8 @@
            (compare (s) (assert-equal
               "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='704' width='576'>
-<style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(235,173,173);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
 .notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -120,8 +120,8 @@ circle{stroke:slategray;}</style>
 (define-blueline-test "Advent Surprise Major" (:layout :grid)
   "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='256' width='164'>
-<style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,100%,80%);stroke-width:1.4;}
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(255,153,153);stroke-width:1.4;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
 .notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -142,8 +142,8 @@ circle{stroke:slategray;}</style>
 (define-blueline-test "Seven Stars Major" (:layout :grid :figures :head :place-notation :half)
 "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='424' width='236'>
-<style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,100%,80%);stroke-width:1.4;}
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(255,153,153);stroke-width:1.4;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
 .notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -180,8 +180,8 @@ circle{stroke:slategray;}</style>
 (define-blueline-test "Bristol Surprise Maximus" (:layout 40 :hunt-bell nil)
 "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='368' width='2768'>
-<style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(235,173,173);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
 .notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -249,8 +249,8 @@ circle{stroke:slategray;}</style>
 (define-blueline-test "Grandsire Caters" (:hunt-bell 1 :working-bell 5 :layout nil :figures :lead :place-notation t :place-bells :dot)
   "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='1796' width='362'>
-<style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(235,173,173);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
 .notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -331,8 +331,8 @@ circle{stroke:slategray;}</style>
 (define-blueline-test "Down Maximus" (:hunt-bell :all :working-bell :smallest :place-bells nil)
   "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='312' width='1028'>
-<style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,80%);stroke-width:0.8;}
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(235,173,173);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
 .notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -360,8 +360,8 @@ circle{stroke:slategray;}</style>
 (define-blueline-test "Huntly Castle Surprise Minor" (:hunt-bell :working :figures t :place-notation :lead)
   "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='704' width='625'>
-<style>.blueline{fill:none;stroke:hsl(240,100%,60%);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(0,60%,60%);stroke-width:0.8;}
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(214,92,92);stroke-width:0.8;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:14px;}
 .notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}

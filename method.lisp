@@ -3166,8 +3166,11 @@ potentially useful slots accessible with @code{file-error-pathname} and
 (define-constant +blueline-column-spacing+ 10)
 (define-constant +blueline-dot-size+ 2.2)
 (define-constant +blueline-figures-size+ "14px" :test #'equal)
-(define-constant +blueline-first-hunt-bell-hue+ 0)
-(define-constant +blueline-first-hunt-bell-saturation+ "60%" :test #'equal)
+
+(define-constant +blueline-first-hunt-bell-colors+
+    '(((nil . nil) . "rgb(235,173,173)") ((nil . t) . "rgb(214,92,92)")
+      ((t . nil) . "rgb(255,153,153)") ((t . t) . "rgb(255,51,51)"))
+  :test #'equalp)
 (define-constant +blueline-first-hunt-bell-width+ 0.8)
 (define-constant +blueline-horizontal-increment+ 16)
 (define-constant +blueline-horizontal-margin+ 14)
@@ -3187,8 +3190,7 @@ potentially useful slots accessible with @code{file-error-pathname} and
 (define-constant +blueline-plus-length+ 3.2)
 (define-constant +blueline-vertical-margin+ 16)
 (define-constant +blueline-vertical-offset+ 14)
-(define-constant +blueline-working-bell-hue+ 240)
-(define-constant +blueline-working-bell-saturation+ "100%" :test #'equal)
+(define-constant +blueline-working-bell-color+ "rgb(51,51,255)" :test #'equalp)
 (define-constant +blueline-working-bell-width+ 1.4)
 
 (define-constant +blueline-figures-x-offset+ (round +blueline-horizontal-increment+ 4))
@@ -3380,7 +3382,7 @@ stream or create a file."
     (when (eq place-notation :half)
       (setf place-notation :lead)))
   (when (and (eq layout :grid) (eq place-notation t))
-    (setf place-notation :lead))  
+    (setf place-notation :lead))
   (let* ((gridp (eq layout :grid))
          (*blueline-method* method)
          (*blueline-figures-lead-head* (rounds (method-stage method)))
@@ -3428,8 +3430,8 @@ stream or create a file."
         (format stream
                 "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='~D' width='~D'>
-<style>.blueline{fill:none;stroke:hsl(~D,~A,60%);stroke-width:~D;stroke-linecap:round;stroke-linejoin:miter;}
-.hunt{stroke:hsl(~D,~A,~A);stroke-width:~D;}
+<style>.blueline{fill:none;stroke:~A;stroke-width:~D;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:~A;stroke-width:~D;}
 .dot{fill:black;stroke:none;}
 .figure{font-family:sans-serif;font-size:~A;}
 .notation{font-family:sans-serif;font-size:~A;font-weight:lighter;font-style:italic;fill:dimgray;}
@@ -3439,12 +3441,11 @@ circle{stroke:slategray;}</style>
 ~A</svg>~%"
                 height
                 width
-                +blueline-working-bell-hue+
-                +blueline-working-bell-saturation+
+                +blueline-working-bell-color+
                 +blueline-working-bell-width+
-                +blueline-first-hunt-bell-hue+
-                (if gridp +blueline-working-bell-saturation+ +blueline-first-hunt-bell-saturation+)
-                (if figures "60%" "80%")
+                (cdr (assoc (cons (not (null gridp)) (not (null figures)))
+                            +blueline-first-hunt-bell-colors+
+                            :test #'equal))
                 (if gridp +blueline-working-bell-width+ +blueline-first-hunt-bell-width+)
                 +blueline-figures-size+
                 +blueline-place-notation-size+
