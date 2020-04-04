@@ -29,7 +29,9 @@
   (assert-equal '(1 2 3 4) (rotate-cycle (list 3 4 1 2) :smallest))
   (assert-equal '(4 1 2 3) (rotate-cycle (list 3 4 1 2) :largest))
   (assert-equal '(1 2 3 4) (rotate-cycle (list 2 3 4 1) :smallest))
-  (assert-equal '(7) (rotate-cycle (list 7) :largest)))
+  (assert-equal '(7) (rotate-cycle (list 7) :largest))
+  (let ((*blueline-method* (lookup-method-by-title "Advent Surprise Major")))
+    (assert-equal '(7 4 1 5 6 2 3) (rotate-cycle (list 1 5 6 2 3 7 4) :natural))))
 
 (define-test test-partition-hunt-bells ()
   (labels ((test-it (result title target)
@@ -116,6 +118,38 @@ circle{stroke:slategray;}</style>
          (assert-equal ',expected (blueline nil #0# ,@args))
          (let ((*blueline-default-parameters* ',args))
            (assert-equal ',expected (blueline nil #0#)))))))
+
+(define-blueline-test "Cambridge Surprise Minor" ()
+  "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='704' width='326'>
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(235,173,173);stroke-width:0.8;}
+.dot{fill:black;stroke:none;}
+.figure{font-family:sans-serif;font-size:14px;}
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='704' width='326' fill='white'/>
+<polyline class='blueline hunt' points='14,16 30,23 14,30 30,37 46,44 62,51 46,58 62,65 78,72 94,79 78,86 94,93 94,100 78,107 94,114 78,121 62,128 46,135 62,142 46,149 30,156 14,163 30,170 14,177 14,184 30,191 14,198 30,205 46,212 62,219 46,226 62,233 78,240 94,247 78,254 94,261 94,268 78,275 94,282 78,289 62,296 46,303 62,310 46,317 30,324 14,331 30,338 14,345 14,352 30,359 14,366 30,373 46,380 62,387 46,394 62,401 78,408 94,415 78,422 94,429 94,436 78,443 94,450 78,457 62,464 46,471 62,478 46,485 30,492 14,499 30,506 14,513 14,520 30,527 14,534 30,541 46,548 62,555 46,562 62,569 78,576 94,583 78,590 94,597 94,604 78,611 94,618 78,625 62,632 46,639 62,646 46,653 30,660 14,667 30,674 14,681 14,688'></polyline>
+<polyline class='blueline' points='30,16 14,23 30,30 14,37 14,44 30,51 30,58 14,65 30,72 14,79 14,86 30,93 14,100 30,107 46,114 62,121 78,128 94,135 78,142 94,149 78,156 94,163 94,170 78,177 94,184 78,191 62,198 46,205 30,212 14,219 14,226 30,233 14,240 30,247 46,254 62,261 46,268 62,275 62,282 46,289 46,296 62,303 46,310 62,317 62,324 46,331 46,338 62,345 46,352 62,359 78,366 94,373 78,380 94,387 78,394 94,401 94,408 78,415 94,422 78,429 78,436 94,443 78,450 94,457 94,464 78,471 94,478 78,485 94,492 78,499 62,506 46,513 62,520 46,527 46,534 62,541 62,548 46,555 62,562 46,569 46,576 62,583 62,590 46,597 62,604 46,611 30,618 14,625 30,632 14,639 14,646 30,653 46,660 62,667 78,674 94,681 78,688'></polyline>
+<text class='label' x='118' y='21'>2</text><circle cx='122.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='30' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='118' y='189'>6</text><circle cx='122.5' cy='184.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='94' cy='184' r='2.2' class='dot'></circle>
+<text class='label' x='118' y='357'>3</text><circle cx='122.5' cy='352.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='46' cy='352' r='2.2' class='dot'></circle>
+<text class='label' x='118' y='525'>4</text><circle cx='122.5' cy='520.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='62' cy='520' r='2.2' class='dot'></circle>
+<text class='label' x='118' y='693'>5</text><circle cx='122.5' cy='688.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='78' cy='688' r='2.2' class='dot'></circle>
+<polyline class='blueline hunt' points='168,16 184,23 168,30 184,37 200,44 216,51 200,58 216,65 232,72 248,79 232,86 248,93 248,100 232,107 248,114 232,121 216,128 200,135 216,142 200,149 184,156 168,163 184,170 168,177 168,184'></polyline>
+<polyline class='blueline' points='232,16 248,23 248,30 232,37 248,44 232,51 248,58 232,65 216,72 200,79 184,86 168,93 184,100 168,107 168,114 184,121 168,128 184,135 184,142 168,149 168,156 184,163 168,170 184,177 184,184'></polyline>
+<text class='label' x='272' y='21'>5</text><circle cx='276.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='232' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='272' y='189'>2</text><circle cx='276.5' cy='184.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='184' cy='184' r='2.2' class='dot'></circle>
+</svg>
+")
 
 (define-blueline-test "Advent Surprise Major" (:layout :grid)
   "<?xml version='1.0' encoding='UTF-8' standalone='no'?>

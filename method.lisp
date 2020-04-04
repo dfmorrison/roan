@@ -3265,7 +3265,10 @@ is @code{nil} no hunt bells are displayed. The default value for @var{hunt-bell}
 @item working-bell
 Controls which working bell of each cycle is drawn first, the others following on in the
 order in which they are rung. This can be a @code{bell}, or a list thereof, or one of the
-keywords @code{:largest} or @code{:smallest}. It defaults to @code{:largest}.
+keywords @code{:natural}, @code{:largest} or @code{:smallest}. If @code{:natural} for
+each cycle the largest bell that makes a place across the lead end is chosen; if there
+is no such bell in a cycle the largest bell in that cycle is used. The default value for
+@var{working-bell} is @code{:natural}.
 
 @item figures
 If non-null figures will also be drawn, in addition to the blue line. If @code{t} they will
@@ -3326,18 +3329,18 @@ fill pointer or one of the symbols @code{t} or @code{nil}; if @var{method} is no
 @code{method}; if @var{layout} is not non-negative integer, @code{nil} or the keyword
 @code{:grid}; if @var{hunt-bell} is not a @code{bell}, list of bells, @code{nil} or one
 one of the keywords @code{:first}, @code{:all} or @code{:working}. if @var{working-bell}
-is not a @code{bell}, list of bells, or one of the symbols @code{:largest} or
-@code{smallest}; if @var{figures} is not one of the keywords @code{:none}, @code{:head},
-@code{:half}, @code{:lead} or @code{:always}; if @var{place-notation} is not one of the
-keywords @code{:none}, @code{:half}, @code{:lead} or @code{:always}; or if
-@var{place-bells} is not @code{nil} or one of the keywords @code{:dot} or@code{:label}.
-Signals a @code{no-place-notation-error} if @var{method} doesn't have both its stage and
-place notation set. Can signal various errors if an I/O error occurs trying to write to a
-stream or create a file."
+is not a @code{bell}, list of bells, or one of the symbols @code{:natural},
+@code{:largest} or @code{smallest}; if @var{figures} is not one of the keywords
+@code{:none}, @code{:head}, @code{:half}, @code{:lead} or @code{:always}; if
+@var{place-notation} is not one of the keywords @code{:none}, @code{:half}, @code{:lead}
+or @code{:always}; or if @var{place-bells} is not @code{nil} or one of the keywords
+@code{:dot} or@code{:label}. Signals a @code{no-place-notation-error} if @var{method}
+doesn't have both its stage and place notation set. Can signal various errors if an I/O
+error occurs trying to write to a stream or create a file."
   (apply (lambda (&key
                     (layout 100)
                     (hunt-bell :first)
-                    (working-bell :largest)
+                    (working-bell :natural)
                     (figures nil)
                     (place-notation nil)
                     (place-bells :label))
@@ -3345,7 +3348,7 @@ stream or create a file."
              (error 'no-place-notation-error :method method))
            (check-type* layout (or (integer 0) null (eql :grid)))
            (check-type* hunt-bell (or bell (satisfies bell-list-p) (member nil :first :all :working)))
-           (check-type* working-bell (or bell (satisfies bell-list-p) (member :largest :smallest)))
+           (check-type* working-bell (or bell (satisfies bell-list-p) (member :natural :largest :smallest)))
            (check-type* figures (member nil t :head :half :lead))
            (check-type* place-notation (member nil t :half :lead))
            (check-type* place-bells (member nil :dot :label))
@@ -3405,7 +3408,7 @@ stream or create a file."
     (multiple-value-bind (primary-hunts secondary-hunts) (partition-hunt-bells hunt-bell)
       (let* ((columns (with-output-to-string (*blueline-stream*)
                         (dolist (c (sort (append (mapcar #'list secondary-hunts) cycles)
-                                         (if (eq working-bell :largest) #'> #'<)
+                                         (if (member working-bell '(:natural :largest)) #'> #'<)
                                          :key #'first))
                           (iter (for p :on c :by (curry #'nthcdr max-leads-per-column))
                                (while p)
@@ -3469,6 +3472,12 @@ circle{stroke:slategray;}</style>
   (iter (with start := (case target
                          (:largest (apply #'max cycle))
                          (:smallest (apply #'min cycle))
+                         (:natural (iter (with le := (first (last (method-changes *blueline-method*))))
+                                         (with sorted := (sort (copy-seq cycle) #'>))
+                                         (for b :in sorted)
+                                         (when (eql (bell-at-position le b) b)
+                                           (return b))
+                                         (finally (return (first sorted)))))
                          (t (apply #'max (or (intersection cycle target) cycle)))))
         (for x :on cycle)
         (for p :previous x)
