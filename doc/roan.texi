@@ -675,10 +675,6 @@ with it.
 @url{https://github.com/eugeneia/trivial-documentation,trivial-documentation} [Affero GPL]
 @end itemize
 
-While they are not loaded into Lisp, a variety of other tools are used in building Roan's
-documentation, some of which are distributed with copyleft licenses. My understanding is
-that this shouldn't be an issue so long as you don't redistribute or modify them, however.
-
 
 @cindex UNIX
 @cindex Apollo
@@ -703,7 +699,7 @@ with CLISP. Over the years I've even ``ported'' it (if you can call a complete r
 a different language a ``port'') to a few other programming languages where I used it for
 various lengths of time. Eventually I tried to make a more tidy, fairly portable Common
 Lisp version, and have been happily using this for my compositional activities in recent
-years. It also underpins most of the method presentation stuff on the
+years. It also underpins the method presentation stuff on the
 @url{http://www.ringing.org/,ringing.org} web site.
 
 Over the years several folks received copies of it, and in some cases used it, at least
