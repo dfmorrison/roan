@@ -13,7 +13,7 @@ html: doc/roan.html doc/roan/index.html
 info: doc/roan.info
 
 doc/roan.pdf: doc/roan.texi doc/inc/roan-version.texi
-	cd doc; makeinfo --pdf roan.texi
+	cd doc; makeinfo --pdf roan.texi -o roan-manual.pdf
 
 doc/roan.info: doc/roan.texi doc/inc/roan-version.texi
 	cd doc; makeinfo roan.texi
