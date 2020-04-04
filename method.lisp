@@ -3485,11 +3485,11 @@ circle{stroke:slategray;}</style>
                                                          (first (if (and segment (null (rest segment)))
                                                                     segment
                                                                     (last changes)))))
-                                         (with sorted := (sort (copy-seq cycle) #'>))
+                                         (with sorted := (sort (copy-seq cycle) #'<))
                                          (for b :in sorted)
                                          (when (eql (bell-at-position apex b) b)
                                            (return b))
-                                         (finally (return (first sorted)))))
+                                         (finally (return (first (last sorted))))))
                          (t (apply #'max (or (intersection cycle target) cycle)))))
         (for x :on cycle)
         (for p :previous x)
