@@ -68,7 +68,7 @@ support the libraries on which Roan depends.
 
 ### Documentation
 
-The [Roan manual](https://bytebucket.org/dfmorrison/roan/wiki/roan-manual.pdf "Roan manual PDF version") is available online.
+The [Roan manual](https://ringing.org/roan-manual.pdf "Roan manual PDF version") is available online.
 It can also be downloaded in four different formats:
 
 * [a PDF file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual.pdf)
