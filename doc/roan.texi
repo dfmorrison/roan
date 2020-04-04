@@ -14,7 +14,7 @@
 @copying
 This is documentation of Roan, version @value{VERSION}.
 
-This documentation is copyright @copyright{} 2015-2019 Donald F Morrison.
+This documentation is copyright @copyright{} 2015-2020 Donald F Morrison.
 
 Copying and distribution of this documentation, with or without modification,
 are permitted in any medium without royalty provided the copyright

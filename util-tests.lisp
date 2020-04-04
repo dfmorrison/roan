@@ -1,4 +1,4 @@
-;;;; Copyright (c) 1975-2019 Donald F Morrison
+;;;; Copyright (c) 1975-2020 Donald F Morrison
 ;;;;
 ;;;; Permission is hereby granted, free of charge, to any person obtaining a copy of this
 ;;;; software and associated documentation files (the "Software"), to deal in the Software
