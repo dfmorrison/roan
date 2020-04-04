@@ -3267,8 +3267,9 @@ Controls which working bell of each cycle is drawn first, the others following o
 order in which they are rung. This can be a @code{bell}, or a list thereof, or one of the
 keywords @code{:natural}, @code{:largest} or @code{:smallest}. If @code{:natural} for
 each cycle the largest bell that makes a place across the lead end is chosen; if there
-is no such bell in a cycle the largest bell in that cycle is used. The default value for
-@var{working-bell} is @code{:natural}.
+is no such bell in a cycle the largest bell in that cycle is used. For methods with
+Grandsire-like palindromic symmetry the first row of the lead is used instead of the
+lead end. The default value for @var{working-bell} is @code{:natural}.
 
 @item figures
 If non-null figures will also be drawn, in addition to the blue line. If @code{t} they will
@@ -3472,10 +3473,21 @@ circle{stroke:slategray;}</style>
   (iter (with start := (case target
                          (:largest (apply #'max cycle))
                          (:smallest (apply #'min cycle))
-                         (:natural (iter (with le := (first (last (method-changes *blueline-method*))))
+                         (:natural (iter (with apex := (let* ((changes (method-changes *blueline-method*))
+                                                              (length (length changes))
+                                                              (segment
+                                                               (and (evenp length)
+                                                                    (> length 2)
+                                                                    (split-palindromic-changes
+                                                                     changes
+                                                                     length
+                                                                     (method-jump-p *blueline-method*)))))
+                                                         (first (if (and segment (null (rest segment)))
+                                                                    segment
+                                                                    (last changes)))))
                                          (with sorted := (sort (copy-seq cycle) #'>))
                                          (for b :in sorted)
-                                         (when (eql (bell-at-position le b) b)
+                                         (when (eql (bell-at-position apex b) b)
                                            (return b))
                                          (finally (return (first sorted)))))
                          (t (apply #'max (or (intersection cycle target) cycle)))))

@@ -151,6 +151,44 @@ circle{stroke:slategray;}</style>
 </svg>
 ")
 
+(define-blueline-test "Little Grandsire Caters" ()
+"<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='522' width='412'>
+<style>.blueline{fill:none;stroke:rgb(51,51,255);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:miter;}
+.hunt{stroke:rgb(235,173,173);stroke-width:0.8;}
+.dot{fill:black;stroke:none;}
+.figure{font-family:sans-serif;font-size:14px;}
+.notation{font-family:sans-serif;font-size:75%;font-weight:lighter;font-style:italic;fill:dimgray;}
+.label{font-family:sans-serif;font-size:80%;font-weight:bolder;fill:slategray;}
+circle{stroke:slategray;}</style>
+<rect height='522' width='412' fill='white'/>
+<polyline class='blueline hunt' points='14,16 30,23 46,30 62,37 78,44 78,51 62,58 46,65 30,72 14,79 14,86 30,93 46,100 62,107 78,114 78,121 62,128 46,135 30,142 14,149 14,156 30,163 46,170 62,177 78,184 78,191 62,198 46,205 30,212 14,219 14,226 30,233 46,240 62,247 78,254 78,261 62,268 46,275 30,282 14,289 14,296 30,303 46,310 62,317 78,324 78,331 62,338 46,345 30,352 14,359 14,366 30,373 46,380 62,387 78,394 78,401 62,408 46,415 30,422 14,429 14,436 30,443 46,450 62,457 78,464 78,471 62,478 46,485 30,492 14,499 14,506'></polyline>
+<polyline class='blueline' points='46,16 46,23 30,30 14,37 14,44 30,51 46,58 62,65 78,72 94,79 110,86 94,93 110,100 126,107 142,114 126,121 142,128 126,135 142,142 142,149 126,156 142,163 126,170 110,177 94,184 110,191 94,198 110,205 94,212 78,219 62,226 78,233 62,240 46,247 30,254 14,261 14,268 30,275 46,282 62,289 78,296 62,303 78,310 94,317 110,324 94,331 110,338 94,345 110,352 126,359 142,366 126,373 142,380 142,387 126,394 142,401 126,408 142,415 126,422 110,429 94,436 110,443 94,450 78,457 62,464 46,471 30,478 14,485 14,492 30,499 46,506'></polyline>
+<text class='label' x='166' y='21'>3</text><circle cx='170.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='46' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='166' y='91'>7</text><circle cx='170.5' cy='86.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='110' cy='86' r='2.2' class='dot'></circle>
+<text class='label' x='166' y='161'>8</text><circle cx='170.5' cy='156.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='126' cy='156' r='2.2' class='dot'></circle>
+<text class='label' x='166' y='231'>4</text><circle cx='170.5' cy='226.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='62' cy='226' r='2.2' class='dot'></circle>
+<text class='label' x='166' y='301'>5</text><circle cx='170.5' cy='296.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='78' cy='296' r='2.2' class='dot'></circle>
+<text class='label' x='166' y='371'>9</text><circle cx='170.5' cy='366.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='142' cy='366' r='2.2' class='dot'></circle>
+<text class='label' x='166' y='441'>6</text><circle cx='170.5' cy='436.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='94' cy='436' r='2.2' class='dot'></circle>
+<text class='label' x='166' y='511'>3</text><circle cx='170.5' cy='506.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='46' cy='506' r='2.2' class='dot'></circle>
+<polyline class='blueline hunt' points='206,16 222,23 238,30 254,37 270,44 270,51 254,58 238,65 222,72 206,79 206,86'></polyline>
+<polyline class='blueline' points='222,16 206,23 206,30 222,37 238,44 254,51 270,58 270,65 254,72 238,79 222,86'></polyline>
+<text class='label' x='358' y='21'>2</text><circle cx='362.5' cy='16.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='222' cy='16' r='2.2' class='dot'></circle>
+<text class='label' x='358' y='91'>2</text><circle cx='362.5' cy='86.5' r='10' stroke='black' stroke-width='1.4' fill='none'></circle>
+<circle cx='222' cy='86' r='2.2' class='dot'></circle>
+</svg>
+")
+
 (define-blueline-test "Advent Surprise Major" (:layout :grid)
   "<?xml version='1.0' encoding='UTF-8' standalone='no'?>
 <svg xmlns='http://www.w3.org/2000/svg' preserveaspectratio='xMidYMid meet' height='256' width='164'>
