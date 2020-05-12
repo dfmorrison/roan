@@ -678,7 +678,7 @@ Signals a @code{type-error} if @var{string} is not a string.
   (let ((exisiting (getcache method *method-traits-cache*)))
     (cond (exisiting)
           (create-if-necessary
-           (putcache method *method-traits-cache* (make-instance 'method-traits))))))
+           (putcache method *method-traits-cache* (make-method-traits))))))
 
 (defun clear-method-traits (method)
   (when-let ((traits (get-method-traits method nil)))
