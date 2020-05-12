@@ -65,7 +65,7 @@
 Roan provides the @code{method} type to describe change ringing methods, not to be
 confused with CLOS methods. A @code{method} can only describe what the Central Council of
 Church Bell Ringers @url{https://cccbr.github.io/method_ringing_framework/, Framework for
-Method Ringing} (FMR) calls a static method, a method that can be viewed as as a fixed
+Method Ringing} (FMR) calls a static method, a method that can be viewed as a fixed
 sequence of changes, including jump changes; while this includes nearly all methods rung
 and named to date, it does exclude, for example, Dixonoids. A @code{method} has a name, a
 stage, classifacation details, and an associated place-notation, though any or all of
@@ -257,7 +257,7 @@ name is described as \"Unknown\", and otherwise is simply omitted. Signals a
 The one argument case can be used with @code{setf}, in which case it potentially sets any
 or all of the name, classification and stage of @var{method}. There is an ambiguity when
 parsing method titles in that there being no explicit class named can indicate with that
-the method has no class (principles and purse differentials) or that the class is Hybrid.
+the method has no class (principles and pure differentials) or that the class is Hybrid.
 When parsing titles for @code{setf} an absence of a class name is taken to mean that there
 is no class. Also, if there is no stage name specified when using @code{setf} with
 @code{method-title} the stage is set to @code{nil}; @code{*default-stage*} is not
@@ -2625,7 +2625,7 @@ signaled if the method library file cannot be read or is of the wrong format.
                              :treble-place :alliance :hybrid :hunt))
   (check-type* stage (or stage null))
   (when (and stage-supplied (null stage))
-    (error 'type-error :format-control "If :stage is supplied to methods-lookup, it must be non-nil"))
+    (error 'simple-type-error :format-control "If :stage is supplied to methods-lookup, it must be non-nil"))
   (read-method-library)
   (let ((methods (method-library-methods *method-library*))
         (has-name-start (method-library-no-name-count *method-library*)))
@@ -3338,6 +3338,7 @@ or @code{:always}; or if @var{place-bells} is not @code{nil} or one of the keywo
 @code{:dot} or@code{:label}. Signals a @code{no-place-notation-error} if @var{method}
 doesn't have both its stage and place notation set. Can signal various errors if an I/O
 error occurs trying to write to a stream or create a file."
+  (declare (ignorable layout hunt-bell working-bell figures place-notation place-bells))
   (apply (lambda (&key
                     (layout 100)
                     (hunt-bell :first)
