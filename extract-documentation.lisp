@@ -44,7 +44,8 @@
                                           :type "texi"
                                           :defaults *include-file-directory*))
                           :direction :output
-                          :if-exists :supersede)
+                          :if-exists :supersede
+                          :external-format (uiop:encoding-external-format :us-ascii))
     (format stream "@c *** This is an automatically generated file, do NOT edit it. ***~%~
                       @c ~S ~S~%"
             symbol kind)

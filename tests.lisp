@@ -23,15 +23,16 @@
   (:use :common-lisp :alexandria :iterate :roan :lisp-unit2 :asdf)
   (:import-from :named-readtables #:in-readtable #:find-readtable)
   (:import-from :roan
-                #:%method-classification
                 #:%extreme-hash-set
-                #:*fch-groups-by-course-head*
+                #:%method-classification
                 #:*blueline-default-parameters*
                 #:*blueline-method*
+                #:*fch-groups-by-course-head*
                 #:*fch-groups-by-name*
                 #:*method-library*
                 #:*method-library-path*
                 #:*pattern-cache*
+                #:+utf-8-external-format+
                 #:cache-count
                 #:call-following
                 #:call-fraction

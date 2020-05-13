@@ -646,3 +646,15 @@ be collapsed returns a copy suitably corrected, and otherwise returns S unchange
 
 (defun same-type-p (x y)
   (and (typep x (type-of y)) (typep y (type-of x))))
+
+
+;;; with-utf-8-file
+
+(defparameter +utf-8-external-format+ (uiop:encoding-external-format :utf-8))
+
+(defmacro with-roan-file ((stream filespec &rest options
+                                  &key (external-format '+utf-8-external-format+)
+                                  &allow-other-keys)
+                          &body body)
+  `(with-open-file (,stream ,filespec :external-format ,external-format ,@options)
+     ,@body))

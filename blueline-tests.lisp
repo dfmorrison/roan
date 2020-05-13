@@ -103,7 +103,7 @@ circle{stroke:slategray;}</style>
     (compare (let ((temp nil))
                (unwind-protect
                     (progn
-                      (fad:with-open-temporary-file (s :keep t)
+                      (fad:with-open-temporary-file (s :keep t :external-format +utf-8-external-format+)
                         (setf temp (pathname s))
                         (format s "Junk~%"))
                       (run temp)

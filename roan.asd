@@ -26,7 +26,7 @@
   :description "A library to support change ringing applications"
   :depends-on (:alexandria :iterate :named-readtables :cl-interpol :cl-ppcre
                            :plump :local-time :binascii :uuid
-                           :cl-fad :drakma :zip :asdf)
+                           :cl-fad :drakma :zip :asdf :asdf-encodings)
   :components ((:file "package")
                (:file "readtables" :depends-on ("package"))
                (:file "util" :depends-on ("package"))
@@ -41,7 +41,8 @@
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :description "Unit tests for Roan"
-  :depends-on (:roan :alexandria :iterate :lisp-unit2 :cl-ppcre :cl-fad)
+  :depends-on (:roan :alexandria :iterate :lisp-unit2 :cl-ppcre
+                     :cl-fad :asdf :asdf-encodings)
   :components ((:file "tests")
                (:file "util-tests" :depends-on ("tests"))
                (:file "roan-tests" :depends-on ("tests"))
@@ -56,5 +57,6 @@
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"
   :description "Support for building the documentation for Roan"
-  :depends-on (:roan :alexandria :iterate :trivial-documentation :cl-fad :cl-ppcre :asdf)
+  :depends-on (:roan :alexandria :iterate :trivial-documentation :cl-fad :cl-ppcre
+                     :asdf :asdf-encodings)
   :components ((:file "extract-documentation")))
