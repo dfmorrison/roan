@@ -432,6 +432,68 @@
     (assert-error 'type-error (npermute-by-collection #(!54321) "13572468"))
     (assert-error 'type-error (npermute-by-collection (hash-set) "13572468"))))
 
+(define-test test-permutation-closure ()
+  (labels ((test-closure (generators &rest results)
+             (iter (with stage := (stage (first results)))
+                   (for r :in results)
+                   (unless (eql (stage r) stage)
+                     ;; Note a unit-test failure, rather a broken test
+                     (error "results in test-closure are not all of the same stage")))
+             (let ((closure (apply #'permutation-closure generators)))
+               (assert-typep 'list closure)
+               (assert-eql (length results) (length closure))
+               (assert-true (iter (with stage := (stage (first closure)))
+                                  (for r :in closure)
+                                  (always (eql (stage r) stage))))
+               (assert-equalp (apply #'hash-set results)
+                              (apply #'hash-set closure)))))
+    (test-closure '(!123456) !123456)
+    (test-closure '(!1324) !1324 !1234)
+    (test-closure '(!1324 !1234 !1324) !1324 !1234)
+    (test-closure '(!3425) !13425 !14235 !12345)
+    (test-closure '(!13425 !1324 !123465)
+                  !143265 !142365 !124365 !142356 !143256 !124356
+                  !134265 !132465 !123456 !123465 !132456 !134256)
+    (test-closure '(!1234567980 !1234567890TE)
+                  !1234567890ET !1234567890TE !1234567980ET !1234567980TE)
+    (test-closure '(!23451 !21435)
+                  !34125 !35142 !43215 !41253 !45231 !14523 !32154 !54321 !53412 !25341
+                  !51423 !52431 !13542 !12534 !24315 !21354 !15243 !23514 !42351 !14235
+                  !13254 !41325 !45312 !24531 !21543 !15432 !31452 !42135 !53241 !23145
+                  !35421 !32415 !42513 !53124 !12453 !13425 !31245 !51342 !52314 !24153
+                  !25134 !43521 !41532 !15324 !34251 !35214 !25413 !52143 !54132 !45123
+                  !43152 !31524 !54213 !51234 !34512 !32541 !14352 !12345 !21435 !23451)
+    (test-closure '(!23451 !21345)
+                  !42531 !12543 !32514 !35421 !15432 !54321 !45321 !43215 !34215 !43152 !31524
+                  !13524 !54312 !45312 !43125 !24153 !25413 !52413 !42153 !41532 !34125 !32154
+                  !31542 !35142 !21543 !15423 !51423 !14253 !14532 !41253 !12534 !21534 !34152
+                  !53412 !35412 !23514 !25431 !24531 !53124 !51243 !24351 !52431 !15243 !41235
+                  !23541 !42351 !14235 !12453 !32415 !35241 !32541 !31254 !43251 !34251 !31425
+                  !53421 !54132 !51324 !31245 !53241 !15324 !13245 !13254 !14325 !41325 !13425
+                  !15342 !13542 !12354 !41352 !14352 !12435 !51432 !21453 !53142 !23154 !24315
+                  !23415 !25341 !41523 !45231 !23145 !25314 !42315 !54231 !52314 !52341 !15234
+                  !35214 !54213 !52134 !51342 !25134 !21354 !24135 !42135 !21435 !25143 !32145
+                  !53214 !52143 !34521 !31452 !14523 !43521 !45213 !24513 !42513 !45132 !45123
+                  !43512 !35124 !54123 !51234 !34512 !32451 !13452 !12345 !21345 !23451)
+    (test-closure '(!T1234567890E)
+                  !4567890ET123 !34567890ET12 !1234567890ET !234567890ET1 !567890ET1234
+                  !890ET1234567 !67890ET12345 !7890ET123456 !0ET123456789 !90ET12345678
+                  !ET1234567890 !T1234567890E)
+    (test-closure '(!ET1234567890)
+                  !34567890ET12 !1234567890ET !7890ET123456 !567890ET1234 !90ET12345678
+                  !ET1234567890)
+    (test-closure '(!0ET123456789) !4567890ET123 !1234567890ET !7890ET123456 !0ET123456789)
+    (test-closure '(!90ET12345678) !1234567890ET !567890ET1234 !90ET12345678)
+    (test-closure '(!7890ET123456) !1234567890ET !7890ET123456)
+    (test-closure '(!13526478 !13254678)
+                  !16452378 !16543278 !14625378 !14263578 !15634278 !15362478 !12436578
+                  !12345678 !13254678 !13526478))
+  (assert-eql 720 (length (permutation-closure !234561 !213456)))
+  (assert-true (null (permutation-closure)))
+  (assert-error 'type-error (permutation-closure nil))
+  (assert-error 'type-error (permutation-closure !23154 13245 !54321))
+  (assert-error 'type-error (permutation-closure '(0 1 3 2 4))))
+
 (define-test test-generate-rows ()
   (labels ((test-gen-once (fn start changes result &optional skip-optional)
              (unless (or start skip-optional)

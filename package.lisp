@@ -145,6 +145,7 @@
            #:parse-place-notation
            #:parse-row
            #:pattern-parse-error
+           #:permutation-closure
            #:permute
            #:permute-by-collection
            #:permute-by-inverse

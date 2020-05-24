@@ -293,6 +293,7 @@ Non-nil if and only if @var{object} is a @code{row}.
 @include inc/permute-function.texi
 @include inc/permute-collection-generic-function.texi
 @include inc/generate-rows-generic-function.texi
+@include inc/permutation-closure-function.texi
 @include inc/inverse-function.texi
 @include inc/permute-by-inverse-function.texi
 @include inc/alter-stage-function.texi
