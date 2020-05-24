@@ -488,7 +488,7 @@
     (test-closure '(!13526478 !13254678)
                   !16452378 !16543278 !14625378 !14263578 !15634278 !15362478 !12436578
                   !12345678 !13254678 !13526478))
-  (assert-eql 720 (length (permutation-closure !234561 !213456)))
+  (assert-eql 40320 (length (permutation-closure !23456781 !213)))
   (assert-true (null (permutation-closure)))
   (assert-error 'type-error (permutation-closure nil))
   (assert-error 'type-error (permutation-closure !23154 13245 !54321))

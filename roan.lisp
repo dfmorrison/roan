@@ -895,15 +895,13 @@ rows is undefined. Signals a @code{type-error} if any of the @var{rows} is not a
         (maximizing (stage r) :into stage)
         (finally (iter (for sub :on rows)
                        (setf (first sub) (alter-stage (first sub) stage)))))
-  ;; Is there a better algorithm? This one is very slow for cases where the result is
-  ;; large (e.g. generating S8).
   (iter (with result := (apply #'hash-set rows))
         (for n := (hash-set-count result))
         (for prev :previous n)
         (until (eql n prev))
         (iter (with elements := (hash-set-elements result))
               (for e :in elements)
-              (dolist (r elements)
+              (dolist (r rows)
                 (hash-set-nadjoin result (permute e r))))
         (finally (return (hash-set-elements result)))))
 
