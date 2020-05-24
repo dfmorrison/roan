@@ -886,9 +886,8 @@ rows is undefined. Signals a @code{type-error} if any of the @var{rows} is not a
 @example
 @group
  (permutation-closure !13425 !1324 !123465)
-   @result{}
- (!143265 !142365 !124365 !142356 !143256 !124356
-  !134265 !132465 !123456 !123465 !132456 !134256)
+   @result{} (!143265 !142365 !124365 !142356 !143256 !124356
+       !134265 !132465 !123456 !123465 !132456 !134256)
 @end group
 @end example"
   (iter (for r :in rows)
