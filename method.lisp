@@ -42,7 +42,6 @@
             (when k
               (collect (cons k (string-capitalize (substitute #\Space #\- (string k)))))))
     :test #'equalp)
-  (deftype class () `(member ,@(coerce +classes+ 'list)))
   (define-constant +class-field+
       (byte (ceiling (log (length +classes+) 2)) (byte-size +stage-field+))
     :test #'equal-byte-specifiers)
@@ -93,8 +92,7 @@ is known, unless the @code{method} has been looked up from a suitable library.
 
 Because ringing methods and their classes are unrelated to CLOS methods and classes, the
 @code{roan} package shadows the symbols @code{common-lisp:method},
-@code{common-lisp:method-name}, @code{common-lisp:class} and
-@code{common-lisp:class-name}.
+@code{common-lisp:method-name} and @code{common-lisp:class-name}.
 ===endsummary===
 Describes a change ringing method, typically including its name, stage, classification and
 place notation."))

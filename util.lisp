@@ -376,10 +376,10 @@ Signals a @code{type-error} if @var{set} is not a @code{hash-set}."
   set)
 
 (defun hash-set-adjoin (set &rest elements)
-  "Returns a @code{hash-set} contains all the elements of @var{set} to which have been
-added the @var{elements}. As usual duplicate elements are not added, though exactly which
-of any potential duplicates are retained is undefined. The @code{hash-set-adjoin} function
-returns a freshly created @code{hash-set} and does not modify @var{set}, while
+  "Returns a @code{hash-set} that contains all the elements of @var{set} to which have
+been added the @var{elements}. As usual duplicate elements are not added, though exactly
+which of any potential duplicates are retained is undefined. The @code{hash-set-adjoin}
+function returns a freshly created @code{hash-set} and does not modify @var{set}, while
 @code{hash-set-nadjoin} modifies and returns @var{set}. Signals a @code{type-error} if
 @var{set} is not a @code{hash-set}.
 @example

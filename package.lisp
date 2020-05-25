@@ -19,7 +19,7 @@
 
 (defpackage :roan
   ;; Use method and class to refer to the ringing concepts, not the CLOS ones.
-  (:shadow #:method #:method-name #:class #:class-name)
+  (:shadow #:method #:method-name #:class-name)
   (:use :common-lisp :alexandria :iterate)
   (:import-from :named-readtables #:defreadtable #:in-readtable)
   (:export #:*blueline-default-parameters*
@@ -201,11 +201,11 @@ prefixed with an explicit @code{roan:}.
 Alternatively all the external symbols of the @code{roan} package can be imported into a
 package with @code{use-package}, or the @code{:use} option to @code{defpackage}. There is
 the slight complication, however, that the @code{roan} package shadows the symbols
-@code{method}, @code{method-name}, @code{class} and @code{class-name} from the
-@code{common-lisp} package. This is done because methods and their classes are important
-concepts in change ringing, albeit one unrelated to CLOS methods and classes. Typically
-@code{method}, @code{method-name}, @code{class} and @code{class-name} should be shadowed
-in other packages that use the @code{roan} package. This can be done with
+@code{method}, @code{method-name} and @code{class-name} from the @code{common-lisp}
+package. This is done because methods and their classes are important concepts in change
+ringing, albeit one unrelated to CLOS methods and classes. Typically @code{method},
+@code{method-name}, @code{class} and @code{class-name} should be shadowed in other
+packages that use the @code{roan} package. This can be done with
 @code{shadowing-import-from}, or the @code{:shadowing-import} option to @code{defpackage}.
 Note that the original Common Lisp symbols will still be available as @code{cl:method},
 @code{cl:method-name}, @code{cl:class} and @code{cl:class-name}. @xref{use-roan}.
