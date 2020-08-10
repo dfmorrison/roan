@@ -52,16 +52,16 @@ Roan by hand, the repository for Roan itself is at
 both current and previous versions can be downloaded from the tags pane of the Downloads
 page, [https://bitbucket.org/dfmorrison/roan/downloads/?tab=tags](https://bitbucket.org/dfmorrison/roan/downloads/?tab=tags).
 
-Note that Quicklisp creates a new distribution about once a month, so there may be a log
+Note that Quicklisp creates a new distribution about once a month, so there may be a lag
 of that duration between when a new version is available in the Bitbucket repository and
 when that version is available in Quicklisp. If you need it sooner, you may need to
 download it yourself from Bitbucket.
 
 Roan has been tested with
 
-* [CCL](http:ccl.clozure.com "Clozure Common LIsp") version 1.11.5 (64 bit), on Ubuntu Linux 18.04.3
+* [CCL](http://ccl.clozure.com) (Clozure Common Lisp) version 1.11.5 (64 bit), on Ubuntu Linux 18.04.3
 
-* [SBCL](http://sbcl.org "Steel Bank Common Lisp) version 1.5.5 (64 bit) on Ubuntu Linux 18.04.3
+* [SBCL](http://sbcl.org) (Steel Bank Common Lisp) version 1.5.5 (64 bit) on Ubuntu Linux 18.04.3
 
 but it should also work in other, modern Common Lisp implementations that
 support the libraries on which Roan depends.
