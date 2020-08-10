@@ -483,6 +483,10 @@ signals a @code{type-error}.
 @include inc/method-hunt-bells-function.texi
 @include inc/method-working-bells-function.texi
 @include inc/method-lead-head-code-function.texi
+@cindex symmetry
+@cindex palindromes
+@include inc/method-conventionally-symmetric-p-function.texi
+@cindex rotations
 @include inc/method-rotations-p-function.texi
 @include inc/method-canonical-rotation-key-function.texi
 

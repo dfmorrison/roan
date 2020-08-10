@@ -1294,6 +1294,40 @@ error if either is not present.")
              (format stream "The method ~A does not have its place notation or stage set."
                      (no-place-notation-error-method condition)))))
 
+(with-bell-property-resolver
+  (defparameter +conventional-symmetry-scanner+
+    (ppcre:create-scanner ",(:?[-x]|\\p{bell}+)$" :case-insensitive-mode t)))
+
+(defun method-conventionally-symmetric-p (method)
+  "Returns true if and only if the method has an even lead length and conventional
+palindromic symmetry with apices at its half-lead and lead-end. Note that this means
+it is false for methods such as Grandsire. Signals a @code{type-error} if @var{method} is
+not a @code{method}. Signals a @code{no-place-notation-error} if @var{method}'s stage or
+place notation are not set. Signals a @code{parse-error} if @var{method}'s place notation
+cannot be interpreted at its stage.
+@example
+@group
+ (method-conventionally-symmetric-p
+   (lookup-method-by-title \"Advent Surprise Major\"))
+     @result{} t
+ (method-conventionally-symmetric-p
+   (lookup-method-by-title \"Grandsire Caters\"))
+     @result{} nil
+@end group
+@end example"
+  (if-let ((length (method-lead-length method)))
+    (or (and (eql length 2) (not (method-contains-jump-changes-p method)))
+        (and (evenp (method-lead-length method))
+             (or (not (null (ppcre:scan +conventional-symmetry-scanner+
+                                        (method-place-notation method))))
+                 (multiple-value-bind (first second)
+                     (split-palindromic-changes (%get-changes method)
+                                                length
+                                                (method-contains-jump-changes-p method))
+                   (declare (ignore first))
+                   (eql (length second) 1)))))
+    (error 'no-place-notation-error :method method)))
+
 (define-thread-local *rows-distinct-p-hash-table* nil)
 
 (defun rows-distinct-p (rows)
@@ -2262,20 +2296,20 @@ An immutable object describing a change ringing call, such as a bob or single."
                               (following nil following-supplied-p)
                               (following-replace nil following-replace-supplied-p))
   "Creates and returns a @code{call}, which modifies the changes of a lead of a
-@code{method}. The @var{place-notation} argument is a string of place, the changes
-corresponding to which will add or replace changes in a a lead of the @code{method} when
-applying the @code{code}. The @var{place-notation} may be @code{nil}, in which case no
-changes are add or replace existing ones. The @var{offset}, a non-negative integer, is the
-position at which to begin modifying the lead, and is measured from the beginning of the
-lead if the generalized boolean @var{from-end} is false, and from the end, otherwise. This
-can be further modifed by @var{fraction} which is multiplied by the lead length; the
-offset is counted forward or backward from that product. The @code{fraction}, if non-nill,
-must be a ratio greater than @code{0} and less than @code{1}, whose denominator evenly
-divides the lead length. The non-negative integer @var{replace} is the number of changes
-in the lead to be deleted or replaced. It is typically equal to the length of
-@var{changes}, which results in exact replacement of changes in the lead, but may be
-greater or less than that length, in which case the resulting lead is of a different
-length than a plain lead.
+@code{method}. The @var{place-notation} argument is a string of place notation, the
+changes corresponding to which will be added to or replace changes in a a lead of the
+@code{method} when applying the @code{code}. The @var{place-notation} may be @code{nil},
+in which case no changes are add or replace existing ones. The @var{offset}, a
+non-negative integer, is the position at which to begin modifying the lead, and is
+measured from the beginning of the lead if the generalized boolean @var{from-end} is
+false, and from the end, otherwise. This can be further modifed by @var{fraction} which is
+multiplied by the lead length; the offset is counted forward or backward from that
+product. The @code{fraction}, if non-nill, must be a ratio greater than @code{0} and less
+than @code{1}, whose denominator evenly divides the lead length. The non-negative integer
+@var{replace} is the number of changes in the lead to be deleted or replaced. It is
+typically equal to the length of @var{changes}, which results in exact replacement of
+changes in the lead, but may be greater or less than that length, in which case the
+resulting lead is of a different length than a plain lead.
 
 If either or both of @var{following} or @var{following-replace} are supplied the call is
 intended to also apply to the subsequent lead. These operate just like

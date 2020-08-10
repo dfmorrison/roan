@@ -1629,8 +1629,8 @@ the generalized boolean @var{upper-case}, which defaults to the current value of
 in upper case, and otherwise in lower case.
 
 The argument @var{cross} controls which character is used to denote a cross change at even
-stages. It must be a character designator for@code{ #\\x}, @code{#\\X} or @code{#\\-}, and
-defaults to the current value of @code{*cross-character*}.
+stages. It must be a character designator for @code{ #\\x}, @code{#\\X} or @code{#\\-},
+and defaults to the current value of @code{*cross-character*}.
 
 The argument @var{jump-changes} should be one of @code{nil}, @code{:jumps} or @code{:full}.
 It determines how jump changes will be notated. If it is @code{nil} and @var{changes}

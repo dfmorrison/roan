@@ -105,6 +105,7 @@
            #:method-changes
            #:method-class
            #:method-contains-jump-changes-p
+           #:method-conventionally-symmetric-p
            #:method-course-length
            #:method-default-calls
            #:method-differential-p

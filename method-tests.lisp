@@ -371,6 +371,21 @@
   (assert-eq nil (method-plain-course (method :stage nil :place-notation "x1x4,2")))
   (assert-error 'type-error (method-plain-course "Cambridge Surprise Minor")))
 
+(define-test test-method-conventionally-symmetric ()
+  (assert-true (method-conventionally-symmetric-p (lookup-method-by-title "Advent Surprise Major")))
+  (assert-true (method-conventionally-symmetric-p (lookup-method-by-title "Original Triples")))
+  (assert-true (method-conventionally-symmetric-p (method :stage 12 :place-notation "x1x4,2")))
+  (assert-true (method-conventionally-symmetric-p (method :stage 10 :place-notation "x1x4x1x2")))
+  (assert-false (method-conventionally-symmetric-p (method :stage 10 :place-notation "x4x1x2x1")))
+  (assert-false (method-conventionally-symmetric-p (lookup-method-by-title "Grandsire Caters")))
+  (assert-false (method-conventionally-symmetric-p (method :stage 6 :place-notation "x1x4x1x")))
+  (assert-false (method-conventionally-symmetric-p (method :stage 4 :place-notation "x")))
+  (assert-error 'type-error (method-conventionally-symmetric-p "Cambridge Surprise Major"))
+  (assert-error 'type-error (method-conventionally-symmetric-p #4!x1x1,2))
+  (assert-error 'no-place-notation-error (method-conventionally-symmetric-p (method-from-title "Cambridge Surprise Major")))
+  (assert-error 'no-place-notation-error (method-conventionally-symmetric-p (method :stage nil :place-notation "x1x4,2")))
+  (assert-error 'parse-error (method-conventionally-symmetric-p (method :stage 4 :place-notation "x1x1x6,2"))))
+
 (define-test test-method-true-plain-course-p ()
   (assert-true (method-true-plain-course-p (method :stage 8
                                                    :place-notation "x3x4x25x36x4x5x6x7,2")))
