@@ -176,6 +176,23 @@
     ;; warn us about the problem at compile time.
     (assert-error 'error (apply #'method *no-such-keyword*))))
 
+(define-test test-copy-method ()
+  (labels ((test-copy (m1 m2)
+             (assert-equal (method-title m1) (method-title m2))
+             (assert-true (equal-methods-p m1 m2))
+             (assert-false (eq m1 m2))
+             (assert-false (eq (method-name m1) (method-name m2)))
+             (assert-false (eq (method-place-notation m1) (method-place-notation m2)))))
+    (let* ((m1 (lookup-method-by-title "Advent Surprise Major"))
+           (m2 (copy-method m1))
+           (m3 (copy-method m2)))
+      (test-copy m1 m2)
+      (test-copy m2 m3)
+      (test-copy m1 m3)
+      (setf (method-jump-p m2) t)
+      (setf (method-jump-p m3) t)
+      (test-copy m2 m3))))
+
 (define-test test-title ()
   (labels ((test-title (s &rest args)
              (let* ((m (apply #'method args))

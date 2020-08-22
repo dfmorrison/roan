@@ -439,6 +439,8 @@ signals a @code{type-error}.
 @xref{method-contains-jump-changes-p}
 @end deffn
 
+@include inc/copy-method-function.texi
+
 @include inc/method-title-function.texi
 @include inc/method-from-title-function.texi
 @include inc/comparable-method-name-function.texi

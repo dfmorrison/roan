@@ -48,7 +48,7 @@
            #:class-name
            #:classify-method
            #:comparable-method-name
-           #:copy-row
+           #:copy-method
            #:cycles
            #:do-hash-set
            #:fch-group

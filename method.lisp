@@ -98,6 +98,9 @@ Describes a change ringing method, typically including its name, stage, classifi
 place notation."))
 
 (defun copy-method (method)
+  "Returns a new @code{method} whose name and place notation are @code{equal} to those
+of @var{method}, and with the same classification as @var{method}. Signals a
+@code{type-error} if @var{method} is not a @code{method}."
   (make-instance 'method
                  :name (and (method-name method)
                             (copy-sequence 'string (method-name method)))

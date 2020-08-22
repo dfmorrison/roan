@@ -35,8 +35,6 @@
                (:file "method" :depends-on ("package" "util" "roan")))
   :in-order-to ((test-op (test-op "roan/test"))))
 
-(defparameter *xxx* nil)
-
 (defsystem :roan/test
   :license "MIT"
   :author "Don Morrison <dfm@ringing.org>"

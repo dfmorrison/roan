@@ -195,9 +195,7 @@ must have a stage specified. @xref{write-row,,@code{write-row}},
   ;; %make-row needs to be available at compile time for some constants, below
   (defstruct (row (:constructor %make-row (bells))
                   (:predicate rowp)
-                  (:print-function (lambda (row stream depth)
-                                     (declare (ignore depth))
-                                     (write-row row :stream stream))))
+                  (:print-object (lambda (row stream) (write-row row :stream stream))))
     "===summary===
 @cindex immutable
 The fundamental units of change ringing are rows and changes, permutations of a fixed set
