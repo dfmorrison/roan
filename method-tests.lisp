@@ -997,14 +997,16 @@
              (assert-eql 1 (length list))
              (first list))
            (test-m (title-or-wild name stage notation &optional class little differential jump)
-             (iter (with  wild := (find #\* title-or-wild))
+             (iter (with wild := (find #\* title-or-wild))
                    (with nm := (if wild title-or-wild name))
                    (for m :in (list (just-one (lookup-methods :name nm :jump jump
                                                               :differential differential
                                                               :little little :class class
                                                               :stage stage))
                                     (unless wild
-                                      (lookup-method-by-title title-or-wild))
+                                      (lookup-method-by-title title-or-wild)
+                                      (lookup-method-by-title title-or-wild t)
+                                      (lookup-method-by-title title-or-wild nil))
                                     (just-one (lookup-methods-by-notation notation stage))
                                     (just-one (lookup-methods-by-notation (parse-place-notation notation :stage stage)))))
                    (unless m (next-iteration))
@@ -1137,7 +1139,10 @@
   (assert-error 'type-error (lookup-methods-by-notation :whatever 8))
   (assert-error 'type-error (lookup-methods-by-notation '(1 2 3) 8))
   (assert-error 'parse-error (lookup-methods-by-notation "Not your father's place notation" 8))
-  (assert-error 'parse-error (lookup-methods-by-notation "x3x4x5x6x7x8x9,2" 8)))
+  (assert-error 'parse-error (lookup-methods-by-notation "x3x4x5x6x7x8x9,2" 8))
+  (assert-error 'error (lookup-method-by-title "No Such Method XYZZY Floop Cinques" t))
+  (assert-eq nil (lookup-method-by-title "No Such Method XYZZY Floop Cinques" nil))
+  (assert-eq nil (lookup-method-by-title "No Such Method XYZZY Floop Cinques")))
 
 (define-test test-update-method-library ()
   (let ((*method-library* nil)

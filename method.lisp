@@ -2215,8 +2215,9 @@ half-lead calls with similar methods with different lead lengths.
 
 Typically a @code{call} replaces exactly as many changes as it supplies. However it is
 possible to replace none, in which case the @code{call} adds to the lead length; to only
-replace changes with a zero length set of changes, in which case the @code{call} shortens
-the lead by deleting changes; or even to add more or fewer changes than it replaces.
+replace changes with a zero length sequence of changes, in which case the @code{call}
+shortens the lead by deleting changes; or even to add more or fewer changes than it
+replaces.
 
 Typically a call only affects the lead of a method to which is is applied. In exceptional
 cases, most notably doubles variations, it may also affect the subsequent lead. To support
@@ -2242,7 +2243,7 @@ The usual bob for Cambridge Surprise is @code{(call \"4\")}.
 @item
 The usual single for Grandsire is @code{(call \"3.123\" :offset 2)}.
 @item
-The usual bob for Erin Triples is @code{(call \"7\" :from-end nil)}.
+The usual bob for Erin Caters is @code{(call \"7\" :from-end nil)}.
 @item
 A 58 half-lead bob for Bristol Major is @code{(call \"5\" :fraction 1/2)}.
 @item
@@ -2302,7 +2303,7 @@ An immutable object describing a change ringing call, such as a bob or single."
 @code{method}. The @var{place-notation} argument is a string of place notation, the
 changes corresponding to which will be added to or replace changes in a a lead of the
 @code{method} when applying the @code{code}. The @var{place-notation} may be @code{nil},
-in which case no changes are add or replace existing ones. The @var{offset}, a
+in which case no changes are added or replace existing ones. The @var{offset}, a
 non-negative integer, is the position at which to begin modifying the lead, and is
 measured from the beginning of the lead if the generalized boolean @var{from-end} is
 false, and from the end, otherwise. This can be further modifed by @var{fraction} which is
@@ -2578,9 +2579,10 @@ parameters are not supplied all otherwise matching methods in the library will b
 without regard to whether or not they have these properties.
 
 If the title of a method is known, it can be found in the library by using
-@code{lookup-method-by-title}. The @var{title} should be a string. If a
-@code{method} with that title is in the library, it is returned; otherwise @code{nil} is
-returned. In general there should never be two or more different methods in the library
+@code{lookup-method-by-title}. The @var{title} should be a string. If a @code{method} with
+that title is in the library, it is returned. Otherwise @code{nil} is returned, unless the
+generalized Boolean @var{errorp} it true (it is false by default), in which case an error
+is signaled. In general there should never be two or more different methods in the library
 with the same title. Matching on the title is done using the FMR's mechanism for comparing
 names. Wildcards cannot be used with @code{lookup-method-by-title}.
 
@@ -2742,7 +2744,7 @@ signaled if the method library file cannot be read or is of the wrong format.
                (setf end i))
               (t (setf start (+ i 1))))))
 
-(defun lookup-method-by-title (title)
+(defun lookup-method-by-title (title &optional errorp)
   "===merge: lookup-methods 1"
   (check-type* title string)
   (when (find #\* title)
@@ -2757,10 +2759,11 @@ signaled if the method library file cannot be read or is of the wrong format.
         (unionf result (lookup-methods :name name :jump jump :differential differential
                                        :class (if jump :hunt :hybrid)
                                        :stage stage)))
-      (when (rest result)
-        (warn "Multiple methods found by lookup-method-by-title, only returning one of them (~{~A~^, ~})"
-              (mapcar #'method-title result)))
-      (first result))))
+      (cond ((rest result)
+             (warn "Multiple methods found by lookup-method-by-title, only returning one of them (~{~A~^, ~})"
+                   (mapcar #'method-title result)))
+            ((first result))
+            (errorp (error "Can't find ~S in the method library" title))))))
 
 (defun lookup-methods-by-notation (notation-or-changes &optional (stage *default-stage*))
   "===merge: lookup-methods 2"
