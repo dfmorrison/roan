@@ -888,20 +888,33 @@ rows is undefined. Signals a @code{type-error} if any of the @var{rows} is not a
        !134265 !132465 !123456 !123465 !132456 !134256)
 @end group
 @end example"
-  (iter (for r :in rows)
-        (check-type* r row)
-        (maximizing (stage r) :into stage)
-        (finally (iter (for sub :on rows)
-                       (setf (first sub) (alter-stage (first sub) stage)))))
-  (iter (with result := (apply #'hash-set rows))
-        (for n := (hash-set-count result))
-        (for prev :previous n)
-        (until (eql n prev))
-        (iter (with elements := (hash-set-elements result))
-              (for e :in elements)
-              (dolist (r rows)
-                (hash-set-nadjoin result (permute e r))))
-        (finally (return (hash-set-elements result)))))
+  (cond ((null rows)
+         (return-from permutation-closure nil))
+        ((null (rest rows))
+         (check-type* (first rows) row)
+         (return-from permutation-closure (cyclic-closure (first rows)))))
+  (let* ((result (make-hash-set))
+         (max-stage (iter (for r :in rows)
+                          (check-type* r row)
+                          (maximizing (stage r))))
+         (gen (iter (for r :in rows)
+                    (for cyc := (delete-if #'roundsp
+                                           (cyclic-closure (alter-stage r max-stage))))
+                    (apply #'hash-set-nadjoin result cyc)
+                    (nconcing cyc))))
+    (iter (for n := (hash-set-count result))
+          (for prev :previous n)
+          (until (eql n prev))
+          (iter (with elements := (hash-set-elements result))
+                (for e :in elements)
+                (dolist (g gen)
+                  (hash-set-nadjoin result (permute e g))))
+          (finally (return (hash-set-elements result))))))
+
+(defun cyclic-closure (row)
+  (iter (for r :initially row :then (permute r row))
+        (collect r)
+        (until (roundsp r))))
 
 
 ;;; Properties of rows and operations on them

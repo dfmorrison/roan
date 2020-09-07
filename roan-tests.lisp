@@ -489,7 +489,10 @@
                   !16452378 !16543278 !14625378 !14263578 !15634278 !15362478 !12436578
                   !12345678 !13254678 !13526478))
   (assert-eql 40320 (length (permutation-closure !23456781 !213)))
+  (assert-equalp (apply #'hash-set (permutation-closure !234517890ET6))
+                 (apply #'hash-set (permutation-closure !45123 !123450ET6789)))
   (assert-true (null (permutation-closure)))
+  (assert-equalp '(!123456789) (permutation-closure (rounds 9)))
   (assert-error 'type-error (permutation-closure nil))
   (assert-error 'type-error (permutation-closure !23154 13245 !54321))
   (assert-error 'type-error (permutation-closure '(0 1 3 2 4))))

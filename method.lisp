@@ -2752,7 +2752,7 @@ signaled if the method library file cannot be read or is of the wrong format.
   (multiple-value-bind (name jump differential little class stage)
       (parse-method-title title)
     (unless stage
-      (return-from lookup-method-by-title nil))
+      (setf stage *default-stage*))
     (let ((result (lookup-methods :name name :jump jump :differential differential
                                   :little little :class class :stage stage)))
       (unless class
