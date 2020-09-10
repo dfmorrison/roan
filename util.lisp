@@ -369,25 +369,25 @@ Signals a @code{type-error} if @var{set} is not a @code{hash-set}."
   set)
 
 (defun hash-set-nadjoin-list-elements (set list)
-  "===merge: hash-set-adjoin"
+  "===merge: hash-set-adjoin 3"
   (let ((table (checked-hash-set-table set)))
     (dolist (e list)
       (setf (gethash e table) t)))
   set)
 
 (defun hash-set-adjoin-list-elements (set list)
-  "===merge: hash-set-adjoin"
+  "===merge: hash-set-adjoin 1"
   (hash-set-nadjoin-list-elements (hash-set-copy set) list))
 
 (defun hash-set-nadjoin (set &rest elements)
-  "===merge: hash-set-adjoin"
+  "===merge: hash-set-adjoin 2"
   (hash-set-nadjoin-list-elements set elements))
 
 (defun hash-set-adjoin (set &rest elements)
   "Returns a @code{hash-set} that contains all the elements of @var{set} to which have
 been added the @var{elements}, or the elements of the @var{list}. As usual duplicate
 elements are not added, though exactly which of any potential duplicates are retained is
-undefined. The @code{hash-set-adjoin} and @code(hash-set-adjoin-list-elements} functions
+undefined. The @code{hash-set-adjoin} and @code{hash-set-adjoin-list-elements} functions
 do not modify @var{set} but might return it if no changes are needed; that is, the caller
 cannot depend upon it necessarily being a fresh copy. The @code{hash-set-nadjoin} and
 @code{hash-set-nadjoin-list-elements} functions modify @var{set} (if one or more of the

@@ -60,6 +60,7 @@
            #:generate-rows
            #:hash-set
            #:hash-set-adjoin
+           #:hash-set-adjoin-list-elements
            #:hash-set-clear
            #:hash-set-copy
            #:hash-set-count
@@ -70,6 +71,7 @@
            #:hash-set-intersection
            #:hash-set-member
            #:hash-set-nadjoin
+           #:hash-set-nadjoin-list-elements
            #:hash-set-ndifference
            #:hash-set-nintersection
            #:hash-set-nunion
