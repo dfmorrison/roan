@@ -64,14 +64,12 @@
            #:hash-set-copy
            #:hash-set-count
            #:hash-set-delete
-           #:hash-set-deletef
            #:hash-set-difference
            #:hash-set-elements
            #:hash-set-empty-p
            #:hash-set-intersection
            #:hash-set-member
            #:hash-set-nadjoin
-           #:hash-set-nadjoinf
            #:hash-set-ndifference
            #:hash-set-nintersection
            #:hash-set-nunion

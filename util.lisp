@@ -368,43 +368,40 @@ Signals a @code{type-error} if @var{set} is not a @code{hash-set}."
   (clrhash (checked-hash-set-table set))
   set)
 
-(defun hash-set-nadjoin (set &rest elements)
+(defun hash-set-nadjoin-list-elements (set list)
   "===merge: hash-set-adjoin"
   (let ((table (checked-hash-set-table set)))
-    (dolist (e elements)
+    (dolist (e list)
       (setf (gethash e table) t)))
   set)
 
+(defun hash-set-adjoin-list-elements (set list)
+  "===merge: hash-set-adjoin"
+  (hash-set-nadjoin-list-elements (hash-set-copy set) list))
+
+(defun hash-set-nadjoin (set &rest elements)
+  "===merge: hash-set-adjoin"
+  (hash-set-nadjoin-list-elements set elements))
+
 (defun hash-set-adjoin (set &rest elements)
   "Returns a @code{hash-set} that contains all the elements of @var{set} to which have
-been added the @var{elements}. As usual duplicate elements are not added, though exactly
-which of any potential duplicates are retained is undefined. The @code{hash-set-adjoin}
-function returns a freshly created @code{hash-set} and does not modify @var{set}, while
-@code{hash-set-nadjoin} modifies and returns @var{set}. Signals a @code{type-error} if
-@var{set} is not a @code{hash-set}.
+been added the @var{elements}, or the elements of the @var{list}. As usual duplicate
+elements are not added, though exactly which of any potential duplicates are retained is
+undefined. The @code{hash-set-adjoin} and @code(hash-set-adjoin-list-elements} functions
+do not modify @var{set} but might return it if no changes are needed; that is, the caller
+cannot depend upon it necessarily being a fresh copy. The @code{hash-set-nadjoin} and
+@code{hash-set-nadjoin-list-elements} functions modify @var{set} (if one or more of the
+elements is not already contained therein) and return it. Note that
+@code{hash-set-[n]adjoin-list-elements} differs from @code{(apply #'hash-set-[n]adjoin
+...)} in that the latter can adjoin at most @code{call-arguments-limit} elements. Signals
+a @code{type-error} if @var{set} is not a @code{hash-set}.
 @example
 @group
  (hash-set-elements (hash-set-adjoin (hash-set 1 2 3) 4 3 2))
      @result{} (3 4 1 2)
 @end group
 @end example"
-  (apply #'hash-set-nadjoin (hash-set-copy set) elements))
-
-(define-modify-macro hash-set-nadjoinf (&rest elements) hash-set-nadjoin
-                     "===lambda: (set &rest elements)
-Adds @var{elements} to @var{set}, which should be a location suitable as a first argument
-to @code{setf} containing a @code{hash-set}, which is modified. As usual duplicate
-elements are not added, though exactly which of any potential duplicates are retained is
-undefined. Returns @var{set} Signals a @code{type-error} if @var{set} does not contain a
-@code{hash-set}.
-@example
-@group
- (let ((s (hash-set !1324 !3412 !4321)))
-   (adjoinf s !1234 !3412 !4231)
-   (hash-set-elements s))
-     @result{} (!3412 !4231 !1234 !3412 !4321 !1324)
-@end group
-@end example")
+  (hash-set-nadjoin-list-elements (hash-set-copy set) elements))
 
 (defun hash-set-delete (set &rest elements)
   "Deletes from the @code{hash-set} @var{set} all elements @code{equalp} to elements of
@@ -423,21 +420,6 @@ not a @code{hash-set}."
 not a @code{hash-set}."
   (apply #'hash-set-delete (hash-set-copy set) elements))
 
-(define-modify-macro hash-set-deletef (&rest elements) hash-set-delete
-                     "===lambda: (set &rest elements)
-Deletes from @var{set}, which should be a location suitable as a first argument to
-@code{setf} contains a @code{hash-set}, all its elements @code{equalp} to any of the
-@var{elements}. Returns @var{set}. Signals a @code{type-error} if the @var{set} does not
-contain a @code{hash-set}.
-@example
-@group
- (let ((s (hash-set !3524 !5432 !4253 !2345)))
-   (hash-set-deletef s !2345 !5432)
-   (hash-set-elements s))
-    @result{} (!4253 !3524)
-@end group
-@end example")
-
 (defun hash-set-ndifference (set &rest more-sets)
   "===merge: hash-set-difference"
   (let ((table (checked-hash-set-table set)))
@@ -446,9 +428,9 @@ contain a @code{hash-set}.
   set)
 
 (defun hash-set-difference (set &rest more-sets)
-  "Returns a @code{hash-set} containing all the elements of @var{set} that not contained
-in any of @var{more-sets}. The @code{hash-set-difference} version returns a fresh
-@code{hash-set}, and does not modify @var{set} or any of the @var{more-sets}. The
+  "Returns a @code{hash-set} containing all the elements of @var{set} that are not
+contained in any of @var{more-sets}. The @code{hash-set-difference} version returns a
+fresh @code{hash-set}, and does not modify @var{set} or any of the @var{more-sets}. The
 @code{hash-set-ndifference} version modifies and returns @var{set}, but does not modify
 any of @var{more-sets}. Signals a @code{type-error} if @var{set} or any of @var{more-sets}
 are not @code{hash-set}s.
@@ -463,41 +445,47 @@ are not @code{hash-set}s.
 @end example"
   (apply #'hash-set-ndifference (hash-set-copy set) more-sets))
 
-(defun %extreme-hash-set (sets test)
-  ;; SETS is a non-empty list of hash-sets. Returns two values, the first the first
-  ;; element of SETS that contains the most/fewest elements, according to the function
-  ;; TEST, and the second SETS with that element spliced out of it. Duplicate (eq) sets
-  ;; are weeded out before looking for the extremum.
-  (iter (with extremum := (first sets))
+(defun %extreme-hash-set (set more-sets test)
+  ;; SET is a hash-set and MORE-SETS is a list of hash-sets. Returns two values, the first
+  ;; the first element of (APPEND SET MORE-SETS) that contains the most/fewest elements,
+  ;; according to the function TEST, and the second that same appended list with that
+  ;; etreme element spliced out of it. Duplicate (eq) sets are weeded out before looking
+  ;; for the extremum.
+  (iter (with extremum := set)
         (with extreme-count := (hash-set-count extremum))
         (with rest := ())
-        (for s :in (rest sets))
+        (for s :in more-sets)
         (for c := (hash-set-count s))
         (unless (or (eq s extremum) (member s rest :test #'eq))
-          (push (if (funcall test c extreme-count)
-                    (prog1 extremum (setf extremum s extreme-count c))
-                    s)
+          (push (cond ((funcall test c extreme-count)
+                       (setf extreme-count c)
+                       (shiftf extremum s))
+                      (t s))
                 rest))
         (finally (return (values extremum rest)))))
 
-(defun %hash-set-union (sets copy)
-  (unless sets
-    (return-from %hash-set-union (hash-set)))
-  (multiple-value-bind (result rest) (%extreme-hash-set sets #'>)
-    ;; Add elements into the largest set from the smaller ones.
-    (when copy
-      (setf result (hash-set-copy result)))
-    (let ((table (hash-set-table result)))
-      (dolist (s rest)
-        (maphash-keys #'(lambda (k) (setf (gethash k table) t)) (hash-set-table s))))
-    result))
+(defun %hash-set-nunion (set more-sets)
+  (iter (with table := (hash-set-table set))
+        (for s :in more-sets)
+        (maphash-keys (lambda (k) (setf (gethash k table) t)) (hash-set-table s)))
+  set)
 
-(defun hash-set-union (&rest sets)
-  "Returns a @code{hash-set} containing all the elements that appear in one or more of the
-@var{sets}. The @code{hash-set-union} version returns a fresh @code{hash-set}, and does
-not modify any of the @var{sets}. The @code{hash-set-nunion} may modify or destroy one
-or more of the @var{sets}, and the return value may or may not be @code{eq} to one of
-them. Signals a @code{type-error} if any of the @var{sets} are not @code{hash-set}s.
+(defun hash-set-nunion (set &rest more-sets)
+  "===merge: hash-set-union"
+  (cond (more-sets
+         (dolist (s more-sets)
+           (check-type* s hash-set))
+         (%hash-set-nunion set more-sets))
+        (t (check-type* set hash-set))))
+
+(defun hash-set-union (set &rest more-sets)
+  "Returns a @code{hash-set} containing all the elements that appear in @var{set} or in
+any of the @var{more-sets}. The @code{hash-set-union} function does not modify @var{set}
+or any of the @var{more-sets}, but may return any one of them unmodified if appropriate;
+the caller should not assume a fresh @code{hash-set} is returned. The
+@code{hash-set-nunion} function always returns @var{set}, modifying it if necessary; it
+does not modify any of the @var{more-sets}. Signals a @code{type-error} if @var{set} or
+any of the @var{more-sets} are not @code{hash-set}s.
 @example
 @group
  (coerce
@@ -510,20 +498,42 @@ them. Signals a @code{type-error} if any of the @var{sets} are not @code{hash-se
  (hash-set-empty-p (hash-set-union)) @result{} t
 @end group
 @end example"
-  (%hash-set-union sets t))
+  (cond ((null more-sets)
+         (check-type* set hash-set))
+        ((rest more-sets)
+         (multiple-value-bind (largest rest) (%extreme-hash-set set more-sets #'>)
+           (%hash-set-nunion (hash-set-copy largest) rest)))
+        ((> (hash-set-count (first more-sets)) (hash-set-count set))
+         (%hash-set-nunion (hash-set-copy (first more-sets)) (list set)))
+        (t (%hash-set-nunion (hash-set-copy set) more-sets))))
 
-(defun hash-set-nunion (&rest sets)
-  "===merge: hash-set-union"
-  (%hash-set-union sets nil))
+(defun %hash-set-nintersection (set more-sets)
+  (let ((table (hash-set-table set))
+        (more-tables (mapl #'(lambda (sublist)
+                               (setf (first sublist) (hash-set-table (first sublist))))
+                           more-sets)))
+    (maphash-keys (lambda (k)
+                    (unless (every (lambda (tab) (gethash k tab)) more-tables)
+                      (remhash k table)))
+                  table))
+  set)
+
+(defun hash-set-nintersection (set &rest more-sets)
+  "===merge: hash-set-intersection"
+  (cond (more-sets
+         (dolist (s more-sets)
+           (check-type* s hash-set))
+         (%hash-set-nintersection set more-sets))
+        (t (check-type* set hash-set))))
 
 (defun hash-set-intersection (set &rest more-sets)
-  "Retuns a @code{hash-set} such at all of its elements are also elements of @var{set} and
-of all the @var{more-sets}. The @code{hash-set-intersection} version returns a fresh
-@code{hash-set}, and does not modify @var{set} or any of the @var{more-sets}. The
-@code{hash-set-nintersection} version may modify or destroy @var{set} and one or more of
-the @var{more-sets}, and the return value may or may not be @code{eq} to one of them.
-Signals a @code{type-error} if @var{set} or any of @var{more-sets} are not
-@code{hash-set}s.
+  "Returns a @code{hash-set} such at all of its elements are also elements of @var{set}
+and of all the @var{more-sets}. The @code{hash-set-intersection} function does not modify
+@var{set} or any of the @var{more-sets}, but may return any one of them unmodified if
+appropriate; the caller should not assume a fresh @code{hash-set} is returned. The
+@code{hash-set-nintersection} function always returns @var{set}, modifying it if
+necessary; it does not modify any of the @var{more-sets}. Signals a @code{type-error} if
+@var{set} or any of the @var{more-sets} are not @code{hash-set}s.
 @example
 @group
  (coerce
@@ -535,26 +545,14 @@ Signals a @code{type-error} if @var{set} or any of @var{more-sets} are not
      @result{} \"EaC\"
 @end group
 @end example"
-  (%hash-set-intersection (cons set more-sets) t))
-
-(defun %hash-set-intersection (sets copy)
-  (multiple-value-bind (result rest) (%extreme-hash-set sets #'<)
-    ;; Subtract elements from the smallest set of elements not in the larger ones.
-    (when copy
-      (setf result (hash-set-copy result)))
-    (let ((table (hash-set-table result))
-          (rest-tables (mapl #'(lambda (sublist)
-                                 (setf (first sublist) (hash-set-table (first sublist))))
-                             rest)))
-      (maphash-keys #'(lambda (k)
-                        (unless (every #'(lambda (tab) (gethash k tab nil)) rest-tables)
-                          (remhash k table)))
-                    table))
-    result))
-
-(defun hash-set-nintersection (set &rest more-sets)
-  "===merge: hash-set-intersection"
-  (%hash-set-intersection (cons set more-sets) nil))
+  (cond ((null more-sets)
+         (check-type* set hash-set))
+        ((rest more-sets)
+         (multiple-value-bind (smallest rest) (%extreme-hash-set set more-sets #'<)
+           (%hash-set-nintersection (hash-set-copy smallest) rest)))
+        ((< (hash-set-count (first more-sets)) (hash-set-count set))
+         (%hash-set-nintersection (hash-set-copy (first more-sets)) (list set)))
+        (t (%hash-set-nintersection (hash-set-copy set) more-sets))))
 
 (defun map-hash-set (function set)
   "Calls @var{function} on each element of the @code{hash-set} @var{set}, and returns
