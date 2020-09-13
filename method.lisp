@@ -2437,8 +2437,11 @@ if the @code{call} would be positioned, or replace changes, that lie outside the
 a @code{call} with following changes does not replace changes up to the end of the first
 lead, or an attempt is made to applly two or more @code{call}s with following place
 notation to the same lead."
-  (let* ((stage (method-stage method))
-         (result (cons nil (method-changes method)))
+  (let* ((stage (or (method-stage method)
+                    (simple-parse-error "~S does not have its stage defined" method)))
+         (result (cons nil (or (method-changes method)
+                               (simple-parse-error "~S does not have its place notation defined"
+                                                   method))))
          (p result)
          (i 0)
          (end (method-lead-length method)))

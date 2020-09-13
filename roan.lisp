@@ -69,7 +69,7 @@ default. It is a generalized boolean, with an initial default value of @code{t}.
 
 (defun bell-name (bell &optional (upper-case *print-bells-upper-case*))
   "Returns a character denoting this @var{bell}, or @code{nil} if @var{bell} is not a
- @code{bell}. If the character is alphabetic, an upper case letter is return if the
+ @code{bell}. If the character is alphabetic, an upper case letter is returned if the
  generalized boolean @var{upper-case} is true, and otherwise a lower case letter. If
  @var{upper-case} is not supplied it defaults to the current value of
  @code{*print-bells-upper-case*}.
