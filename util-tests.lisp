@@ -277,7 +277,16 @@
     (assert-equal '(3 6) (sort (iter (for e :in-hash-set s2) (when e (collect (/ e 2))))
                                 #'<))
     (assert-eq nil (iter (for e :in-hash-set s2) (hash-set-delete s2 e)))
-    (assert-true (hash-set-empty-p s2))))
+    (assert-true (hash-set-empty-p s2))
+    (iter (with list := '(!132465 !87654321 17 :foo))
+          (with set := (make-hash-set :initial-elements list))
+          (for n :downfrom 4)
+          (until (zerop n))
+          (assert-eql n (hash-set-count set))
+          (assert (member (hash-set-pop set) list :test #'equalp))
+          (finally (assert (null (hash-set-pop set nil)))
+                   (assert-equalp :empty (hash-set-pop set nil :empty))
+                   (assert-error 'error (hash-set-pop set))))))
 
 (defstruct test-hash-set-errors-test-struct roan::table)
 

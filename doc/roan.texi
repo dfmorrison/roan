@@ -346,6 +346,7 @@ producing lists of @code{row}s, representing changes.
 @include inc/hash-set-adjoin-function.texi
 @include inc/hash-set-remove-function.texi
 @include inc/hash-set-delete-function.texi
+@include inc/hash-set-pop-function.texi
 @include inc/hash-set-difference-function.texi
 @include inc/hash-set-union-function.texi
 @include inc/hash-set-intersection-function.texi

@@ -76,6 +76,7 @@
            #:hash-set-nintersection
            #:hash-set-nunion
            #:hash-set-p
+           #:hash-set-pop
            #:hash-set-proper-subset-p
            #:hash-set-remove
            #:hash-set-subset-p
