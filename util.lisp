@@ -420,19 +420,6 @@ not a @code{hash-set}."
 not a @code{hash-set}."
   (apply #'hash-set-delete (hash-set-copy set) elements))
 
-(defun hash-set-pop (set &optional (error-p t) empty-value)
-  "Deletes an element from @var{set} and returns it. The particular element chosen to be
-removed and returned is undefined. If @var{set} is empty returns @var{empty-value} if the
-generalized Boolean @var{error-p} is false and otherwise signals an error. By default
-@var{error-p} is true and @var{empty-value} is @code{nil}. Signals a @code{type-error} if
-@var{set} is not a @code{hash-set}."
-  (cond ((not (hash-set-empty-p set))
-         (let ((result (do-hash-set (e set) (return e))))
-           (hash-set-delete set result)
-           result))
-        (error-p (error "Attempt to pop an element from the empty hash-set ~S" set))
-        (t empty-value)))
-
 (defun hash-set-ndifference (set &rest more-sets)
   "===merge: hash-set-difference"
   (let ((table (checked-hash-set-table set)))
@@ -616,6 +603,19 @@ elements are iterated over is undefined, and may vary between invocations of thi
 on the same @code{hash-set}. If @var{set} is not a @code{hash-set} a @code{type-error} is
 signaled."
   `(for (,var nil) in-hashtable (checked-hash-set-table ,set)))
+
+(defun hash-set-pop (set &optional (error-p t) empty-value)
+  "Deletes an element from @var{set} and returns it. The particular element chosen to be
+removed and returned is undefined. If @var{set} is empty returns @var{empty-value} if the
+generalized Boolean @var{error-p} is false and otherwise signals an error. By default
+@var{error-p} is true and @var{empty-value} is @code{nil}. Signals a @code{type-error} if
+@var{set} is not a @code{hash-set}."
+  (cond ((not (hash-set-empty-p set))
+         (let ((result (do-hash-set (e set) (return e))))
+           (hash-set-delete set result)
+           result))
+        (error-p (error "Attempt to pop an element from the empty hash-set ~S" set))
+        (t empty-value)))
 
 
 ;;; with-warnings-muffled
