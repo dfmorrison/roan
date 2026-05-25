@@ -66,7 +66,7 @@ a space.
 Spaces, but no other whitespace, can be included in patterns. However no spaces may be
 included within bell classes or run descriptions. Thus \" 123 [456] 7-T/3 * \" is
 equivalent to \"123[456]7-T/3*\", but both \"123[ 4 5 6 ]7-T/3*\" and
-\"123[456]7-T / 3*\" are illegal, and will cause an error to be signaled.
+\"123[456]7-T / 3*\" are illegal, and will cause errors to be signaled.
 
 In addition to strings, patterns may be represented by parse trees, which are simple list
 structures made up of keywords and bells (that is, small, non-negative integers). Strings
@@ -92,7 +92,7 @@ is equivalent to the tree
 @end group
 @end example
 ===endsummary===
-Determines whether @var{row}, or pair of consecutive @code{row}s, @var{row} and
+Determines whether @var{row}, or a pair of consecutive @code{row}s, @var{row} and
 @var{following-row}, match a pattern. If @var{following-row} is supplied it should be of
 the same stage as @var{row}. The @var{pattern} may be a string or a tree, and should be
 constructed to be appropriate for the stage of @var{row}; an error is signaled if it
@@ -116,7 +116,7 @@ Signals an error if @var{pattern} cannot be parsed as a pattern, if @var{row} is
 @var{pattern} contains bells above the stage of @var{row}, or if @var{following-row} is a
 @code{row} of a different stage than @var{row}.
 
-Care should be used when matching against two rows. In the usual use case when searching
+Care should be used when matching against two rows. In the usual use case where searching
 for things like wraps every row typically will be passed twice to this method, first as
 @var{row} and then as @var{following-row}. A naive pattern might end up matching twice,
 and thus double counting. For example, if at major \"*12345678*\" were used to search for
@@ -623,7 +623,7 @@ which label is retained is undefined.
 
 A @code{match-counter} also distinguishes matches that occur at handstroke from those
 that occur at backstroke. Typically you tell the @code{match-counter} which stroke the
-next @code{row} it is asked to match is on, and it then automatically alternates
+next @code{row} it is asked to match is on, and it then it automatically alternates
 handstrokes and backstrokes for subsequent @code{row}s. For patterns that span two
 rows, such as wraps, the stroke is considered to be that between the rows; for example a
 wrap of rounds that spans a backstroke lead would be considered to be ``at'' backstroke.
