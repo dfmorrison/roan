@@ -1,4 +1,4 @@
-;;;; Copyright (c) 1975-2026 Donald F Morrison
+;;;; Copyright (c) 1975-2021 Donald F Morrison
 ;;;;
 ;;;; Permission is hereby granted, free of charge, to any person obtaining a copy of this
 ;;;; software and associated documentation files (the "Software"), to deal in the Software
@@ -32,6 +32,10 @@
                (assert-equal expected (comparable-method-name n)))))
     (test-name "advent" "Advent" "ADVENT" "aDvEnT" "advent")
     (test-name "new cambridge" "New Cambridge" "new Cambridge" "New cambridge" "New Cambridge")
+    (test-name "london no3" "London No.3" "London No 3" "London No. 3" "London No3")
+    (test-name "nasa" "NASA" "N.A.S.A." "N. A. S. A.")
+    (test-name "st albans" "St Alban's" "St Albans")
+    (test-name "achaorochain" "A'Chaorochain" "A' Chaorochain" "A'chaorochain")
     (test-name "e mc2" "E=mc²" "e & MC₂")
     (test-name "makcentm" "mäkčeň™")
     (test-name "uluru" "Uluṟu")
@@ -1093,7 +1097,7 @@
             "Little Bob Twenty-Two")
     (test-n '(:name "* *") 6309
             "Winchester Castle Surprise Major"
-            "www.ouscr.org.uk Treble Place Minor"
+            "Cat's-Eye Surprise Major"
             "London No.3 Surprise Royal")
     (test-n nil 21637)
     (test-n '(:stage 16) 49 "Leda Little Alliance Sixteen")
