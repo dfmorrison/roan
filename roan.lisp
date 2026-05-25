@@ -1,4 +1,4 @@
-;;;; Copyright (c) 1975-2020 Donald F Morrison
+;;;; Copyright (c) 1975-2026 Donald F Morrison
 ;;;;
 ;;;; Permission is hereby granted, free of charge, to any person obtaining a copy of this
 ;;;; software and associated documentation files (the "Software"), to deal in the Software
@@ -45,7 +45,7 @@ A representation of a bell. These are zero-based, small integers, so the treble 
 
   `(integer 0 (,+maximum-stage+)))
 
-;;; We're assuming ASCII/Unicode here. It will have to be changed if support for a bizarre
+;;; We're assuming ASCII/Unicode here. It may have to be changed if support for a bizarre
 ;;; character set is required.
 (defconstant +char-code-array-length+ 256)
 

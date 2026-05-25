@@ -14,7 +14,7 @@
 @copying
 This is documentation of Roan, version @value{VERSION}.
 
-This documentation is copyright @copyright{} 2015-2020 Donald F Morrison.
+This documentation is copyright @copyright{} 2015-2026 Donald F Morrison.
 
 Copying and distribution of this documentation, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -124,7 +124,8 @@ Roan by hand, the repository for Roan itself is at
 both current and previous versions can be downloaded from the tags pane of the Downloads
 page, @url{https://bitbucket.org/dfmorrison/roan/downloads/?tab=tags}.
 
-Note that Quicklisp creates a new distribution about once a month, so there may be a log
+Note that Quicklisp creates a new distribution irregularly, these days it appears perhaps
+once ever six months or more, so there may be a lag
 of that duration between when a new version is available in the Bitbucket repository and
 when that version is available in Quicklisp. If you need it sooner, you may need to
 download it yourself from Bitbucket.
