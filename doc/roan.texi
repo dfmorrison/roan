@@ -29,7 +29,7 @@ notice and this notice are preserved.
 @end titlepage
 
 @ifnottex
-@validatemenus off
+@c @validatemenus off
 @node Top
 @top
 @insertcopying

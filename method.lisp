@@ -245,7 +245,7 @@ details cannot occur together, such as a little principle."
     result))
 
 (define-constant +suppress-class+
-    '("Grandsire" "Double Grandsire" "Reverse Grandsire" "Little Grandsire"
+    '("Grandsire" "Double Grandsire" "Reverse Grandsire" "Little Grandsire" "New Grandsire"
       "Union" "Double Union" "Reverse Union" "Little Union")
   :test #'equalp)
 
@@ -2199,7 +2199,7 @@ array being a possibly empty list of course heads. For element @var{e}, the list
 @var{m},@var{n} of this array, lead @var{m} of the plain course of @var{method} is false
 against lead @var{n} of each of the courses starting with an element of @var{e}. The leads
 are counted starting with zero. That is, if @var{s} is the stage of @var{method}, then
-0≤@var{m}<@var{s}-1 and 0≤@var{n}<@var{s}-1.
+0@u{2264}@var{m}<@var{s}-1 and 0@u{2264}@var{n}<@var{s}-1.
 
 A @code{type-error} is signaled if @var{method} is not a @code{method}. Signals a
 @code{parse-error} if the place notation string cannot be properly parsed as place
@@ -3120,18 +3120,14 @@ potentially useful slots accessible with @code{file-error-pathname} and
           (drakma:header-value :last-modified headers)))
 
 (define-constant +extra-methods+
-    '(("New Grandsire Bob Doubles" "5.1.5.1,1.3")
-      ("New Grandsire Bob Triples" "7.1.7.1.7.1,1.3")
-      ("New Grandsire Bob Caters" "9.1.9.1.9.1.9.1,1.3")
-      ("New Grandsire Bob Cinques" "E.1.E.1.E.1.E.1.E.1,1.3")
-      ("Cloister Bob Doubles" "5.1.3.1.3.1")
-      ("Cloister Bob Triples" "7.1.3.1.3.1")
-      ("Cloister Bob Caters" "9.1.3.1.3.1")
-      ("Cloister Bob Cinques" "E.1.3.1.3.1")
-      ("St Helen's Bob Doubles" "5.1.3.1.3.1")
-      ("St Helen's Bob Triples" "7.1.3.1.3.1")
-      ("St Helen's Bob Caters" "9.1.3.1.3.1")
-      ("St Helen's Bob Cinques" "E.1.3.1.3.1")
+    '(("Cloister Little Bob Doubles" "5.1.3.1.3.1")
+      ("Cloister Little Bob Triples" "7.1.3.1.3.1")
+      ("Cloister Little Bob Caters" "9.1.3.1.3.1")
+      ("Cloister Little Bob Cinques" "E.1.3.1.3.1")
+      ("St Helen's Little Bob Doubles" "5.1.3.1.3.1")
+      ("St Helen's Little Bob Triples" "7.1.3.1.3.1")
+      ("St Helen's Little Bob Caters" "9.1.3.1.3.1")
+      ("St Helen's Little Bob Cinques" "E.1.3.1.3.1")
       ("Mersey Ferry Treble Jump Minor" "(13)4.(35)x(64)3.(42)x" t)
       ("Double Oxford Treble Jump Minor" "x(24)x(35)x5,2" t)
       ("Cambridge Treble Jump Minor" "x3x(24)x2x(35)x4x5,2" t)

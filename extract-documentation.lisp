@@ -122,9 +122,12 @@
              properties)
       rest)))
 
-(defun extract-documentation (system-name &key
-                                            (package-name system-name)
-                                            (directory +default-include-file-directory+))
+(defun extract-documentation (system-name &key (package-name system-name)
+                                               (directory +default-include-file-directory+))
+  ;; First, until trivial-documentation gets fixed, work around a nasty interaction
+  ;; between it and SBCL. If other public classes are added to Roan they'll need to be
+  ;; finalized here, too.
+  (closer-mop:ensure-finalized 'roan:method)
   (let ((*include-file-directory* (uiop/pathname:subpathname
                                    (asdf:system-source-directory system-name)
                                    directory))

@@ -1174,6 +1174,17 @@
       (when (probe-file *method-library-path*)
         (delete-file *method-library-path*)))))
 
+(define-test test-no-extra-duplicates ()
+  (iter (for (title) :in roan::+extra-methods+)
+        (for m := (method-from-title title))
+        (assert-eql 1 (length (lookup-methods :name (method-name m)
+                                              :jump (method-jump-p m)
+                                              :differential (method-differential-p m)
+                                              :little (method-little-p m)
+                                              :class (method-class m)
+                                              :stage (method-stage m))))))
+
+
 (define-test test-call ()
   (labels ((check-call (call changes offset from-end fraction replace &key stage following)
              (assert-equalp changes (get-call-changes call (or stage (stage (first changes)))))

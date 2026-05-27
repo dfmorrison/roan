@@ -25,10 +25,9 @@ doc/roan/index.html: doc/roan.texi doc/inc/roan-version.texi
 	cd doc; makeinfo --html --css-include=roan.css --split=chapter roan.texi
 
 doc/inc/roan-version.texi: $(SOURCES) roan.asd extract-documentation.lisp
-	ccl -Q \
-	-e '(ql:quickload :roan/doc)' \
-	-e '(roan/doc:extract-documentation :roan)' \
-	-e '(quit)'
+	sbcl --noinform --non-interactive \
+	--eval '(ql:quickload :roan/doc)' \
+	--eval '(roan/doc:extract-documentation :roan)' \
 
 archives:
 	cd doc; cp roan.html roan-manual-single-page.html; xz roan-manual-single-page.html
