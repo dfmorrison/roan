@@ -120,25 +120,24 @@ Quicklisp's @code{quickload} function, above, will also pull in all the other li
 upon which Roan depends; if you don't use Quicklisp you will have to ensure that those
 libraries are available and loaded. If you don't want to use Quicklisp, and prefer to load
 Roan by hand, the repository for Roan itself is at
-@url{https://bitbucket.org/dfmorrison/roan}, and
-both current and previous versions can be downloaded from the tags pane of the Downloads
-page, @url{https://bitbucket.org/dfmorrison/roan/downloads/?tab=tags}.
+@url{https://github.com/dfmorrison/roan}.
 
 Note that Quicklisp creates a new distribution irregularly, these days it appears perhaps
-once ever six months or more, so there may be a lag
-of that duration between when a new version is available in the Bitbucket repository and
+once every six months or more, so there may be a lag
+of that duration between when a new version is available in the GitHub repository and
 when that version is available in Quicklisp. If you need it sooner, you may need to
-download it yourself from Bitbucket.
+download it yourself from GitHub.
 
 @cindex Lisp implementations
 Roan has been tested with at least
 @itemize
 @item
-@url{http:ccl.clozure.com,@acronym{CCL, Clozure CL}} version 1.11.5 (64 bit), on Ubuntu
-Linux 18.04.3,
+@url{http://sbcl.org,@acronym{SBCL, Steel Bank Common Lisp}} version 2.4.0 (ARM64) on
+macOS 26.5
+@item SBCL version 1.5.5 (x86-64) on Ubuntu Linux 18.04.3.
 @item
-and @url{http://sbcl.org,@acronym{SBCL, Steel Bank Common Lisp}} version 1.5.5 (64 bit) on
-Ubuntu Linux 18.04.3.
+and @url{http:ccl.clozure.com,@acronym{CCL, Clozure CL}} version 1.11.5 (x86-64),
+on Ubuntu Linux 18.04.3,
 @end itemize
 @noindent
 but should also work in other, modern Common Lisp implementations that
@@ -149,8 +148,9 @@ support the libraries on which Roan depends. @xref{dependencies}.
 @section Reporting bugs
 
 The best way to report bugs is to submit them with
-@url{https://bitbucket.org/dfmorrison/roan/issues,Roan's Bitbucket issue tracker}.
-If that doesn't work for you you can also send mail to Don Morrison <@email{dfm@@ringing.org}>.
+@url{https://github.com/dfmorrison/roan/issues,Roan's GitHub issue tracker}.
+If that doesn't work for you you can also send mail
+to Don Morrison <@email{dfmorrison@@gmail.com}>.
 
 It would be helpful, and will be more likely to lead to successful resolution of the bug,
 if a bug report includes

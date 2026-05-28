@@ -48,40 +48,25 @@ Quicklisp's `quickload` function, above, will also pull in all the other librari
 upon which Roan depends; if you don't use Quicklisp you will have to ensure that those
 libraries are available and loaded. If you don't want to use Quicklisp, and prefer to load
 Roan by hand, the repository for Roan itself is at
-[https://bitbucket.org/dfmorrison/roan](https://bitbucket.org/dfmorrison/roan), and
-both current and previous versions can be downloaded from the tags pane of the Downloads
-page, [https://bitbucket.org/dfmorrison/roan/downloads/?tab=tags](https://bitbucket.org/dfmorrison/roan/downloads/?tab=tags).
+[https://github.com/dfmorrison/roan](https://github.com/dfmorrison/roan).
 
-Note that Quicklisp creates a new distribution about once a month, so there may be a lag
-of that duration between when a new version is available in the Bitbucket repository and
+Note that Quicklisp creates a new distribution irregularly, these days it appears perhaps
+once every six months or more, so there may be a lag
+of that duration between when a new version is available in the GitHub repository and
 when that version is available in Quicklisp. If you need it sooner, you may need to
-download it yourself from Bitbucket.
+download it yourself from GitHub.
 
-Roan has been tested with
-
-* [CCL](http://ccl.clozure.com) (Clozure Common Lisp) version 1.11.5 (64 bit), on Ubuntu Linux 18.04.3
-
-* [SBCL](http://sbcl.org) (Steel Bank Common Lisp) version 1.5.5 (64 bit) on Ubuntu Linux 18.04.3
-
+Roan has been tested with [SBCL](http://sbcl.org) (Steel Bank Common Lisp) on macOS, and
+both SBCL and [CCL](http://ccl.clozure.com) (Clozure Common Lisp) on Linux,
 but it should also work in other, modern Common Lisp implementations that
 support the libraries on which Roan depends.
 
 ### Documentation
 
 The [Roan manual](https://ringing.org/roan-manual.pdf "Roan manual PDF version") is available online.
-It can also be downloaded in four different formats:
-
-* [a PDF file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual.pdf)
-
-* [a single HTML page](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-single-page.html.bz2)
-
-* [multiple HTML pages](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual-multiple-pages-html.tar.bz2)
-
-* [an Info file](https://bitbucket.org/dfmorrison/roan/downloads/roan-manual.info.bz2)
 
 ### Reporting Bugs
 
 The best way to report bugs is to submit them with
-[Roan's Bitbucket issue tracker](https://bitbucket.org/dfmorrison/roan/issues)
-If that doesn't work for you you can also send mail to Don Morrison <dfm@ringing.org>.
-
+[Roan's GitHub issue tracker](https://github.com/dfmorrison/roan/issues)
+If that doesn't work for you you can also send mail to Don Morrison <dfmorrison@gmail.com>.

@@ -203,14 +203,14 @@ prefixed with an explicit @code{roan:}.
 Alternatively all the external symbols of the @code{roan} package can be imported into a
 package with @code{use-package}, or the @code{:use} option to @code{defpackage}. There is
 the slight complication, however, that the @code{roan} package shadows the symbols
-@code{method}, @code{method-name}, @code{class} and @code{class-name} from the
+@code{method}, @code{method-name} and @code{class-name} from the
 @code{common-lisp} package. This is done because methods and their classes are important
 concepts in change ringing, albeit ones unrelated to CLOS methods and classes. Typically
-@code{method}, @code{method-name}, @code{class} and @code{class-name} should be shadowed
+@code{method}, @code{method-name} and @code{class-name} should be shadowed
 in other packages that use the @code{roan} package. This can be done with
 @code{shadowing-import-from}, or the @code{:shadowing-import} option to @code{defpackage}.
 Note that the original Common Lisp symbols will still be available as @code{cl:method},
-@code{cl:method-name}, @code{cl:class} and @code{cl:class-name}. @xref{use-roan}.
+@code{cl:method-name} and @code{cl:class-name}. @xref{use-roan}.
 @example
 @group
 MY-PACKAGE> *package* #<Package \"MY-PACKAGE\"> MY-PACKAGE> (package-use-list *)
@@ -225,7 +225,7 @@ MY-PACKAGE> *package* #<Package \"MY-PACKAGE\"> MY-PACKAGE> (package-use-list *)
 @end example
 ===endsummary===
 Contains the symbols used by Roan. The @code{roan} package shadows three symbols from the
-@code{common-lisp} package: @code{method}, @code{method-name}, @code{class} and
+@code{common-lisp} package: @code{method}, @code{method-name} and
 @code{class-name}. The functions and so on attached to these symbols in the
 @code{common-lisp} package are usually only needed when doing introspection, and the
 shadowing should rarely cause difficulties."))

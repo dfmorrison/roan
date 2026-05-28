@@ -291,7 +291,7 @@ Instances of @code{row} should normally be treated as immutable."
   "Writes @var{row}, which should be a @code{row}, to the indicated @var{stream}.
 The case of any bells represented by letters is controlled by @var{upper-case}, a
 generalized boolean defaulting to the current value of @code{*print-bells-upper-case*}.
-@var{escape}, a generalized Boolean defaulting to the current value of
+The @var{escape} argument, a generalized Boolean defaulting to the current value of
 @code{*print-escape*}, determines whether or not to write it in a form that read can
 understand. Signals a @code{type-error} if @var{row} is not a @code{row}, and the usual
 errors if @var{stream} is not open for writing, etc."
@@ -1108,7 +1108,9 @@ not a @code{row}.
   "Returns a list of lists of bells. Each of the sublists is the orbit of all of its
 elements in @var{row}. One cycles are included. Thus, if @var{row} is a lead head, all the
 sublists of length one are hunt bells, all the rest being working bells; if there are two
-or more sublists of length greater than one the corresponding method is differential. The
+or more sublists of length greater than one the corresponding method is either a differential
+method or a short course method: if not all the sublists of length greater than one are of
+the same length then it is differential, and otherwise a short course method. The
 resulting sublists are each ordered such that the first bell is the lowest numbered bell
 in that cycle, and the remaining bells occur in the order in which a bell traverses the
 cycle. Within the top level list, the sublists are ordered such that the first bell of
@@ -1354,7 +1356,10 @@ rounds is not a Grandsire lead head, nor is any row below minimus. Signals a
 Place notation manipulated by Roan is extended to support jump changes and comma as an
 unfolding operator for easy notation of palindromic sequences of changes.
 
-Jump changes may be included in the place notation in two ways. Within changes may appear
+Jump changes may be included in the place notation in two ways.
+Note that the place notation implemented in Roan for jump changes is slightly different
+than that described in the Central Council's Framework for Method Ringing (FMR).
+Within changes may appear
 parenthesized pairs of places, indicating that the bell in the first place jumps to the
 second place. Thus the change (13)6 corresponds to the jump change 231546. As usual
 implied leading or lying places may be omitted, so that could also be written simply (13).

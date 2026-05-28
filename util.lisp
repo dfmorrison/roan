@@ -339,7 +339,7 @@ Signals a @code{type-error} if @var{set} is not a @code{hash-set}.
   "The @code{hash-set-subset-p} predicate is true if and only if all elements of
 @var{subset} occur in @var{superset}. The @code{hash-set-proper-subset-p} predicate is
 true if and only that is the case and further that @code{subset} does not contain all the
-elements of @var{superset}. @code{type-error} is signaled if either argument is not a
+elements of @var{superset}. A @code{type-error} is signaled if either argument is not a
 @code{hash-set}.
 @example
 @group
