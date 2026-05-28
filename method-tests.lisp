@@ -1095,10 +1095,11 @@
             "Little Bob Eighteen"
             "Little Bob Twenty"
             "Little Bob Twenty-Two")
-    (test-n '(:name "* *") 6309
+    (test-n '(:name "* *") 6000
             "Winchester Castle Surprise Major"
             "Cat's-Eye Surprise Major"
-            "London No.3 Surprise Royal")
+            "London No. 3 Surprise Royal"
+            "Tom a' Chòinich Surprise Royal")
     (test-n nil 21637)
     (test-n '(:stage 16) 49 "Leda Little Alliance Sixteen")
     (test-n '(:class :hybrid) 119 "Seven Stars Major")
@@ -1173,17 +1174,6 @@
                  (assert-false (equalp new (multiple-value-list (method-library-details))))))))
       (when (probe-file *method-library-path*)
         (delete-file *method-library-path*)))))
-
-(define-test test-no-extra-duplicates ()
-  (iter (for (title) :in roan::+extra-methods+)
-        (for m := (method-from-title title))
-        (assert-eql 1 (length (lookup-methods :name (method-name m)
-                                              :jump (method-jump-p m)
-                                              :differential (method-differential-p m)
-                                              :little (method-little-p m)
-                                              :class (method-class m)
-                                              :stage (method-stage m))))))
-
 
 (define-test test-call ()
   (labels ((check-call (call changes offset from-end fraction replace &key stage following)

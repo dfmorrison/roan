@@ -2579,7 +2579,7 @@ notation to the same lead."
   ;; used to confirm a method library file is such
   :test #'equal)
 
-(defconstant +default-method-libary-size+ 22000)
+(defconstant +default-method-libary-size+ 32000)
 
 (define-constant +method-source+
     "https://cccbr.github.io/methods-library/xml/CCCBR_methods.xml.zip"
@@ -2943,6 +2943,7 @@ the remote file."
                   (progn
                     (convert-xml-method-file xml-file *method-library-path* +method-source+ etag last-modified)
                     (read-method-library :force t)
+                    (check-for-duplicates-in-method-library)
                     (length (method-library-methods *method-library*)))
                (delete-file xml-file)))
         (delete-file zip-file)))))
@@ -3065,6 +3066,23 @@ potentially useful slots accessible with @code{file-error-pathname} and
                     (finally (setf (method-library-no-name-count lib) n)))
               (setf *method-library* lib))))))))
 
+(defun check-for-duplicates-in-method-library ()
+  (iter (with titles := (hash-set))
+        (for meth :in (lookup-methods))
+        (for title := (method-title meth))
+        (if (hash-set-member title titles)
+            (adjoining title :into duplicates :test #'equalp)
+            (hash-set-nadjoin titles title))
+        (finally (let ((n (length duplicates)))
+                   (case n
+                     (0)
+                     (1 (warn "Method title ~A is duplicated" (first duplicates)))
+                     (2 (warn "Method titles ~A and ~A are duplicated"
+                              (first duplicates) (second duplicates)))
+                     (t (warn "~R method titles are duplicated, including ~A and ~A"
+                              n (first duplicates) (first (last duplicates))))))
+                 (return duplicates))))
+
 (defun method-library-etag (file)
   (if *method-library*
       (getf (method-library-metadata *method-library*) :etag)
@@ -3122,7 +3140,6 @@ potentially useful slots accessible with @code{file-error-pathname} and
 (define-constant +extra-methods+
     '(("Cloister Little Bob Doubles" "5.1.3.1.3.1")
       ("Cloister Little Bob Triples" "7.1.3.1.3.1")
-      ("Cloister Little Bob Caters" "9.1.3.1.3.1")
       ("Cloister Little Bob Cinques" "E.1.3.1.3.1")
       ("St Helen's Little Bob Doubles" "5.1.3.1.3.1")
       ("St Helen's Little Bob Triples" "7.1.3.1.3.1")
