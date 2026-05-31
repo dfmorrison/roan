@@ -43,11 +43,11 @@ subexpressions. Thus \"*(4|5|6)(4|5|6)78\" at major matches all 144 combination 
 When matched against two major rows \"?*12345678*?\" matches wraps of rounds, but not
 either row being rounds.
 
-Two further notations are possible. In each case it does not extend what can be expressed,
-it merely makes more compact something that can be expressed with the symbols already
-described. The first is a bell class, which consits of one or more bell names within
-square brackets, and indicates any one of those bells. Thus an alternative way to match
-the 144 combination rollups at major is \"*[456][456]78\".
+Two further notations are possible. In each case this further notation does not extend
+what can be expressed, it merely makes more compact something that can be expressed with
+the notations already described. The first is a bell class, which consits of one or more
+bell names within square brackets, and indicates any one of those bells. Thus an
+alternative way to match the 144 combination rollups at major is \"*[456][456]78\".
 
 A more compact notation is also available for describing runs of consecutive bells. Two
 bell symbols separated by a hyphen represent the run of bells from one to the other. Thus

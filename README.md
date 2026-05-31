@@ -23,7 +23,7 @@ Roan provides
 * a data structure for describing methods, which can include jump changes,
 
 * a searchable library of method definitions, together with a mechanism for
-  updating that database from the [CCCBR Methods Library](https://cccbr.github.io/methods-library/)
+  updating that database from the [Central Council Methods Library](https://cccbr.github.io/methods-library/)
 
 * a function for drawing blue lines of methods as Scalable Vector Graphics (SVG) images
 
@@ -56,14 +56,15 @@ of that duration between when a new version is available in the GitHub repositor
 when that version is available in Quicklisp. If you need it sooner, you may need to
 download it yourself from GitHub.
 
-Roan has been tested with [SBCL](http://sbcl.org) (Steel Bank Common Lisp) on macOS, and
-both SBCL and [CCL](http://ccl.clozure.com) (Clozure Common Lisp) on Linux,
+Roan has been tested with [SBCL](https://sbcl.org) (Steel Bank Common Lisp) on macOS, and
+both SBCL and [CCL](https://ccl.clozure.com) (Clozure Common Lisp) on Linux,
 but it should also work in other, modern Common Lisp implementations that
 support the libraries on which Roan depends.
 
 ### Documentation
 
-The [Roan manual](https://ringing.org/roan-manual.pdf "Roan manual PDF version") is available online.
+The Roan manual is [available online](https://dfmorrison.github.io/) or
+<a href="https://dfmorrison.github.io/roan-manual.pdf" download>as a PDF file[/a].
 
 ### Reporting Bugs
 

@@ -47,11 +47,11 @@ notice and this notice are preserved.
 @cindex Ringing Class Library
 @cindex features
 Roan is a library of
-@url{http://en.wikipedia.org/wiki/Common_Lisp,Common Lisp}
+@url{https://en.wikipedia.org/wiki/Common_Lisp,Common Lisp}
 code for writing applications related to
-@url{http://www.ringing.org/change-ringing,change ringing}.
+@url{https://www.ringing.org/change-ringing,change ringing}.
 It is roughly comparable to the
-@url{http://ringing-lib.sourceforge.net/,Ringing Class Library},
+@url{https://ringing-lib.sourceforge.net/,Ringing Class Library},
 although that is for the C++ programming language, and the two libraries differ in many
 other ways.
 
@@ -92,9 +92,22 @@ plain lead of a method, at any point within that lead, and possibly spanning two
 is done in doubles variations.
 @end itemize
 
+@cindex documentation
+@cindex manual
+
 While this manual describes Roan, it is neither a tutorial on Lisp nor one on change
 ringing. If you don't know Common Lisp or don't know about change ringing, much of this
 manual is likely to be confusing.
+
+This manual is available online at @url{https://dfmorrison.github.io/} or as a PDF file at
+@ifhtml
+@html
+<a href="https://dfmorrison.github.io/roan-manual.pdf" download>roan-manual.pdf</a>
+@end html
+@end ifhtml
+@ifnothtml
+@url{https://dfmorrison.github.io/roan-manual.pdf}
+@end ifnothtml
 
 @cindex license
 Roan is distributed under an MIT open source license. While you should read it for
@@ -112,7 +125,7 @@ Roan also loads and uses a variety of other libraries. @xref{dependencies}.
 @cindex ASDF
 @cindex library
 @cindex Bitbucket
-While @url{http://quicklisp.org,Quicklisp} is not required to run Roan, it is recommended.
+While @url{https://www.quicklisp.org/beta, Quicklisp} is not required to run Roan, it is recommended.
 With Quicklisp installed and configured, you can download and install Roan by simply
 evaluating @code{(ql:quickload :roan)}.
 
@@ -132,23 +145,23 @@ download it yourself from GitHub.
 Roan has been tested with at least
 @itemize
 @item
-@url{http://sbcl.org,@acronym{SBCL, Steel Bank Common Lisp}} version 2.4.0 (ARM64) on
+@url{https://sbcl.org, @acronym{SBCL, Steel Bank Common Lisp}} version 2.4.0 (ARM64) on
 macOS 26.5
 @item SBCL version 1.5.5 (x86-64) on Ubuntu Linux 18.04.3.
 @item
-and @url{http:ccl.clozure.com,@acronym{CCL, Clozure CL}} version 1.11.5 (x86-64),
+and
+@url{https://ccl.clozure.com, @acronym{CCL, Clozure CL}} version 1.11.5 (x86-64),
 on Ubuntu Linux 18.04.3,
 @end itemize
 @noindent
 but should also work in other, modern Common Lisp implementations that
 support the libraries on which Roan depends. @xref{dependencies}.
 
-
 @node Reporting bugs
 @section Reporting bugs
 
 The best way to report bugs is to submit them with
-@url{https://github.com/dfmorrison/roan/issues,Roan's GitHub issue tracker}.
+@url{https://github.com/dfmorrison/roan/issues, Roan's GitHub issue tracker}.
 If that doesn't work for you you can also send mail
 to Don Morrison <@email{dfmorrison@@gmail.com}>.
 
@@ -419,8 +432,8 @@ Return the name, classification details, stage and place notation of @var{method
 @code{nil}. A non-nil value returned by @code{method-name} or @code{method-place-notation}
 is a string; by @code{method-stage} a @code{stage} (that is, an integer); and by
 @code{method-class} one of the keywords @code{:bob}, @code{:place}, @code{:surprise},
-@code{:delight}, @code{:treble-bob}, @code{:alliance}, @code{:treble-place}, or
-@code{:hybrid}. The predicates @code{method-jump-p}, @code{method-differential-p} and
+@code{:delight}, @code{:treble-bob}, @code{:alliance}, @code{:treble-place},@code{:hybrid},
+or @code{:hunt}. The predicates @code{method-jump-p}, @code{method-differential-p} and
 @code{method-little-p} return generalized booleans.
 These functions all signal a @code{type-error} if @var{method} is not a @code{method}.
 
@@ -585,7 +598,7 @@ read their actual licenses to be sure. @xref{dependencies}.
 
 Roan's license is:
 @quotation
-Copyright (c) 1975-2019 Donald F Morrison
+Copyright (c) 1975-2026 Donald F Morrison
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
@@ -636,17 +649,17 @@ sure to adhere to them.
 @item
 @url{https://common-lisp.net/project/asdf/,ASDF} [MIT]
 @item
-@url{http://weitz.de/cl-fad/,CL-FAD} [BSD]
+@url{https://weitz.de/cl-fad/,CL-FAD} [BSD]
 @item
 @url{https://common-lisp.net/project/local-time/,local-time} [MIT]
 @item
 @url{https://github.com/dardoria/uuid/blob/master/uuid.lisp,uuid} [LLGPL]
 @item
-@url{http://weitz.de/cl-ppcre,CL-PPCRE} [BSD]
+@url{https://weitz.de/cl-ppcre,CL-PPCRE} [BSD]
 @item
-@url{http://weitz.de/drakma/,Drakma} [BSD]
+@url{https://weitz.de/drakma/,Drakma} [BSD]
 @item
-@url{https://shinmera.github.io/plump/,Plump} [Artistic]
+@url{https://shinmera.com/docs/plump/, Plump} [Artistic]
 @item
 @url{https://github.com/froydnj/binascii,binascii} [BSD]
 @item
@@ -677,7 +690,7 @@ with it.
 
 @itemize
 @item
-@url{http://weitz.de/cl-fad/,CL-FAD} [BSD]
+@url{https://weitz.de/cl-fad/,CL-FAD} [BSD]
 @item
 @url{https://github.com/eugeneia/trivial-documentation,trivial-documentation} [Affero GPL]
 @end itemize
@@ -707,7 +720,7 @@ a different language a ``port'') to a few other programming languages where I us
 various lengths of time. Eventually I tried to make a more tidy, fairly portable Common
 Lisp version, and have been happily using this for my compositional activities in recent
 years. It also underpins the method presentation stuff on the
-@url{http://www.ringing.org/,ringing.org} web site.
+@url{https://www.ringing.org/,ringing.org} website.
 
 Over the years several folks received copies of it, and in some cases used it, at least
 for a little while. I think it was used for a time on a Lisp Machine to drive a set of
@@ -762,14 +775,12 @@ are modifying Roan you really should make friends with the unit tests.
 
 @cindex building
 @cindex documentation
+@cindex manual
 @node Building the documentation
 @section Building the documentation
 
 @anchor{building}
 
-@cindex documentation
-@cindex manual
-@cindex building
 @cindex Texinfo
 @cindex @code{extract-documentation}
 @cindex @file{Makefile}
@@ -777,7 +788,7 @@ are modifying Roan you really should make friends with the unit tests.
 @cindex @acronym{HTML}
 @cindex Info
 This manual is written using
-@url{https://www.gnu.org/software/texinfo/,Texinfo}.
+@url{https://www.gnu.org/software/texinfo/, GNU Texinfo}.
 Depending upon how your environment is already configured you may have to download
 and install Texinfo software, TeX and/or LaTeX.
 
@@ -808,12 +819,14 @@ a single @acronym{HTML} file
 a collection of @acronym{HTML} files, one per chapter
 @end itemize
 
-@cindex Clozure Common Lisp
-@cindex CCL
-So long as CCL (Clozure Common Lisp) is installed, the @file{Makefile} in the source
-hierarchy should do all this for you. If preferred, it should be straightforward to
-modify the @file{Makefile} to use a different Lisp implementation to run
-@code{extract-documentation}.
+@cindex Steel Bank Common Lisp
+@cindex SBCL
+So long as SBCL (Steel Bank Common Lisp) is installed, the @file{Makefile} in the source
+hierarchy should do all this for you.
+If preferred, the @file{Makefile} can be easily modified to use a different Lisp
+implementation to run @code{extract-documentation}.
+Note that if you are using SBCL it will emit several warnings about an inability to
+find docstrings for an SBCL internal type; these warnings can be safely ignored.
 
 @cindex Edward Smith
 @cindex Smith, Edward
@@ -822,11 +835,12 @@ modify the @file{Makefile} to use a different Lisp implementation to run
 If a public function is added to Roan, it should include a suitable documentation string,
 and @file{roan.texi} should be revised to give it an appropriate home, where the
 corresponding @file{inc/*-function.texi} file is @code{@@include}d. So long as you export
-its name from the @code{roan} package it should be picked up by when building the
+its name from the @code{roan} package it should be picked up when building the
 documentation.
 Then, run
 @command{make documentation} and if all goes
-well@footnote{``If all goes well'' is reputed to have been a favorite expression of the sea captain Edward Smith.},
+well@footnote{According to John Pladdys
+``If all goes well'' was a favorite expression of the sea captain Edward Smith.},
 all four kinds of documentation will be nicely produced a few seconds later.
 
 Of course, most of the time, all won't go well. Besides looking carefully at the rather noisy
@@ -880,17 +894,15 @@ Writing good documentation is often harder than writing the corresponding code.
 
 @anchor{testing}
 
-The Roan source tree contains a collection unit tests. If you are making changes to Roan
+The Roan source tree contains a collection of unit tests. If you are making changes to Roan
 it is @emph{highly} recommended that you make friends with them and use them early and
 often. Unless run on an unusally slow machine or Lisp implementation it takes less than
 a minute to run the full collection, and in the long run they will save you a lot of time.
 
 The unit tests live in their own package, @code{roan/test}, and make use of a further library
 not included in Roan itself, @url{https://github.com/AccelerationNet/lisp-unit2,lisp-unit2}.
-After running @code{(ql:quickload :roan)} once, run @code{(ql:quickload :roan/test)} once as
-well. Once that has been done, assuming Roan has
-been installed where @acronym{ASDF} can find it, it should be possible to run all the
-unit tests by simply evaluating @code{(asdf:test-system :roan)}. If the unit tests all succeed
+After running  @code{(ql:quickload :roan/test)} it should be possible to run all the
+unit tests by simply evaluating @code{(roan/test:test-roan)}. If the unit tests all succeed
 it will report the success of about 13,000 assertions with no failures. Otherwise, you'll
 have some debugging to do.
 

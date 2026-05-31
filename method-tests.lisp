@@ -75,6 +75,7 @@
       (test-m (method :class :bob :little t) 17 nil :bob nil t)
       (test-m (method :differential t) 17 nil nil nil nil t)
       (test-m (method :jump t) 17 nil nil nil nil nil t)
+      (test-m (method :stage 6 :jump t :class :hunt) 6 nil :hunt nil nil nil t)
       (test-m (method :name "fooX"
                       :class :hunt
                       :stage 7
@@ -87,6 +88,8 @@
                       :stage 6
                       :place-notation "x3x4x2x3x4x5,2")
               6 "Cambridge" :surprise "x3x4x2x3x4x5,2"))
+    (assert-error 'inconsistent-method-specification-error (method :jump nil :class :hunt))
+    (assert-error 'inconsistent-method-specification-error (method :class :hunt))
     (assert-error 'type-error (method :name t :stage 8))
     (assert-error 'type-error (method :class 17 :stage 8))
     (assert-error 'type-error (method :stage :foo))

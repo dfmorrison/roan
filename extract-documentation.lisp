@@ -127,7 +127,7 @@
   ;; First, until trivial-documentation gets fixed, work around a nasty interaction
   ;; between it and SBCL. If other public classes are added to Roan they'll need to be
   ;; finalized here, too.
-  (closer-mop:ensure-finalized 'roan:method)
+  (closer-mop:ensure-finalized (find-class 'roan:method))
   (let ((*include-file-directory* (uiop/pathname:subpathname
                                    (asdf:system-source-directory system-name)
                                    directory))

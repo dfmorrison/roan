@@ -63,16 +63,15 @@
   (:documentation "===summary===
 Roan provides the @code{method} type to describe change ringing methods, not to be
 confused with CLOS methods. A @code{method} can only describe what the Central Council of
-Church Bell Ringers @url{https://cccbr.github.io/method_ringing_framework/, Framework for
-Method Ringing} (FMR) calls a static method, a method that can be viewed as a fixed
-sequence of changes, including jump changes; while this includes nearly all methods rung
-and named to date, it does exclude, for example, Dixonoids. A @code{method} has a name, a
-stage, classifacation details, and an associated place-notation, though any or all of
-these may be @code{nil}. In the case of the stage or place notation @code{nil} indicates
-that the corresponding value is not known; the same is also true if the name is
-@code{nil}, except for the case of Little Bob, which in the taxonomy of the FMR has no
-name. The stage, if known, should be a @code{stage}, and the name and place notation, if
-known, should be strings.
+Church Bell Ringers @url{https://framework.cccbr.org.uk, Framework for Method Ringing} (FMR)
+calls a static method, a method that can be viewed as a fixed sequence of changes,
+including jump changes; while this includes nearly all methods rung and named to date, it
+does exclude, for example, Dixonoids. A @code{method} has a name, a stage, classification
+details, and an associated place-notation, though any or all of these may be @code{nil}.
+In the case of the stage or place notation @code{nil} indicates that the corresponding
+value is not known; the same is also true if the name is @code{nil}, except for the case
+of Little Bob, which in the taxonomy of the FMR has no name. The stage, if known, should
+be a @code{stage}, and the name and place notation, if known, should be strings.
 
 The classification follows the taxonomy in the FMR and consists of a @code{class} and
 three boolean attributes for jump methods, differential methods and little methods. The
@@ -216,8 +215,8 @@ A @code{type-error} is signaled if @var{stage} is supplied and is neither @code{
 @code{stage}; if either of @var{name} or @var{place-notation} are supplied and are neither
 @code{nil} nor a string; or if @code{class} is supplied and is neither @code{nil} nor one
 of the keywords @code{:bob}, @code{:place}, @code{:surprise}, @code{:delight},
-@code{:treble-bob}, @code{:alliance}, @code{:treble-place} or @code{:hybrid}. A
-@code{inconsistent-method-specification-error} is signaled if the various classification
+@code{:treble-bob}, @code{:alliance}, @code{:treble-place}, @code{:hybrid} or @code{:hunt}.
+A @code{inconsistent-method-specification-error} is signaled if the various classification
 details cannot occur together, such as a little principle."
   (check-type* name (or string null))
   (check-type* place-notation (or string null))
@@ -1059,7 +1058,6 @@ be properly parsed as place notation at @var{method}'s stage.
 
 (define-method-trait lead-head-code (%update-lead-head-code)
   "Returns the lead head code for @var{method}, as a keyword, if its stage and place
-
 notation are set and it has Plain Bob or Grandsire lead ends, and otherwise returns
 @code{nil}. No methods below minimus are considered to have such lead ends, nor is rounds
 considered such a lead end. When not @code{nil} the result is a keyword whose name
@@ -1070,19 +1068,19 @@ typically single letters or, more recently, single letters followed by digits, t
 various lead ends for the methods they contain. While the choices made have in the past
 varied by collection, in recent decades a consistent set of codes has been used, which is
 now codified in the Central Council of Church Bell Ringers
-@url{https://cccbr.github.io/method_ringing_framework/, Framework for Method
-Ringing} (FMR), appendix C. While these codes actually describe both a row and a change
+@url{https://framework.cccbr.org.uk, Framework for Method Ringing} (FMR), appendix C.
+While these codes actually describe both a row and a change
 adjacent to that row, and thus two different rows, the FMR calls them \"lead head codes\",
 so that phrasing is also used here.
 
-There is currently (as of July 2019) an issue with the definitions of these codes in the
+There is currently (as of May 2026) an issue with the definitions of these codes in the
 FMR, where those for Grandsire-like methods do not correctly correspond to common
 practice. For example, most ringers would consider Itchingfield Slow Bob Doubles and
 Longford Bob Doubles to have the same lead ends. However, the current FMR definition says
-that the former has 'c' Grandsire lead ends, and the latter does not. This is currently
-under discussion for correction in the next revision of the FMR. The
-@code{method-lead-head-code} function is implemented assuming that this will be corrected
-in the next revision of the FMR to match common practice. For example, it considers
+that the former has Grandsire lead ends, and the latter does not. This has been a subject
+for discussion for possibleamendment in a future revision of the FMR. The
+@code{method-lead-head-code} function is implemented assuming that this will be amended
+in a future revision of the FMR to match common practice. For example, it considers
 neither Itchingfield Slow Bob nor Longford Bob as having Grandsire lead ends.
 
 It is also worth noting that, for some of the less common cases, the lead end codes
@@ -1200,7 +1198,7 @@ notation at @var{method}'s stage.")
 (defun classify-method (method)
   "Assigns the classification fields of @var{method} to match the classification assigned
 by the Central Council of Church Bell Ringers
-@url{https://cccbr.github.io/method_ringing_framework/, Framework for Method
+@url{https://framework.cccbr.org.uk, Framework for Method
 Ringing} (FMR) for the place notation contained in that @code{method}, and returns the
 method. Signals a @code{type-error} if @var{method} is not a @code{method}. Signals a
 @code{no-place-notation-error} if either the stage or place notation of @var{method} are
@@ -1723,8 +1721,8 @@ stage.
   "===summary===
 Most methods that have been rung and named at stages major and above have been rung at
 even stages, with Plain Bob lead ends and lead heads, without jump changes, and with the
-usual palindromic symmetry. For major, and at higher stages if the tenors are kept
-together, the false course heads of such methods are traditionally partitioned into named
+usual palindromic symmetry. For major, and at higher stages, if the tenors are kept
+together the false course heads of such methods are traditionally partitioned into named
 sets all of whose elements must occur together in such methods. These are traditionally
 called ``false course head groups'' (FCHs), although they are not what mathemeticians
 usually mean by the word ``group''. Further information is available from a variety of
@@ -2608,9 +2606,9 @@ notation to the same lead."
                          (stage nil stage-supplied))
   "===summary===
 Roan provides a library of method definitions, derived from the
-@url{https://cccbr.github.io/methods-library/index.html,Central Council of Church Bell
-Ringers Methods Library}. These are augmented with a handful of other methods not yet in
-the CCCBR Library, jump methods and common alternative names for a few
+@url{https://methods.cccbr.org.uk, Central Council Methods Library}.
+These are augmented with a handful of other methods not yet in
+the Council's library, jump methods and common alternative names for a few
 methods (@ref{lookup-method-info}). As delivered with Roan this library is only up to
 date as of the date a version of Roan was released. However, if a network connection is
 available, the library can be updated to the most recent version made available by the
@@ -2630,7 +2628,7 @@ ones.
 If @var{name} is provided, it should be a string or @code{nil}, and all the methods
 returned will have that name. The Central Council of Church Bell Ringers
 @url{https://cccbr.github.io/method_ringing_framework/, Framework for Method
-Ringing} (FMR), appendix C defines the form method names may take, and a mechanism for
+Ringing} (FMR), appendix B defines the form method names may take, and a mechanism for
 comparing them that is more complex than simply comparing strings for equality. For
 example, @code{\"London No.3\"} and @code{\"London no 3\"} are considered the same names.
 The @code{lookup-methods} function uses this mechanism. @xref{comparable-method-name}.
@@ -2649,9 +2647,9 @@ value for the @var{stage} argument.
 
 If @var{class} is provided, it should be @code{nil} or one of the keywords @code{:bob},
 @code{:place}, @code{:surprise}, @code{:delight}, @code{:treble-bob},
-@code{:treble-place}, @code{:alliance}, @code{:hybrid} or @code{:blank}. With the
-exception of @code{:blank}, all the methods returned will have the specified class. The
-value @code{:blank} matches either @code{nil}, meaning no explicit class, or
+@code{:treble-place}, @code{:alliance}, @code{:hybrid}, @code{hunt} or @code{:blank}. With
+the exception of @code{:blank}, all the methods returned will have the specified class.
+The value @code{:blank} matches either @code{nil}, meaning no explicit class, or
 @code{:hybrid}; when writing a method's title according to the FMR the hybrid class and no
 class are indistinguishable, since ``hybrid'' is not included in the title.
 
@@ -2889,7 +2887,7 @@ Returns an integer, which is used to index information about the method on
 methods added to those from the Central Council, as the added methods do not have a
 @code{:complib-id}, while all those from the Council do.
 @end table
-Others may be added in future versions of Roan.
+Other @var{key} values may be added in future versions of Roan.
 
 Signals a @code{type-error} if @var{title-or-method} is neither a string nor a
 @code{method}, or if @var{key} is not a keyword.
@@ -2920,7 +2918,7 @@ Signals a @code{type-error} if @var{title-or-method} is neither a string nor a
         result)))
 
 (defun update-method-library (&optional force)
-  "Queries the remote server containing the CCCBR's Methods Library. If that remote
+  "Queries the remote server containing the Central Council Method Library. If that remote
 file has changed since the one Roan's library was built from was downloaded, it fetches
 the new one and uses it to build an updated Roan method library. If the generalized
 boolean @var{force} is true it fetches the remote file and rebuilds Roan's library
@@ -2970,10 +2968,11 @@ updating.
 The URL used to fetch the remote file from which the Roan library was built.
 
 @item
-The @var{source-id} provided in the remote file, that is a CCCBR version stamp.
+The @var{source-id} provided in the remote file, that is a Central Council library
+version stamp.
 
 @item
-The date the CCCBR library was built, according to the contents of the file downloaded
+The date the Council's library was built, according to the contents of the file downloaded
 from the remote server. This may or may not be the same as the date the file on the
 remote server was last modified.
 
@@ -3377,14 +3376,14 @@ Controls the distribution of leads into columns. For differentials, or methods w
 multiple, equal length cycles of working bells, each cycle always starts a new column.
 Within a cycle the value of @var{layout} controls the number of leads in a column. If it
 is a non-negative integer, this is the maximum number of rows in a column; though if the
-lead length exceeds this value each column will contain one lead. If @code{nil} this is
+lead length exceeds this value each column will contain one lead. If @code{nil} there is
 no limit to the number of leads in a column, each cycle of working bells then filling a
 column.The special value @code{:grid} may also be supplied, in which case only a single
 column is used for a single lead, with all the bells blue lines combined into it as a grid.
 The default value for @var{layout} is @code{100}.
 
 @item hunt-bell
-Controls which hunt bells are displayed specially. Those not displayed specially, are
+Controls which hunt bells are displayed specially. Those not displayed specially are
 treated as working bells. If a @code{bell}, that is, a small, non-negative integer less
 than the stage of @var{method}, this is the hunt bell displayed specially; a list of
 @code{bell}s may also be supplied, for multiple hunt bells. If a supplied @code{bell} is
@@ -3405,8 +3404,9 @@ Grandsire-like palindromic symmetry the first row of the lead is used instead of
 lead end. The default value for @var{working-bell} is @code{:natural}.
 
 @item figures
-If non-null figures will also be drawn, in addition to the blue line. If @code{t} they will
-be drawn for all leads. If @code{:lead} only for the first lead of each cycle. If
+If non-null figures (bell names) will also be drawn, in addition to the blue line.
+If @code{t} they will be drawn for all leads.
+If @code{:lead} only for the first lead of each cycle. If
 @code{:half} and the @var{method} has the usual palindromic symmetry around the half lead,
 with one additional change at the lead end, they will only be drawn for the first
 half-lead; otherwise @code{:half} is equivalent to @code{:lead}. If @code{:head} the

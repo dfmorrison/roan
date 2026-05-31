@@ -840,7 +840,10 @@ Signals an error if @var{initial-row} is neither a @code{row} nor @code{nil}, if
   (generate-rows-error changes))
 
 (defun permute-by-inverse (row change)
-  "Equivalent to @code{(permute @var{row} (inverse @var{change}))}. Signals a
+;; For reasons I have not been able to work out the extract doc stuff isn't getting the
+;; lambda list right for his function, so tell it what to do.
+  "===lambda: (row change)
+Equivalent to @code{(permute @var{row} (inverse @var{change}))}. Signals a
 @code{type-error} if either @var{row} or @var{change} is not a @code{row}.
 @example
 @group
@@ -1040,7 +1043,10 @@ stage of @var{row}, or are duplicated.
   (and (rowp row) (%in-course-p (row-bells row))))
 
 (defun inverse (row)
-  "Returns the inverse of the @code{row} @var{row}. That is, the @code{row}, @var{r}, such
+;; For reasons I have not been able to work out the extract doc stuff isn't getting the
+;; lambda list right for his function, so tell it what to do.
+  "===lambda: (row)
+Returns the inverse of the @code{row} @var{row}. That is, the @code{row}, @var{r}, such
 that when @var{row} is permuted by @var{r}, the result is rounds. A theorem of group
 theory implies also that when @var{r} is permuted by @var{row} the result will also be
 rounds. Signals a @code{type-error} if @var{row} is not a @code{row}.
