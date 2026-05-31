@@ -39,7 +39,7 @@ See the file `LICENSE` for details.
 
 ### Installing Roan
 
-While [Quicklisp](http://quicklisp.org) is not required to run Roan,
+While [Quicklisp](https://quicklisp.org) is not required to run Roan,
 it is recommended.
 With Quicklisp installed and configured, you can download and install Roan by simply
 executing in Lisp `(ql:quickload :roan)`.
