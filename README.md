@@ -63,8 +63,7 @@ support the libraries on which Roan depends.
 
 ### Documentation
 
-The Roan manual is [available online](https://dfmorrison.github.io/) or
-<a href="https://github.com/dfmorrison/roan/doc/roan-manual.pdf" download>as a PDF file</a>.
+The Roan manual is [available online](https://dfmorrison.github.io/) or [as a PDF file](https://dfmorrison.github.io/roan-manual.pdf).
 
 ### Reporting Bugs
 
